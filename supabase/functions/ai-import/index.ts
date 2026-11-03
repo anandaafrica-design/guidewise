@@ -26,10 +26,11 @@ const SCHEMA = {
       type: "array",
       items: {
         type: "object", additionalProperties: false,
-        required: ["date", "title", "meet", "start", "stops", "checklist", "notes"],
+        required: ["date", "title", "area", "meet", "start", "stops", "checklist", "notes"],
         properties: {
           date: { type: "string", description: "YYYY-MM-DD, or empty if unknown" },
           title: { type: "string", description: "Short day title, e.g. 'Cape Peninsula'" },
+          area: { type: "string", description: "Town or region where most of the day happens, for a weather forecast, e.g. 'Simon's Town', 'Kasane'. On a train or flight day: where the group sleeps." },
           meet: { type: "string", description: "Meeting point for the group, or empty" },
           start: { type: "string", description: "Group departure time HH:MM (24h), or empty" },
           stops: {

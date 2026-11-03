@@ -108,7 +108,7 @@ function convDay(d,prev){
     out.push({place:(kind==='flight'&&!/^✈/.test(s.place)?'✈ ':'')+String(s.place||'Stop'),drive:tr,stay,note:(flags.length?flags.join(' · ')+': ':'')+String(s.note||''),lunch:!!s.lunch});
     cur=a+stay;
   });
-  return{date:isoOk(d.date)?d.date:nextIso(prev),title:String(d.title||'Day'),meet:String(d.meet||''),start:fmt(start),weather:'',dress:'',bring:'',
+  return{date:isoOk(d.date)?d.date:nextIso(prev),title:String(d.title||'Day'),area:String(d.area||''),wxAuto:true,meet:String(d.meet||''),start:fmt(start),weather:'',dress:'',bring:'',
     stops:out,checklist:(d.checklist||[]).filter(Boolean).map(t=>({t:String(t),d:false}))};
 }
 /* Built once when the draft arrives, so the review shows exactly what will be saved. */
