@@ -8,7 +8,7 @@ const cors = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
-const ALLOWED_RETURN = /^https:\/\/(guidewise-app\.netlify\.app|deploy-preview-\d+--guidewise-app\.netlify\.app)$/;
+const ALLOWED_RETURN = /^https:\/\/((www\.)?guidewiseapp\.co\.za|guidewise-app\.netlify\.app|deploy-preview-\d+--guidewise-app\.netlify\.app)$/;
 
 async function paystack(path: string, init: RequestInit = {}) {
   const r = await fetch("https://api.paystack.co" + path, {

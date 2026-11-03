@@ -4,18 +4,19 @@ Pre-tour prep PWA for tour guides, worldwide. Owner: Ananda van der Merwe (UK En
 Tagline idea: "Guidewise. Tomorrow, sorted."
 
 ## Live
-- https://guidewise-app.netlify.app
+- https://guidewiseapp.co.za (custom domain, owner bought it; DNS set up by owner) and https://guidewise-app.netlify.app
 - Netlify site "guidewise-app", site-id 9e36a9ca-6f37-416e-8e51-31229de5132e, team spookstories
 
 ## Files
 - site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
 - site/index.html: whole app (vanilla JS, no build step)
-- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v24; own files are fetched network-first, cache when offline). New precached files go in its F list
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v26; own files are fetched network-first, cache when offline). New precached files go in its F list
 - site/backup.js: cloud backup (sign-in, POPIA consent, passphrase, encrypt, sync). Shares globals with index.html
 - site/import.js: AI import (tab 'import', from Tours > Import from documents or the Docs tab; can use documents already saved in the tour). Loaded after backup.js and uses its globals (sb, user, plan, plus, refresh, SB_URL, SB_KEY)
 - site/vendor/xlsx-mini-0.18.5.js: SheetJS (Apache-2.0), lazy-loaded by import.js for .xlsx/.csv
 - site/vendor/supabase-2.45.4.js: vendored so it works offline; site/privacy.html: POPIA notice; site/terms.html: terms, pricing, refunds (Paystack needs it); site/setup.html: setup guide to send to guides (install, first tour, backup, help). Keep it in step with the UI
 - supabase/: record of the deployed migration and edge function
+- site/guides.html: public landing page for other guides (features, pricing, FAQ); screenshots in site/img/app-*.jpg are from the sample tour only, never real guest data. Linked from More > About Guidewise
 - site/manifest.webmanifest, site/icon-192.png, site/icon-512.png
 
 ## Design (v10)
@@ -24,6 +25,10 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 - Look (v11): topo.svg / topo-w.svg contour graphics (body and Today hero), green-to-ochre accent line under the header, coloured next-step icons and tiles. Stop types inferred by kindOf() (meal, flight, wildlife, stay, free) colour the timeline
 - Briefing: 'Send on WhatsApp' opens wa.me/?text=… (data-wa=dayIndex), also from the Today hero; Copy stays as fallback
 - Tour-day tools (v12): stop.phone and stop.addr with Call (tel:) and Directions (Google Maps) buttons; venue library T.venues (by place name, refilled on later tours, backed up with T). day.area drives a free Open-Meteo forecast (ensureWx, cache guidewise.wx 3 h, up to 15 days ahead); fills day.weather when empty or wxAuto; strong wind/rain becomes a Today step. Headcount tab 'count' (in-memory, Today shows it on tour days). SW does not intercept other sites
+- Running late (tab 'late'): pick minutes and the stop; at the current stop on a tour day its stay grows, otherwise the drive to it; WhatsApp update with new times; Undo
+- Cash and tips (tab 'cash', S.cash [{id,date,cat,amt,what}], S.cur): categories float in, entrance, meals, tips paid, transport, other, tips received (kept out of the float balance); summary to WhatsApp or copy. Duplicate clears cash
+- First run (tab 'welcome', key guidewise.onb): shown once when only the sample tour exists; import, new tour, or explore
+- End-of-day report (tab 'report'): programme, changes (day.log, written by Running late), cash that day, float balance, day.report notes; WhatsApp, email (mailto) or copy. Never includes guest birthdays, dietaries or notes
 - Day and Guests are read-first (timeline / guest cards) with Edit day / tap-to-edit (editDay, editG). Keep new screens read-first with a clear primary action
 
 ## Features (v3)

@@ -215,6 +215,8 @@ header::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:3px
 .tile.t-guests .tic{background:#efe6f3}.tile.t-guests svg{stroke:var(--plum)}
 .tile.t-pack .tic{background:var(--sand)}.tile.t-pack svg{stroke:var(--ochre)}
 .tile.t-docs .tic{background:#e3f1ea}.tile.t-docs svg{stroke:var(--accent)}
+.tile.t-cash .tic{background:#e9f3e3}.tile.t-cash svg{stroke:var(--game)}
+.tile.t-late .tic{background:#f8e3e7}.tile.t-late svg{stroke:var(--rose)}
 .tile .bar2{position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--soft)}.tile .bar2 i{display:block;height:100%;background:var(--ochre)}
 /* stop types */
 .rs .bx{border-left:4px solid var(--k,var(--accent))}
@@ -223,6 +225,30 @@ header::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:3px
 .rs.lunch .bx{border-left-color:var(--k,var(--ochre))}
 .kt{display:inline-block;font:700 .7rem var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--k,var(--accent));margin-bottom:2px}
 .wa{background:#1f8f57!important;color:#fff!important}
+.chipsel{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chipsel button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:10px 16px;font:700 1rem var(--body);cursor:pointer;color:var(--ink)}
+.chipsel button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chipsel.sm button{padding:6px 11px;font-size:.85rem}
+.money{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.money div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px;box-shadow:var(--shadow)}
+.money b{display:block;font:800 1.02rem var(--display);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.money span{font-size:.78rem;color:var(--muted)}
+.money .bal{background:linear-gradient(150deg,var(--accent),var(--accent-2));color:#fff;border:0}.money .bal span{color:#e6efe9}
+.money .neg b{color:var(--alert)}
+.cx{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.cx .tx{flex:1;min-width:0}.cx .tx span{display:block;font-size:.82rem;color:var(--muted)}
+.cx .am{font:700 1rem var(--mono);font-variant-numeric:tabular-nums}
+.cx .am.in{color:var(--accent)}.cx .am.tip{color:var(--plum)}
+.addcash{display:grid;grid-template-columns:120px 1fr;gap:8px}
+.late-msg{white-space:pre-wrap}
+.onb{min-height:calc(100vh - 220px);display:grid;align-content:start;gap:12px;padding-top:10px}
+.onb .big{font:800 2rem/1.1 var(--display);letter-spacing:-.02em;margin:14px 0 0;background:linear-gradient(90deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.onb .lead{font-size:1.05rem;color:var(--muted);margin:0}
+.onb .opt3{display:flex;gap:14px;align-items:center;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow);font:inherit;color:inherit;cursor:pointer}
+.onb .opt3 .n{flex:none;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:1.4rem}
+.onb .opt3.pri{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),var(--shadow)}
+.onb .opt3 b{display:block;font-size:1.05rem}.onb .opt3 span.s{font-size:.9rem;color:var(--muted)}
+.onb ul{margin:0;padding-left:20px;color:var(--muted);font-size:.95rem}
 /* tour switcher */
 header .in{position:relative}
 .tsw{flex:1;min-width:0;display:grid;gap:1px;text-align:left;background:none;border:0;padding:4px 8px 4px 0;font:inherit;color:inherit;cursor:pointer;border-radius:10px}
@@ -280,7 +306,7 @@ const sample={
      stops:[
       {place:'Chapman\'s Peak Drive',drive:40,stay:20,note:'Photo stop. Toll: cash or card.',lunch:false},
       {place:'Cape Point Nature Reserve',drive:45,stay:120,note:'Funicular tickets pre-booked. Watch baboons with food.',lunch:false},
-      {place:'Lunch at Two Oceans Restaurant',drive:5,stay:75,note:'Table for 8 booked under A&K.',lunch:true},
+      {place:'Lunch at Two Oceans Restaurant',drive:5,stay:75,note:'Table for 8 booked.',lunch:true},
       {place:'Boulders Beach penguins',drive:30,stay:60,note:'SANParks entry per person.',lunch:false},
       {place:'Back at hotel',drive:50,stay:0,note:'',lunch:false}
      ],
@@ -362,11 +388,14 @@ const icons={
  cloud:'<svg viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.1 9.2 4.5 4.5 0 0 0 7 18z"/></svg>',
  spark:'<svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>',
  count:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c.8-3.2 3.2-5 6-5s5.2 1.8 6 5"/><path d="M16 11l2 2 4-4"/></svg>',
+ cash:'<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6.5 9v.01M17.5 15v.01"/></svg>',
+ late:'<svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5M9 2h6"/></svg>',
+ report:'<svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6M10 9h2"/></svg>',
  help:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/></svg>'
 };
 const NAV=[['today','Today'],['plan','Day'],['guests','Guests'],['brief','Briefing'],['more','More']];
-const UNDER_MORE=['more','count','pack','docs','intel','acct','plus','import','home'];
-const DAY_TABS=['plan','pack','brief','docs'];
+const UNDER_MORE=['more','count','cash','late','report','pack','docs','intel','acct','plus','import','home'];
+const DAY_TABS=['plan','pack','brief','docs','late','report'];
 const names={home:'Home',plan:'Day plan',guests:'Guests',pack:'Checklist',brief:'Briefing',docs:'Documents',intel:'Local intel'};
 
 function renderChrome(){
@@ -425,6 +454,84 @@ function renderCount(){
   <div class="acts"><button class="btn" data-hc="all">Mark everyone</button></div>`;
 }
 
+/* ---------- Running late: shift the rest of the day and tell the group ---------- */
+let lateMin=15,lateFrom=null,lateDone=null; // lateDone: {day, stop, field, mins} for undo
+function lateStart(d){if(d.date===todayIso()){const x=nowNext(d);if(x.now>=0)return{i:x.now,f:'stay'};if(x.next>=0)return{i:x.next,f:'drive'}}return{i:0,f:'drive'}}
+function lateText(d,from){const sc=schedule(d),rows=d.stops.map((s,i)=>i>=from&&!/^free time$/i.test(s.place)?`${fmt(sc[i].arrive)}  ${s.place}`:'').filter(Boolean);
+  return `Quick update 🕑 We are running about ${lateDone?lateDone.mins:lateMin} minutes behind.\n\nNew times:\n${rows.slice(0,6).join('\n')}${sc.length?`\n\nBack around ${fmt(sc[sc.length-1].leave)}.`:''}\n\nThank you for your patience!`}
+function renderLate(){
+  const d=D();if(!d.stops.length)return `<h2>Running late</h2><div class="empty"><b>No stops on this day</b><span class="note">Add stops to the day plan first.</span></div>`;
+  if(lateDone&&lateDone.day===S.day){const from=lateDone.stop;
+    return `<h2>Day ${S.day+1} moved by ${lateDone.mins} min</h2><p class="note">Every stop from <b>${esc(d.stops[from].place)}</b> onwards has moved. Tell the group:</p>
+    <div class="bubble late-msg" id="lateMsg">${esc(lateText(d,from))}</div>
+    <div class="acts"><button class="btn pri wa" data-latewa="1">💬 Send update on WhatsApp</button><button class="btn" data-lateundo="1">Undo</button><button class="btn" data-go="plan:${S.day}">See day plan</button></div>`}
+  const st=lateStart(d);if(lateFrom===null||lateFrom>=d.stops.length)lateFrom=st.i;
+  return `<h2>Running late</h2><p class="note">Day ${S.day+1} · ${esc(d.title)}. Every stop from the one you choose moves later, and an update for the group is ready to send.</p>
+  <p class="eyebrow">How late?</p><div class="chipsel">${[5,10,15,20,30,45,60].map(m=>`<button class="${m===lateMin?'on':''}" data-latemin="${m}">${m} min</button>`).join('')}</div>
+  <p class="eyebrow">From which stop?</p><div class="field"><select id="lateFrom">${d.stops.map((s,i)=>`<option value="${i}" ${i===lateFrom?'selected':''}>${fmt(schedule(d)[i].arrive)} ${esc(s.place)}</option>`).join('')}</select></div>
+  <div class="acts"><button class="btn pri" data-lateapply="1">Move the day ${lateMin} min later</button></div>
+  <p class="note">If you are at that stop now, its stay gets longer; otherwise the drive to it does.</p>`;
+}
+
+/* ---------- Cash and tips: float in, spending out, tips received kept apart ---------- */
+const CATS=[['float','Float in','in'],['entry','Entrance','out'],['meal','Meals','out'],['tip','Tips paid','out'],['trans','Transport','out'],['other','Other','out'],['mytip','Tips received','tip']];
+const catOf=k=>CATS.find(c=>c[0]===k)||CATS[5];
+let cashCat='entry';
+const money=n=>{const v=Math.round(Math.abs(n)*100)/100;return (n<0?'−':'')+(S.cur||'R')+' '+v.toLocaleString('en-ZA',{minimumFractionDigits:v%1?2:0,maximumFractionDigits:2})};
+function cashTotals(list){let fin=0,out=0,tip=0;(list||S.cash||[]).forEach(e=>{const t=catOf(e.cat)[2];if(t==='in')fin+=e.amt;else if(t==='out')out+=e.amt;else tip+=e.amt});return{fin,out,tip,bal:fin-out}}
+function cashSub(){const c=S.cash||[];if(!c.length)return'Float, entrance fees, tips: running balance';const t=cashTotals();return `Balance ${money(t.bal)} · ${c.length} entr${c.length===1?'y':'ies'}`}
+function cashReport(){const c=S.cash||[],t=cashTotals(),by={};c.forEach(e=>{by[e.cat]=(by[e.cat]||0)+e.amt});
+  let r=`${S.tour}: cash summary\n\nFloat received: ${money(t.fin)}\nSpent: ${money(t.out)}\nBalance: ${money(t.bal)}\n\nBy type:\n`;
+  CATS.filter(x=>x[2]==='out').forEach(([k,l])=>{if(by[k])r+=`${l}: ${money(by[k])}\n`});
+  r+=`\nDetail:\n`+c.slice().sort((a,b)=>a.date<b.date?-1:1).filter(e=>catOf(e.cat)[2]!=='tip').map(e=>`${dShort(e.date)}  ${catOf(e.cat)[1]}  ${e.what||''}  ${catOf(e.cat)[2]==='in'?'+':'-'}${money(e.amt)}`).join('\n');
+  return r}
+function renderCash(){
+  S.cash=S.cash||[];const t=cashTotals(),fd=S.days[focusDay().i],day=fd&&fd.date||todayIso(),todays=S.cash.filter(e=>e.date===day),tt=cashTotals(todays);
+  let h=`<div class="bar"><h2>Cash and tips</h2><label class="pill" style="gap:4px">Currency <input id="cashCur" value="${esc(S.cur||'R')}" maxlength="4" style="width:46px;min-height:0;padding:2px 6px;border:0;background:var(--soft)"></label></div>
+  <div class="money"><div class="bal ${t.bal<0?'neg':''}"><b>${money(t.bal)}</b><span>Float balance</span></div><div><b>${money(tt.out)}</b><span>Spent ${esc(dShort(day))}</span></div><div><b>${money(t.tip)}</b><span>Tips received</span></div></div>
+  <div class="card"><b>Add</b>
+    <div class="chipsel sm">${CATS.map(([k,l])=>`<button class="${k===cashCat?'on':''}" data-cashcat="${k}">${l}</button>`).join('')}</div>
+    <div class="addcash"><input id="cashAmt" inputmode="decimal" placeholder="Amount"><input id="cashWhat" placeholder="${cashCat==='float'?'From whom, e.g. A&K office':cashCat==='mytip'?'From whom (optional)':'What for, e.g. Cape Point entry'}"></div>
+    <div class="row"><input type="date" id="cashDate" value="${esc(day)}"><button class="btn pri" data-cashadd="1">Add ${esc(catOf(cashCat)[1].toLowerCase())}</button></div>
+    <span class="note">Tips you receive are kept separate from the float.</span></div>`;
+  if(!S.cash.length)h+=`<div class="empty"><b>Nothing logged yet</b><span class="note">Start with the float you received, then add spending as you go.</span></div>`;
+  else{const days=[...new Set(S.cash.map(e=>e.date))].sort().reverse();
+    days.forEach(dt=>{const l=S.cash.filter(e=>e.date===dt);h+=`<p class="eyebrow">${esc(dLabel(dt))}</p>`+l.map(e=>{const k=catOf(e.cat);return `<div class="cx"><span class="tx"><b>${esc(e.what||k[1])}</b><span>${k[1]}</span></span><span class="am ${k[2]==='in'?'in':k[2]==='tip'?'tip':''}">${k[2]==='in'?'+':k[2]==='tip'?'':'−'}${money(e.amt)}</span><button class="x" data-cashdel="${e.id}" aria-label="Delete">×</button></div>`}).join('')});
+    h+=`<div class="acts"><button class="btn pri wa" data-cashwa="1">💬 Send summary</button><button class="btn" data-cashcopy="1">Copy summary</button></div><p class="note">The summary lists the float, spending by type and every entry, for your tour report. Tips received are not included.</p>`}
+  return h;
+}
+
+/* ---------- First run: three ways in ---------- */
+const ONB='guidewise.onb';
+function renderWelcome(){
+  return `<div class="onb"><p class="big">Tomorrow, sorted.</p>
+  <p class="lead">Guidewise keeps your tour in your pocket: the day plan, guests, briefing, documents and cash, even with no signal.</p>
+  <button class="opt3 pri" data-onb="import"><span class="n" style="background:var(--accent);color:#fff">✦</span><span><b>Import my itinerary</b><span class="s">Itinerary, rooming list or recap: a ready tour in about a minute (Plus, 30 days free)</span></span></button>
+  <button class="opt3" data-onb="new"><span class="n" style="background:#e3edf7">＋</span><span><b>Start a tour from scratch</b><span class="s">Add days, stops and guests yourself</span></span></button>
+  <button class="opt3" data-onb="sample"><span class="n" style="background:var(--sand)">👀</span><span><b>Look around the sample tour</b><span class="s">A two-day Cape trip, to see how it works</span></span></button>
+  <p class="eyebrow" style="margin-bottom:0">Good to know</p>
+  <ul><li>Everything stays on your phone unless you switch on backup.</li><li>Install it on your home screen so it works offline. <a href="setup.html#install">How</a></li><li>Your briefing goes to WhatsApp in one tap.</li></ul></div>`;
+}
+
+/* ---------- End-of-day report for the operator ---------- */
+function reportText(){
+  const d=D(),sc=schedule(d),c=(S.cash||[]).filter(e=>e.date===d.date),t=cashTotals(c),by={};c.forEach(e=>{by[e.cat]=(by[e.cat]||0)+e.amt});
+  let r=`${S.tour}\nDay ${S.day+1} report · ${dLabel(d.date)} · ${d.title}\n\n`;
+  r+=`Guests: ${S.guests.length}\nDeparted ${d.start}${sc.length?`, back about ${fmt(sc[sc.length-1].leave)}`:''}\n`;
+  const visited=d.stops.filter(s=>!/^free time$/i.test(s.place)).map((s,i)=>s.place);if(visited.length)r+=`\nProgramme:\n${d.stops.map((s,i)=>/^free time$/i.test(s.place)?'':`${fmt(sc[i].arrive)} ${s.place}`).filter(Boolean).join('\n')}\n`;
+  if((d.log||[]).length)r+=`\nChanges:\n${d.log.map(l=>`${l.t} ${l.txt}`).join('\n')}\n`;
+  if(c.length){r+=`\nCash today:\n`;CATS.filter(x=>x[2]==='out').forEach(([k,l])=>{if(by[k])r+=`${l}: ${money(by[k])}\n`});if(by.float)r+=`Float received: ${money(by.float)}\n`;r+=`Float balance now: ${money(cashTotals().bal)}\n`}
+  if(d.report)r+=`\nNotes:\n${d.report}\n`;
+  return r.trim();
+}
+function renderReport(){
+  const d=D();
+  return `<h2>End-of-day report</h2><p class="note">Day ${S.day+1} · ${esc(dLabel(d.date))} · ${esc(d.title)}. Built from the day plan, changes and cash. Guest birthdays, dietaries and notes are never included.</p>
+  <div class="field"><span class="lbl">Incidents and notes for the operator</span><textarea id="f-report" data-f="report" rows="4" placeholder="E.g. Chapman's Peak closed, went via Ou Kaapse Weg. Lunch excellent. Coach aircon weak.">${esc(d.report||'')}</textarea></div>
+  <h2>Preview</h2><div class="bubble late-msg" id="repMsg">${esc(reportText())}</div>
+  <div class="acts"><button class="btn pri wa" data-repwa="1">💬 Send on WhatsApp</button><a class="btn" id="repMail" href="mailto:?subject=${encodeURIComponent(S.tour+' · Day '+(S.day+1)+' report')}&body=${encodeURIComponent(reportText())}">✉ Email</a><button class="btn" data-repcopy="1">Copy</button></div>`;
+}
+
 /* ---------- Today: the day that matters now, and what to do next ---------- */
 const todayIso=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)};
 const daysBetween=(a,b)=>Math.round((new Date(b+'T12:00')-new Date(a+'T12:00'))/864e5);
@@ -447,6 +554,7 @@ function nextSteps(f){
   const lunch=d.stops.find(s=>s.lunch);if(lunch&&di.length&&f.n>=0&&f.n<=2)out.push({ic:'🍽',c:'food',t:`Tell ${lunch.place.replace(/^Lunch (at )?/i,'')} about ${di.length} dietary need${di.length>1?'s':''}`,s:di.slice(0,3).map(g=>g.name.split(' ')[0]+': '+g.diet).join(' · '),go:'plan:'+f.i,cls:'warm'});
   const w=wxFor(d);if(w&&(w.wind>=40||w.rain>=60))out.unshift({ic:w.wind>=40?'💨':'🌧',c:'plan',t:w.wind>=40?`Strong wind ${f.rel.toLowerCase()}: ${w.wind} km/h`:`Rain likely ${f.rel.toLowerCase()}: ${w.rain}%`,s:'Check exposed stops, boat trips and the briefing',go:'plan:'+f.i,cls:'warm'});
   if(!d.area&&f.n>=0&&f.n<=15)out.push({ic:'🌤',c:'plan',t:'Add the area to get the weather',s:`Day ${f.i+1}: town or region, in Edit day`,go:'plan:'+f.i,edit:1});
+  if(f.n===0&&hr>=16)out.unshift({ic:'📝',c:'plan',t:"Send today's report",s:'Times, changes and cash for your operator',go:'report:'+f.i,cls:hr>=18?'hot':''});
   if(typeof sync!=='undefined'&&!sync.acct&&!S.tour.includes('(sample)'))out.push({ic:'☁',c:'cloud',t:'Back up your tours',s:'So a lost phone does not cost you your planning',go:'acct'});
   return out.slice(0,4);
 }
@@ -461,7 +569,7 @@ function renderToday(){
   else if(d.stops.length){hero+=`<div class="now">${d.stops.slice(0,3).map((s,k)=>`<div><span class="t">${fmt(sc[k].arrive)}</span> ${esc(s.place)}</div>`).join('')}${d.stops.length>3?`<div style="opacity:.8">+ ${d.stops.length-3} more</div>`:''}</div>`}
   const w=wxFor(d);if(w)hero+=`<div class="wxl">${w.ic} ${esc(wxText(w))}</div>`;
   let nx=null;if(f.n===0&&d.stops.length){const x=nowNext(d);nx=d.stops[x.next>=0?x.next:x.now]||null}else if(d.stops.length)nx=d.stops.find(s=>!/^free time$/i.test(s.place)&&!/^✈/.test(s.place))||null;
-  hero+=`<div class="go"><button data-go="plan:${f.i}">Open day plan</button><button class="ghost" data-wa="${f.i}">💬 Send briefing</button>${nx&&f.n===0&&!/^free time$/i.test(nx.place)&&!/^✈/.test(nx.place)?`<a class="ghost" style="background:rgb(255 255 255 / .16);color:#fff;border-radius:999px;padding:9px 14px;font:700 .9rem var(--body);text-decoration:none" href="${esc(dirUrl(nx))}" target="_blank" rel="noopener">🧭 Navigate</a>${nx.phone?`<a style="background:rgb(255 255 255 / .16);color:#fff;border-radius:999px;padding:9px 14px;font:700 .9rem var(--body);text-decoration:none" href="tel:${esc(telOf(nx.phone))}">📞 Call</a>`:''}`:''}</div></div>`;
+  hero+=`<div class="go"><button data-go="plan:${f.i}">Open day plan</button><button class="ghost" data-wa="${f.i}">💬 Send briefing</button>${f.n===0&&d.stops.length?`<button class="ghost" data-go="late:${f.i}">⏱ Running late</button>`:''}${nx&&f.n===0&&!/^free time$/i.test(nx.place)&&!/^✈/.test(nx.place)?`<a class="ghost" style="background:rgb(255 255 255 / .16);color:#fff;border-radius:999px;padding:9px 14px;font:700 .9rem var(--body);text-decoration:none" href="${esc(dirUrl(nx))}" target="_blank" rel="noopener">🧭 Navigate</a>${nx.phone?`<a style="background:rgb(255 255 255 / .16);color:#fff;border-radius:999px;padding:9px 14px;font:700 .9rem var(--body);text-decoration:none" href="tel:${esc(telOf(nx.phone))}">📞 Call</a>`:''}`:''}</div></div>`;
   const steps=nextSteps(f);
   const n=d.checklist.length,done=d.checklist.filter(c=>c.d).length,di=diets().length;
   const tile=(ic,t,sub,go,pr)=>`<button class="tile t-${ic}" data-go="${go}"><span class="tic">${icons[ic]}</span><b>${t}</b><span>${sub}</span>${pr!==undefined?`<span class="bar2"><i style="width:${pr}%"></i></span>`:''}</button>`;
@@ -473,6 +581,8 @@ function renderToday(){
     ${tile('guests','Guests',`${S.guests.length} guest${S.guests.length===1?'':'s'}${di?' · '+di+' dietary':''}`,'guests')}
     ${tile('pack','Checklist',n?`${done} of ${n} ready`:'Nothing yet','pack:'+f.i,n?Math.round(done/n*100):undefined)}
     ${tile('docs','Documents','Vouchers, tickets','docs:'+f.i)}
+    ${tile('cash','Cash and tips',(S.cash||[]).length?'Balance '+money(cashTotals().bal):'Float and spending','cash')}
+    ${tile('late','Running late','Shift the day, tell the group','late:'+f.i)}
   </div>`;
   if(typeof isStandalone==='function'&&!isStandalone()&&!instHidden())h+=`<div class="mini-inst"><span>📲 Install Guidewise so it works with no signal.</span>${window.gwInstallReady?'<button class="btn sm pri" data-inst="go">Install</button>':'<a class="btn sm" href="setup.html#install">How</a>'}<button class="x" data-inst="x" aria-label="Hide">×</button></div>`;
   return h;
@@ -487,6 +597,9 @@ function renderMore(){
     ${li('pack','Checklist',n?`${done} of ${n} ready for Day ${S.day+1}`:'What to take each day','data-tab="pack"')}
     ${li('docs','Documents','Vouchers and tickets, readable offline','data-tab="docs"')}
     ${li('count','Headcount',`${S.guests.length} guest${S.guests.length===1?'':'s'}: tap them back on board`,'data-tab="count"')}
+    ${li('cash','Cash and tips',cashSub(),'data-tab="cash"')}
+    ${li('report','End-of-day report',`Day ${S.day+1}: times, changes, cash, notes for your operator`,'data-tab="report"')}
+    ${li('late','Running late',`Shift Day ${S.day+1} and tell the group`,'data-tab="late"')}
     ${li('intel','Local intel',`${S.intel.length} private note${S.intel.length===1?'':'s'}`,'data-tab="intel"')}
   </div>
   <p class="eyebrow">Plan faster</p><div class="list">
@@ -496,6 +609,7 @@ function renderMore(){
   <p class="eyebrow">Account</p><div class="list">
     ${li('cloud','Backup and Guidewise Plus','Encrypted backup, restore on any phone','data-tab="acct"')}
     ${a('help','Setup guide','Install, first tour, backup, AI import','setup.html')}
+    ${a('spark','About Guidewise','What it does, pricing, share with other guides','guides.html')}
     ${a('docs','Privacy and terms','How your data is handled','privacy.html')}
   </div>`;
 }
@@ -507,7 +621,7 @@ function renderPlanRead(){
   const n=d.checklist.length,done=d.checklist.filter(c=>c.d).length;
   let h='';
   if(b.length)h+=`<div class="alert"><b>🎂 Birthday:</b> ${b.map(g=>esc(g.name)).join(', ')}. Arrange cake or a card with the lunch venue.</div>`;
-  h+=`<div class="bar"><h2>${esc(d.title)||'Untitled day'}</h2><button class="pill" data-editday="1">Edit day</button></div>
+  h+=`<div class="bar"><h2>${esc(d.title)||'Untitled day'}</h2><span style="display:flex;gap:6px">${d.stops.length?`<button class="pill" data-tab="late">⏱ Late</button>`:''}<button class="pill" data-editday="1">Edit day</button></span></div>
   <p class="sub">${esc(dLabel(d.date))} · Meet ${esc(d.meet)||'meeting point'} ${fmt(toMin(d.start)-15)} · Depart ${esc(d.start)}</p>`;
   h+=wxCard(d);
   if(n)h+=`<button class="step" data-go="pack:${S.day}" style="margin:12px 0"><span class="ic">🎒</span><span class="tx"><b>Before you leave: ${done} of ${n} ready</b><span>${esc(d.checklist.filter(c=>!c.d).slice(0,3).map(c=>c.t).join(', ')||'All packed')}</span></span><span class="chev">›</span></button>`;
@@ -640,16 +754,34 @@ function renderHome(){
 function render(){
   renderChrome();
   setTimeout(()=>{if(tab==='docs')fillDocs();if(tab==='plan')fillDayDocs();if(tab==='acct')fillAcct();if(tab==='import'&&window.fillImport)fillImport();if(['today','plan','brief'].includes(tab)){const fd=tab==='today'?S.days[focusDay().i]:D();ensureWx(fd)}},0);
-  const v={today:renderToday,more:renderMore,count:renderCount,home:renderHome,plan:renderPlan,guests:renderGuests,pack:renderPack,brief:renderBrief,docs:renderDocs,intel:renderIntel,plus:()=>(window.renderPlus?renderPlus():''),import:()=>(window.renderImport?renderImport():'<p class="note">Loading…</p>'),acct:window.renderAcct||(()=>'<p class="note">Backup is not available right now.</p>')}[tab]();
-  $('#main').innerHTML=v+(tab==='docs'||tab==='acct'||tab==='home'||tab==='plus'||tab==='import'||tab==='today'||tab==='more'||tab==='count'?'':S.tour.includes('(sample)')?`<p class="sample">Sample tour loaded. Rename it and edit freely; your changes are saved in this browser. New here? <a href="setup.html">Setup guide</a></p>`:'');
+  const v={welcome:renderWelcome,report:renderReport,today:renderToday,more:renderMore,count:renderCount,late:renderLate,cash:renderCash,home:renderHome,plan:renderPlan,guests:renderGuests,pack:renderPack,brief:renderBrief,docs:renderDocs,intel:renderIntel,plus:()=>(window.renderPlus?renderPlus():''),import:()=>(window.renderImport?renderImport():'<p class="note">Loading…</p>'),acct:window.renderAcct||(()=>'<p class="note">Backup is not available right now.</p>')}[tab]();
+  $('#main').innerHTML=v+(tab==='docs'||tab==='acct'||tab==='home'||tab==='plus'||tab==='import'||tab==='today'||tab==='more'||tab==='count'||tab==='late'||tab==='cash'||tab==='welcome'||tab==='report'?'':S.tour.includes('(sample)')?`<p class="sample">Sample tour loaded. Rename it and edit freely; your changes are saved in this browser. New here? <a href="setup.html">Setup guide</a></p>`:'');
 }
 
 document.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;const ds=b.dataset,d=D();
   if(ds.tsw!==undefined){panelOpen=ds.tsw==='1'?!panelOpen:false;renderChrome();if(panelOpen)setTimeout(()=>$('#tpanel').scrollTop=0,0);return}
   if(ds.tab||ds.go||ds.topen||ds.tnew)panelOpen=false;
-  if(ds.tab){tab=ds.tab;editDay=false;editG=-1;render();scrollTo(0,0);return}
+  if(ds.tab){if(ds.tab!=='late'){lateDone=null;lateFrom=null}tab=ds.tab;editDay=false;editG=-1;render();scrollTo(0,0);return}
   if(ds.hc!==undefined){if(ds.hc==='reset')hc.clear();else if(ds.hc==='all')S.guests.forEach((g,i)=>hc.add(i));else{const i=+ds.hc;hc.has(i)?hc.delete(i):hc.add(i)}render();return}
+  if(ds.onb){try{localStorage.setItem(ONB,'1')}catch(x){}
+    if(ds.onb==='import'){tab='import';render();return}
+    if(ds.onb==='new'){const nd=new Date();nd.setDate(nd.getDate()+1);const t={id:uid(),tour:'New tour',day:0,days:[newDay(nd.toISOString().slice(0,10))],guests:[],intel:[]};T.tours.push(t);openTour(t.id);panelOpen=true;renderChrome();setTimeout(()=>{const n=$('#tourName');if(n){n.focus();n.select()}},50);return}
+    tab='today';render();return}
+  if(ds.repwa){window.open('https://wa.me/?text='+encodeURIComponent(reportText()),'_blank','noopener');return}
+  if(ds.repcopy){navigator.clipboard.writeText(reportText()).then(()=>toast('Report copied')).catch(()=>toast('Could not copy'));return}
+  if(ds.latemin){lateMin=+ds.latemin;render();return}
+  if(ds.lateapply){const d=D(),i=+($('#lateFrom')||{}).value||0,st=lateStart(d),f=(d.date===todayIso()&&st.i===i)?st.f:'drive';
+    d.stops[i][f]=(+d.stops[i][f]||0)+lateMin;lateDone={day:S.day,stop:i,field:f,mins:lateMin};
+    const nw=new Date();(d.log=d.log||[]).push({t:String(nw.getHours()).padStart(2,'0')+':'+String(nw.getMinutes()).padStart(2,'0'),txt:`Running ${lateMin} min late from ${d.stops[i].place}`});save();render();scrollTo(0,0);return}
+  if(ds.lateundo){const u=lateDone,d=S.days[u.day];if(d&&d.stops[u.stop])d.stops[u.stop][u.field]=Math.max(0,(+d.stops[u.stop][u.field]||0)-u.mins);if(d&&d.log)d.log.pop();lateDone=null;save();render();toast('Times put back');return}
+  if(ds.latewa){window.open('https://wa.me/?text='+encodeURIComponent(lateText(D(),lateDone.stop)),'_blank','noopener');return}
+  if(ds.cashcat){cashCat=ds.cashcat;const a=$('#cashAmt').value,w=$('#cashWhat').value;render();$('#cashAmt').value=a;$('#cashWhat').value=w;return}
+  if(ds.cashadd){const amt=parseFloat(String($('#cashAmt').value).replace(/\s/g,'').replace(',','.'));if(!(amt>0)){toast('Enter an amount');$('#cashAmt').focus();return}
+    S.cash=S.cash||[];S.cash.push({id:uid(),date:$('#cashDate').value||todayIso(),cat:cashCat,amt:Math.round(amt*100)/100,what:$('#cashWhat').value.trim()});save();render();toast('Added');return}
+  if(ds.cashdel){if(!b.classList.contains('arm')){b.classList.add('arm');b.textContent='Delete?';setTimeout(()=>{b.classList.remove('arm');b.textContent='×'},3000);return}S.cash=S.cash.filter(e=>e.id!==ds.cashdel);save();render();return}
+  if(ds.cashwa){window.open('https://wa.me/?text='+encodeURIComponent(cashReport()),'_blank','noopener');return}
+  if(ds.cashcopy){navigator.clipboard.writeText(cashReport()).then(()=>toast('Summary copied')).catch(()=>toast('Could not copy'));return}
   if(ds.go){const[t,dy]=ds.go.split(':');if(dy!==undefined&&dy!=='')S.day=+dy;tab=t;editDay=!!ds.editAfter;editG=-1;save();render();scrollTo(0,0);return}
   if(ds.wa!==undefined){S.day=+ds.wa;save();const txt=briefingText();
     window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank','noopener');toast('Opening WhatsApp…');return}
@@ -662,7 +794,7 @@ document.addEventListener('click',e=>{
   if(ds.topen){openTour(ds.topen);return}
   if(ds.tnew){const nd=new Date();nd.setDate(nd.getDate()+1);const t={id:uid(),tour:'New tour',day:0,days:[newDay(nd.toISOString().slice(0,10))],guests:[],intel:[]};
     T.tours.push(t);openTour(t.id);panelOpen=true;renderChrome();setTimeout(()=>{const n=$('#tourName');if(n){n.focus();n.select()}},50);return}
-  if(ds.tdup){const src=T.tours.find(t=>t.id===ds.tdup);const t=structuredClone(src);Object.assign(t,{id:uid(),tour:src.tour.replace(/\s*\(sample\)/,'')+' (copy)',guests:[],archived:false,day:0});
+  if(ds.tdup){const src=T.tours.find(t=>t.id===ds.tdup);const t=structuredClone(src);Object.assign(t,{id:uid(),tour:src.tour.replace(/\s*\(sample\)/,'')+' (copy)',guests:[],cash:[],archived:false,day:0});
     t.days.forEach(x=>x.checklist.forEach(c=>c.d=false));T.tours.push(t);save();render();toast('Tour duplicated, without guests');return}
   if(ds.tarc){const t=T.tours.find(x=>x.id===ds.tarc);t.archived=!t.archived;save();render();toast(t.archived?'Tour archived':'Tour restored');return}
   if(ds.tdel){if(!b.classList.contains('arm')){b.classList.add('arm');b.textContent='Tap again to delete';setTimeout(()=>{b.classList.remove('arm');b.textContent='Delete'},3000);return}
@@ -670,7 +802,7 @@ document.addEventListener('click',e=>{
     dbAll().then(all=>all.filter(f=>(f.tour||T.legacyDocs)===id).forEach(f=>dbDel(f.id))).catch(()=>{});
     if(!T.tours.length){const nd=new Date();nd.setDate(nd.getDate()+1);T.tours.push({id:uid(),tour:'New tour',day:0,days:[newDay(nd.toISOString().slice(0,10))],guests:[],intel:[]})}
     if(!T.tours.includes(S)){S=T.tours[0];T.cur=S.id}save();render();toast('Tour deleted');return}
-  if(ds.day){S.day=+ds.day;editDay=false}
+  if(ds.day){S.day=+ds.day;editDay=false;lateFrom=null;if(lateDone&&lateDone.day!==S.day)lateDone=null}
   else if(ds.addday){editDay=true;const last=S.days[S.days.length-1];const nd=new Date((last?.date||'2026-11-04')+'T12:00');nd.setDate(nd.getDate()+1);
     S.days.push(newDay(nd.toISOString().slice(0,10)));S.day=S.days.length-1}
   else if(ds.addstop){d.stops.push({place:'New stop',drive:20,stay:45,note:'',lunch:false})}
@@ -698,8 +830,10 @@ document.addEventListener('change',e=>{
 });
 document.addEventListener('input',e=>{
   const el=e.target,ds=el.dataset,d=D();
+  if(el.id==='cashCur'){S.cur=el.value.trim()||'R';save();return}
+  if(el.id==='lateFrom'){lateFrom=+el.value;return}
   if(el.id==='tourName'){S.tour=el.value;$('#tswName').textContent=S.tour||'Untitled tour'}
-  else if(ds.f){d[ds.f]=el.value;if(ds.f==='weather')d.wxAuto=false;if(ds.f==='area'){d.wxAuto=d.wxAuto||!d.weather}if(tab==='brief')$('#bubble').textContent=briefingText()}
+  else if(ds.f){d[ds.f]=el.value;if(ds.f==='report'){const m=$('#repMsg');if(m)m.textContent=reportText();const a=$('#repMail');if(a)a.href='mailto:?subject='+encodeURIComponent(S.tour+' · Day '+(S.day+1)+' report')+'&body='+encodeURIComponent(reportText())}if(ds.f==='weather')d.wxAuto=false;if(ds.f==='area'){d.wxAuto=d.wxAuto||!d.weather}if(tab==='brief')$('#bubble').textContent=briefingText()}
   else if(ds.s!==undefined&&ds.k!=='lunch'){d.stops[+ds.s][ds.k]=(ds.k==='drive'||ds.k==='stay')?+el.value:el.value}
   else if(ds.g!==undefined){S.guests[+ds.g][ds.k]=el.value}
   else if(ds.ct!==undefined){d.checklist[+ds.ct].t=el.value}
@@ -771,6 +905,7 @@ async function fillDayDocs(){
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&panelOpen){panelOpen=false;renderChrome();return}if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.dopen)openDoc(+e.target.dataset.dopen)});
 
+try{if(!localStorage.getItem(ONB)&&T.tours.length===1&&S.tour.includes('(sample)'))tab='welcome'}catch(e){}
 render();
 if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 </script>
