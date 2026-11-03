@@ -10,7 +10,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 ## Files
 - site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
 - site/index.html: whole app (vanilla JS, no build step)
-- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v4). New precached files go in its F list
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v5). New precached files go in its F list
 - site/backup.js: cloud backup (sign-in, POPIA consent, passphrase, encrypt, sync). Shares globals with index.html
 - site/vendor/supabase-2.45.4.js: vendored so it works offline; site/privacy.html: POPIA notice
 - supabase/: record of the deployed migration and edge function
@@ -28,10 +28,10 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 ## Data
 State in localStorage key tourPrepKit.v1; documents in IndexedDB (device only).
 Optional backup (v4): Supabase project "guidewise" (ref bqevxxhdtzlywjoqbogt, London, org Spot-it Kruger).
-- Email code sign-in. POPIA consent (version popia-v1) required before anything is uploaded; RLS also refuses backups without a consent row
-- Tour JSON encrypted on device: PBKDF2-SHA256 600k -> AES-256-GCM, user id as AAD. Key kept non-extractable in IndexedDB "guidewise-keys". Server never sees plaintext
+- Email code sign-in. POPIA consent (version popia-v2) required before anything is uploaded; RLS also refuses backups without a consent row
+- Format 2: random data key (AES-256-GCM, user id as AAD) encrypts the tour. It is stored wrapped twice: by the passphrase (PBKDF2 600k, min 8 chars) and by a one-time recovery code (20 chars, PBKDF2 100k). Device keeps it non-extractable in IndexedDB "guidewise-keys". Changing passphrase or recovery code only re-wraps; other devices keep working. Server never sees a key or plaintext
 - Never add a server feature that needs to read guest data without revisiting consent and encryption
-- Changing consent wording: bump to popia-v2 in backup.js, privacy.html and the consents check constraint and has_consent()
+- Changing consent wording: bump to popia-v3 in backup.js, privacy.html and the consents check constraint and has_consent()
 
 ## Roadmap
 1. Accounts + cloud backup: done in v4 (documents not yet backed up: phase 2 via Supabase Storage, encrypted the same way)
