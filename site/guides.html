@@ -1,0 +1,146 @@
+<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="theme-color" content="#1f5546">
+<title>Guidewise · The tour guide's app. Tomorrow, sorted.</title>
+<meta name="description" content="Guidewise is the pocket app for tour guides: day plans that move with you, guests and dietaries, WhatsApp briefings, AI import of itineraries, weather, running late, cash and tips. Works offline.">
+<meta property="og:title" content="Guidewise · Tomorrow, sorted."><meta property="og:description" content="The pocket app for tour guides. Day plan, guests, WhatsApp briefing, AI import, offline."><meta property="og:image" content="img/app-today.jpg">
+<link rel="icon" href="icon-192.png"><link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+:root{--bg:#f4f5f1;--surface:#fff;--ink:#0f1a15;--muted:#4a5750;--line:#dde3de;--accent:#1f5546;--accent-2:#2f7a63;--ochre:#94600f;--soft:#e6efe9;--sand:#f6efe2;--sky:#2f6ea5;--plum:#7a4b8c;--rose:#b2465a;--game:#3f7a34;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--body:"Atkinson Hyperlegible",ui-sans-serif,system-ui,sans-serif;--shadow:0 1px 2px rgb(15 26 21 / .05),0 8px 24px rgb(15 26 21 / .07)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg) url(topo.svg) right -200px top -40px/900px auto no-repeat;color:var(--ink);font:18px/1.6 var(--body)}
+a{color:var(--accent)}
+.w{max-width:1080px;margin:0 auto;padding:0 20px}
+nav.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0}
+.logo{display:flex;align-items:center;gap:10px;font:800 1.35rem var(--display);color:var(--ink);text-decoration:none}
+.logo img{width:36px;height:36px;border-radius:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;padding:13px 22px;font:700 1rem var(--body);text-decoration:none;border:0;cursor:pointer}
+.btn.pri{background:var(--accent);color:#fff;box-shadow:0 8px 20px rgb(31 85 70 / .25)}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:9px 16px;font-size:.92rem}
+.hero{display:grid;gap:28px;align-items:center;padding:24px 0 40px}
+@media(min-width:860px){.hero{grid-template-columns:1.1fr .9fr;padding:48px 0 64px}}
+.kick{display:inline-block;font:700 .8rem var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--ochre);background:var(--sand);border-radius:999px;padding:5px 12px}
+h1{font:800 clamp(2.3rem,6vw,3.6rem)/1.04 var(--display);letter-spacing:-.03em;margin:14px 0 14px}
+h1 em{font-style:normal;background:linear-gradient(90deg,var(--accent),var(--accent-2) 55%,var(--ochre));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{font-size:1.15rem;color:var(--muted);margin:0 0 22px;max-width:34em}
+.ctas{display:flex;gap:10px;flex-wrap:wrap}
+.small{font-size:.88rem;color:var(--muted);margin-top:12px}
+.phones{position:relative;display:flex;justify-content:center;gap:14px}
+.phone{width:min(46%,250px);border-radius:30px;border:8px solid #0f1a15;background:#0f1a15;box-shadow:0 30px 60px rgb(15 26 21 / .25);overflow:hidden}
+.phone img{display:block;width:100%;height:auto}
+.phone.b{transform:translateY(40px)}
+section{padding:44px 0}
+h2{font:800 clamp(1.7rem,4vw,2.3rem)/1.15 var(--display);letter-spacing:-.02em;margin:0 0 10px}
+.sub{color:var(--muted);margin:0 0 26px;max-width:40em}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.f{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
+.f .i{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:1.3rem;margin-bottom:10px}
+.f b{display:block;font:700 1.08rem var(--body);margin-bottom:4px}
+.f p{margin:0;color:var(--muted);font-size:.95rem}
+.band{background:linear-gradient(150deg,var(--accent),var(--accent-2));color:#fff;border-radius:26px;padding:28px 22px;position:relative;overflow:hidden}
+.band::before{content:"";position:absolute;inset:0;background:url(topo-w.svg) right -100px center/700px auto no-repeat;pointer-events:none}
+.band h2,.band p{position:relative}.band p{color:#e6efe9}
+.steps{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));position:relative;margin-top:16px}
+.steps div{background:rgb(255 255 255 / .12);border-radius:16px;padding:16px}
+.steps b{display:block;font:800 1.6rem var(--display)}
+.shots{display:flex;gap:14px;overflow-x:auto;padding:6px 2px 18px;scroll-snap-type:x mandatory}
+.shots figure{flex:none;width:230px;margin:0;scroll-snap-align:start}
+.shots .phone{width:100%}
+.shots figcaption{font-size:.9rem;color:var(--muted);margin-top:8px;text-align:center}
+.price{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.p{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:var(--shadow)}
+.p.plus{border:2px solid var(--accent)}
+.p h3{font:800 1.3rem var(--display);margin:0}
+.p .amt{font:800 2.2rem var(--display);margin:8px 0 2px}.p .amt small{font-size:1rem;color:var(--muted);font-weight:700}
+.p ul{padding-left:20px;margin:12px 0 18px;color:var(--muted)}.p li{margin:4px 0}
+.tag{display:inline-block;background:var(--ochre);color:#fff;border-radius:999px;font:700 .75rem var(--body);padding:3px 10px;margin-left:6px;vertical-align:middle}
+details{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px}
+summary{font-weight:700;cursor:pointer}
+details p{color:var(--muted);margin:8px 0 0}
+footer{padding:30px 0 50px;color:var(--muted);font-size:.92rem;display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between}
+</style></head><body>
+<div class="w">
+<nav class="top"><a class="logo" href="guides.html"><img src="icon-192.png" alt="">Guidewise</a><a class="btn pri sm" href="./">Open the app</a></nav>
+
+<header class="hero">
+  <div>
+    <span class="kick">For tour guides, worldwide</span>
+    <h1>Tomorrow, <em>sorted.</em></h1>
+    <p class="lead">Guidewise is the pocket app for guides. Your day plan moves when the day does, your guests' needs are on every lunch stop, and the evening briefing goes to WhatsApp in one tap. It works with no signal.</p>
+    <div class="ctas"><a class="btn pri" href="./">Start free</a><a class="btn ghost" href="#how">See how it works</a></div>
+    <p class="small">Free on your phone, forever. Plus is free for 30 days, no card needed.</p>
+  </div>
+  <div class="phones"><div class="phone"><img src="img/app-today.jpg" alt="Guidewise Today screen with tomorrow's day and next steps" width="585" height="1170"></div><div class="phone b"><img src="img/app-plan.jpg" alt="Day plan timeline with travel times and lunch dietaries" width="585" height="1170"></div></div>
+</header>
+
+<section id="how">
+  <h2>Everything a guide juggles, in one place</h2>
+  <p class="sub">Built by a working tour director for long days, bad signal and bright sun.</p>
+  <div class="grid">
+    <div class="f"><div class="i" style="background:#e3f1ea">☀️</div><b>Today, at a glance</b><p>The day that matters now, what is on and next, and the next steps: what to pack, the briefing to send, a birthday to arrange.</p></div>
+    <div class="f"><div class="i" style="background:#e3edf7">🗺</div><b>A day plan that moves</b><p>Stops with travel and stay times. Change one and every later time follows. Call the venue or get directions from each stop.</p></div>
+    <div class="f"><div class="i" style="background:#f8e3e7">⏱</div><b>Running late?</b><p>One tap shifts the rest of the day and writes the WhatsApp update with the new times. Undo if plans change again.</p></div>
+    <div class="f"><div class="i" style="background:#efe6f3">👥</div><b>Guests who feel known</b><p>Rooms, birthdays and dietary needs. Dietaries appear on every lunch stop; birthdays remind you on the day. Headcount at every stop.</p></div>
+    <div class="f"><div class="i" style="background:#e3f1ea">💬</div><b>The briefing, written for you</b><p>Tomorrow's meeting time, weather, dress and what to expect, straight to your group on WhatsApp. Never includes private details.</p></div>
+    <div class="f"><div class="i" style="background:var(--sand)">✦</div><b>AI import</b><p>Drop in the itinerary, rooming list or recap. Guidewise builds the tour in about a minute, with travel times and flights, for you to check.</p></div>
+    <div class="f"><div class="i" style="background:#e3edf7">🌤</div><b>Live weather</b><p>A forecast for each day's area goes into the briefing, with a warning when wind or rain could change your plans.</p></div>
+    <div class="f"><div class="i" style="background:#e9f3e3">💵</div><b>Cash and tips</b><p>Float, entrance fees, meals and tips paid, with a running balance and a tidy summary for your tour report.</p></div>
+    <div class="f"><div class="i" style="background:#e8eef0">🔒</div><b>Private by design</b><p>Everything stays on your phone. Optional backup is encrypted before it leaves, so nobody else can read it. Built for POPIA.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="band">
+    <h2>From inbox to ready, in three steps</h2>
+    <p>Start the evening before your group arrives.</p>
+    <div class="steps">
+      <div><b>1</b>Import the itinerary and rooming list, or duplicate an earlier tour.</div>
+      <div><b>2</b>Check the plan, add venue numbers, pack with the daily checklist.</div>
+      <div><b>3</b>Send the briefing. Sleep. Tomorrow is sorted.</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>See it on a phone</h2>
+  <div class="shots">
+    <figure><div class="phone"><img src="img/app-today.jpg" alt="Today screen" loading="lazy" width="585" height="1170"></div><figcaption>Today and next steps</figcaption></figure>
+    <figure><div class="phone"><img src="img/app-plan.jpg" alt="Day plan" loading="lazy" width="585" height="1170"></div><figcaption>Day plan with travel times</figcaption></figure>
+    <figure><div class="phone"><img src="img/app-brief.jpg" alt="Briefing" loading="lazy" width="585" height="1170"></div><figcaption>WhatsApp briefing</figcaption></figure>
+    <figure><div class="phone"><img src="img/app-cash.jpg" alt="Cash and tips" loading="lazy" width="585" height="1170"></div><figcaption>Cash and tips</figcaption></figure>
+  </div>
+</section>
+
+<section id="price">
+  <h2>Simple pricing</h2>
+  <p class="sub">Prices in South African rand. Cancel any time in the app.</p>
+  <div class="price">
+    <div class="p"><h3>Free</h3><div class="amt">R0</div><p class="small" style="margin:0">Forever</p>
+      <ul><li>Unlimited tours, days and guests</li><li>Today, day plan, running late, headcount</li><li>WhatsApp briefing and weather</li><li>Documents, checklist, cash and tips</li><li>Works offline</li></ul>
+      <a class="btn ghost" href="./">Start free</a></div>
+    <div class="p plus"><h3>Guidewise Plus <span class="tag">30 days free</span></h3><div class="amt">R79 <small>a month</small></div><p class="small" style="margin:0">or R790 a year (2 months free)</p>
+      <ul><li>Everything in Free</li><li>AI import: 5 tours a month from your documents</li><li>Encrypted cloud backup</li><li>Restore on a new phone</li></ul>
+      <a class="btn pri" href="./">Try Plus free</a></div>
+  </div>
+</section>
+
+<section>
+  <h2>Questions</h2>
+  <details><summary>Does it work without signal?</summary><p>Yes. Install it on your home screen and your tours, plans, guests and documents open anywhere. Only AI import, weather and backup need a connection.</p></details>
+  <details><summary>iPhone or Android?</summary><p>Both, plus computers. It installs from the browser in a few taps; no app store needed. <a href="setup.html#install">How to install</a></p></details>
+  <details><summary>What about my guests' privacy?</summary><p>Guest details stay on your phone. Backups are encrypted on your phone first, so we cannot read them. AI import cleans spreadsheets on your phone before sending and asks your agreement every time. <a href="privacy.html">Privacy notice</a></p></details>
+  <details><summary>Can I cancel?</summary><p>Any time, in the app. Plus keeps working until the end of the period you paid for, and everything on your phone stays free. <a href="terms.html">Terms and pricing</a></p></details>
+  <details><summary>Who makes Guidewise?</summary><p>Guidewise is made in Cape Town by a working tour director, for guides everywhere. Questions: <a href="mailto:guidewise.app@gmail.com">guidewise.app@gmail.com</a></p></details>
+</section>
+
+<section style="text-align:center">
+  <h2>Ready for tomorrow?</h2>
+  <p class="sub" style="margin-left:auto;margin-right:auto">Open Guidewise, look around the sample tour, then import your own.</p>
+  <a class="btn pri" href="./">Open Guidewise</a>
+</section>
+
+<footer><span>© Guidewise · Cape Town</span><span><a href="setup.html">Setup guide</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></span></footer>
+</div>
+</body></html>
