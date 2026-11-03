@@ -78,7 +78,10 @@ async function refresh(){
   try{
     const c=await sb.from('consents').select('id').eq('version',CONSENT).limit(1);if(c.error)throw c.error;
     consented=c.data.length>0;
-    const sp=await sb.from('subscriptions').select('status,plan,trial_ends_at,current_period_end').maybeSingle();plan=sp.data||null;
+    let sp=await sb.from('subscriptions').select('status,plan,trial_ends_at,current_period_end,paystack_customer_code,paystack_subscription_code').maybeSingle();plan=sp.data||null;
+    if(plan&&plan.paystack_customer_code&&!plan.paystack_subscription_code&&!refresh._tried){refresh._tried=1; // paid but the return or webhook was missed
+      const v=await sb.functions.invoke('billing-manage',{body:{action:'verify'}}).catch(()=>({}));
+      if(v.data?.status==='active'){sp=await sb.from('subscriptions').select('status,plan,trial_ends_at,current_period_end,paystack_customer_code,paystack_subscription_code').maybeSingle();plan=sp.data||plan}}
     meta=await getMeta();
     bk=(await kGet(user.id))||null;
     if(bk&&!bk.kid)bk=null; // key from the first version: set up again
@@ -346,7 +349,7 @@ const fromPay=/[?&]paid=1/.test(location.search);
 addEventListener('pageshow',e=>{if(e.persisted&&busy){busy='';paint()}});
 /* Back from Paystack: the webhook may take a few seconds, so check the plan a few times. */
 const payRef=(new URLSearchParams(location.search)).get('reference')||'';
-async function awaitPayment(){for(let i=0;i<10;i++){if(payRef)await sb.functions.invoke('billing-manage',{body:{action:'verify',reference:payRef}}).catch(()=>{});
+async function awaitPayment(){for(let i=0;i<10;i++){await sb.functions.invoke('billing-manage',{body:payRef?{action:'verify',reference:payRef}:{action:'verify'}}).catch(()=>{});
   const sp=await sb.from('subscriptions').select('status,plan,trial_ends_at,current_period_end').maybeSingle();
   plan=sp.data||plan;if(plan&&plan.status==='active'){toast('Thank you. Guidewise Plus is on');paint();if(ready()){lastJSON=null;backupNow()}return}
   await new Promise(r=>setTimeout(r,3000))}msg='If your payment went through, it can take a minute to show. Refresh this page shortly.';paint()}

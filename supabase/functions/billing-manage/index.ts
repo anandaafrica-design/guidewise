@@ -30,12 +30,22 @@ Deno.serve(async (req) => {
 
   // Back from checkout: confirm with Paystack directly, so the app does not depend on the webhook alone.
   if (action === "verify") {
-    if (!reference || !/^[\w.-]{4,100}$/.test(reference)) return json({ error: "reference" }, 400);
+    if (sub?.status === "comp") return json({ status: "comp" });
     try {
-      const t = await paystack("/transaction/verify/" + encodeURIComponent(reference));
-      if (t.status !== "success" || t.metadata?.user_id !== u.user.id) return json({ status: "unpaid" });
-      if (sub?.status === "comp") return json({ status: "comp" });
-      const list = await paystack("/subscription?customer=" + encodeURIComponent(String(t.customer?.id)) + "&perPage=20");
+      // With a checkout reference: confirm that charge belongs to this user. Without one: look up
+      // the Paystack customer we created for this user at checkout (never one the client names).
+      let customerId: string | number | undefined, customerCode: string | undefined;
+      if (reference) {
+        if (!/^[\w.-]{4,100}$/.test(reference)) return json({ error: "reference" }, 400);
+        const t = await paystack("/transaction/verify/" + encodeURIComponent(reference));
+        if (t.status !== "success" || t.metadata?.user_id !== u.user.id) return json({ status: "unpaid" });
+        customerId = t.customer?.id; customerCode = t.customer?.customer_code;
+      } else {
+        if (!sub?.paystack_customer_code) return json({ status: "none" });
+        const c = await paystack("/customer/" + encodeURIComponent(sub.paystack_customer_code));
+        customerId = c.id; customerCode = c.customer_code;
+      }
+      const list = await paystack("/subscription?customer=" + encodeURIComponent(String(customerId)) + "&perPage=20");
       const s = (list || []).filter((x: any) => x.status === "active").sort((a: any, b: any) => (b.id || 0) - (a.id || 0))[0];
       if (!s) return json({ status: "pending" }); // subscription is created a few seconds after the charge
       await admin.from("subscriptions").upsert({
@@ -43,7 +53,7 @@ Deno.serve(async (req) => {
         status: "active",
         plan: s.plan?.interval === "annually" ? "yearly" : "monthly",
         current_period_end: s.next_payment_date || null,
-        paystack_customer_code: t.customer?.customer_code,
+        paystack_customer_code: customerCode,
         paystack_subscription_code: s.subscription_code,
         paystack_email_token: s.email_token,
         updated_at: new Date().toISOString(),

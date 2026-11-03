@@ -10,7 +10,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 ## Files
 - site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
 - site/index.html: whole app (vanilla JS, no build step)
-- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v9). New precached files go in its F list
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v10). New precached files go in its F list
 - site/backup.js: cloud backup (sign-in, POPIA consent, passphrase, encrypt, sync). Shares globals with index.html
 - site/vendor/supabase-2.45.4.js: vendored so it works offline; site/privacy.html: POPIA notice; site/terms.html: terms, pricing, refunds (Paystack needs it); site/setup.html: setup guide to send to guides (install, first tour, backup, help). Keep it in step with the UI
 - supabase/: record of the deployed migration and edge function
