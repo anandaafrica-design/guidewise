@@ -10,7 +10,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 ## Files
 - site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
 - site/index.html: whole app (vanilla JS, no build step)
-- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v26; own files are fetched network-first, cache when offline). New precached files go in its F list
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v27; own files are fetched network-first, cache when offline). New precached files go in its F list
 - site/backup.js: cloud backup (sign-in, POPIA consent, passphrase, encrypt, sync). Shares globals with index.html
 - site/import.js: AI import (tab 'import', from Tours > Import from documents or the Docs tab; can use documents already saved in the tour). Loaded after backup.js and uses its globals (sb, user, plan, plus, refresh, SB_URL, SB_KEY)
 - site/vendor/xlsx-mini-0.18.5.js: SheetJS (Apache-2.0), lazy-loaded by import.js for .xlsx/.csv
@@ -29,6 +29,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 - Cash and tips (tab 'cash', S.cash [{id,date,cat,amt,what}], S.cur): categories float in, entrance, meals, tips paid, transport, other, tips received (kept out of the float balance); summary to WhatsApp or copy. Duplicate clears cash
 - First run (tab 'welcome', key guidewise.onb): shown once when only the sample tour exists; import, new tour, or explore
 - End-of-day report (tab 'report'): programme, changes (day.log, written by Running late), cash that day, float balance, day.report notes; WhatsApp, email (mailto) or copy. Never includes guest birthdays, dietaries or notes
+- Venues (tab 'venues'): T.venues {key:{name,phone,addr,note}}, gathered from every tour's stops with a phone or address; add, edit, search, delete
 - Day and Guests are read-first (timeline / guest cards) with Edit day / tap-to-edit (editDay, editG). Keep new screens read-first with a clear primary action
 
 ## Features (v3)
@@ -47,6 +48,7 @@ All tours in localStorage key guidewise.tours.v2: {v:2, cur, legacyDocs, tours:[
 Optional backup (v4): Supabase project "guidewise" (ref bqevxxhdtzlywjoqbogt, London, org Spot-it Kruger).
 - Email code sign-in. POPIA consent (version popia-v2) required before anything is uploaded; RLS also refuses backups without a consent row
 - Format 2: random data key (AES-256-GCM, user id as AAD) encrypts the tour. It is stored wrapped twice: by the passphrase (PBKDF2 600k, min 8 chars) and by a one-time recovery code (20 chars, PBKDF2 100k). Device keeps it non-extractable in IndexedDB "guidewise-keys". Changing passphrase or recovery code only re-wraps; other devices keep working. Server never sees a key or plaintext
+- Document backup (v13): storage bucket 'docs' (private, 15 MB limit). Each file encrypted on the phone with the tour data key, AAD user id + ':doc:' + sid, stored at docs/<uid>/<sid> as iv+ciphertext. Names, types and filing only in the encrypted backup's 'docs' manifest. sync.up (uploaded sids), sync.man (last manifest, keeps other devices' files listed), sync.docDel (tombstones: only these are deleted remotely). Restore downloads missing files. Toggle 'Back up documents too' (sync.docs). Storage policies: own folder; insert needs has_consent() and has_plus(). Delete backup, replace backup and delete-account remove the files
 - Never add a server feature that needs to read guest data without revisiting consent and encryption
 - Changing consent wording: bump to popia-v3 in backup.js, privacy.html and the consents check constraint and has_consent()
 
@@ -70,10 +72,13 @@ Optional backup (v4): Supabase project "guidewise" (ref bqevxxhdtzlywjoqbogt, Lo
 - Test path: header x-gw-test with a row in admin_test_tokens (owner only); delete tokens after testing
 
 ## Roadmap
-1. Accounts + cloud backup: done in v4 (documents not yet backed up: phase 2 via Supabase Storage, encrypted the same way)
+1. Accounts + cloud backup: done in v4; documents backed up in v13
 2. Payments: done in v8 (Paystack). AI import: done in v9
-3. Custom domain (guidewise.app or .co, to be bought)
+3. Custom domain guidewiseapp.co.za bought; owner to finish Netlify + DNS + Supabase Site URL
 4. Live local intel for the tour's area
+
+## Tests
+- `node tests/smoke.js` (see tests/README.md). Run before every PR; add a check for each new feature
 
 ## Deploy
 Git-linked: merging to main deploys to production; PRs get a Netlify deploy preview. Repo: anandaafrica-design/guidewise.

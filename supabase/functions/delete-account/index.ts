@@ -1,4 +1,4 @@
-// Deletes the calling user's account. Backups and consents cascade via foreign keys.
+// Deletes the calling user's account. Backups and consents cascade via foreign keys; backed-up documents are removed from storage first.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
 const cors = {
@@ -25,6 +25,13 @@ Deno.serve(async (req) => {
       body: JSON.stringify({ code: sub.paystack_subscription_code, token: sub.paystack_email_token }),
     });
     if (!r.ok && sub.status !== "non_renewing") return json({ error: "cancel_failed" }, 502);
+  }
+  // Remove backed-up documents (encrypted files in storage do not cascade).
+  for (let i = 0; i < 50; i++) {
+    const { data: files } = await admin.storage.from("docs").list(data.user.id, { limit: 1000 });
+    if (!files || !files.length) break;
+    const { error: re } = await admin.storage.from("docs").remove(files.map((f) => data.user.id + "/" + f.name));
+    if (re) return json({ error: "docs_delete_failed" }, 500);
   }
   const del = await admin.auth.admin.deleteUser(data.user.id);
   if (del.error) return json({ error: "delete failed" }, 500);

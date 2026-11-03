@@ -163,7 +163,7 @@ h2{letter-spacing:-.01em}
 .li .chev{color:var(--muted);font-size:1.2rem}
 .bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:22px 0 10px}
 .bar h2{margin:0}
-.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 13px;font:700 .85rem var(--body);cursor:pointer}
+.pill{display:inline-flex;align-items:center;gap:6px;min-height:40px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 13px;font:700 .85rem var(--body);cursor:pointer}
 .pill.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 /* read-mode timeline */
 .rt{position:relative;margin-left:4px}
@@ -229,7 +229,7 @@ header::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:3px
 .chipsel button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:10px 16px;font:700 1rem var(--body);cursor:pointer;color:var(--ink)}
 .chipsel button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .chipsel.sm button{padding:6px 11px;font-size:.85rem}
-.money{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.money{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,96px),1fr));gap:8px;margin:10px 0}
 .money div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px;box-shadow:var(--shadow)}
 .money b{display:block;font:800 1.02rem var(--display);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .money span{font-size:.78rem;color:var(--muted)}
@@ -239,7 +239,8 @@ header::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:3px
 .cx .tx{flex:1;min-width:0}.cx .tx span{display:block;font-size:.82rem;color:var(--muted)}
 .cx .am{font:700 1rem var(--mono);font-variant-numeric:tabular-nums}
 .cx .am.in{color:var(--accent)}.cx .am.tip{color:var(--plum)}
-.addcash{display:grid;grid-template-columns:120px 1fr;gap:8px}
+.addcash{display:grid;grid-template-columns:minmax(0,110px) minmax(0,1fr);gap:8px}
+.bar{flex-wrap:wrap}.row>*{min-width:0}
 .late-msg{white-space:pre-wrap}
 .onb{min-height:calc(100vh - 220px);display:grid;align-content:start;gap:12px;padding-top:10px}
 .onb .big{font:800 2rem/1.1 var(--display);letter-spacing:-.02em;margin:14px 0 0;background:linear-gradient(90deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -269,7 +270,7 @@ header .in{position:relative}
 .tpanel .tp-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .tpanel .tp-foot{display:block;width:100%;margin-top:8px;background:none;border:0;color:var(--accent);font:700 .92rem var(--body);padding:10px;cursor:pointer;text-align:center}
 .sacts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.sacts a,.sacts button{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:5px 11px;font:700 .82rem var(--body);text-decoration:none;cursor:pointer}
+.sacts a,.sacts button{display:inline-flex;align-items:center;gap:4px;min-height:36px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:5px 11px;font:700 .82rem var(--body);text-decoration:none;cursor:pointer}
 .wx{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#e3edf7,#f4f8fc);border:1px solid #d3e0ee;border-radius:var(--r);padding:10px 12px;margin:10px 0}
 .wx .i{font-size:1.7rem;line-height:1}.wx b{display:block}.wx .note{display:block}
 .hero .wxl{margin-top:8px;font-size:.95rem;opacity:.95}
@@ -394,7 +395,7 @@ const icons={
  help:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/></svg>'
 };
 const NAV=[['today','Today'],['plan','Day'],['guests','Guests'],['brief','Briefing'],['more','More']];
-const UNDER_MORE=['more','count','cash','late','report','pack','docs','intel','acct','plus','import','home'];
+const UNDER_MORE=['more','count','cash','late','report','venues','pack','docs','intel','acct','plus','import','home'];
 const DAY_TABS=['plan','pack','brief','docs','late','report'];
 const names={home:'Home',plan:'Day plan',guests:'Guests',pack:'Checklist',brief:'Briefing',docs:'Documents',intel:'Local intel'};
 
@@ -437,11 +438,32 @@ function wxCard(d){const w=wxFor(d);if(!w)return d.area?'':`<button class="step"
 const vKey=n=>String(n||'').trim().toLowerCase();
 function venueSync(st,k){if(!st||/^free time$/i.test(st.place)||/^✈/.test(st.place))return false;T.venues=T.venues||{};const key=vKey(st.place);if(!key)return false;
   if(k==='place'){const v=T.venues[key];if(v&&(!st.phone&&!st.addr)){st.phone=v.phone||'';st.addr=v.addr||'';return true}return false}
-  if(st.phone||st.addr)T.venues[key]={phone:st.phone||'',addr:st.addr||''};return false}
+  if(st.phone||st.addr)T.venues[key]={...(T.venues[key]||{}),name:st.place.trim(),phone:st.phone||'',addr:st.addr||''};return false}
 const telOf=p=>String(p||'').replace(/[^\d+]/g,'');
 const dirUrl=s=>'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(s.addr||s.place);
 function stopActs(s){if(/^free time$/i.test(s.place)||/^✈/.test(s.place))return'';
   return `<div class="sacts">${s.phone?`<a href="tel:${esc(telOf(s.phone))}">📞 Call</a>`:''}<a href="${esc(dirUrl(s))}" target="_blank" rel="noopener">🧭 Directions</a></div>`}
+
+/* ---------- Venue library: every venue with a phone or address, from all tours ---------- */
+let vEdit=null,vQ='';
+function collectVenues(){T.venues=T.venues||{};let n=0;T.tours.forEach(t=>t.days.forEach(d=>d.stops.forEach(st=>{const k=vKey(st.place);
+  if(!k||/^free time$/i.test(st.place)||/^✈/.test(st.place)||!(st.phone||st.addr))return;const v=T.venues[k];
+  if(!v){T.venues[k]={name:st.place.trim(),phone:st.phone||'',addr:st.addr||''};n++}else if(!v.name)v.name=st.place.trim()})));return n}
+function renderVenues(){
+  if(collectVenues())save();
+  const all=Object.entries(T.venues||{}).map(([k,v])=>({k,...v,name:v.name||k})).sort((a,b)=>a.name.localeCompare(b.name));
+  const q=vQ.trim().toLowerCase(),list=q?all.filter(v=>(v.name+' '+(v.addr||'')+' '+(v.note||'')).toLowerCase().includes(q)):all;
+  let h=`<div class="bar"><h2>Venues (${all.length})</h2><button class="pill" data-vadd="1">+ Add</button></div>
+  <p class="note">Every venue you have saved a phone number or address for. When you type a saved name into a stop, its details fill in.</p>`;
+  if(all.length>5)h+=`<div class="field" style="margin:10px 0"><input id="vSearch" value="${esc(vQ)}" placeholder="Search venues" type="search"></div>`;
+  if(!all.length)return h+`<div class="empty"><b>No venues yet</b><span class="note">Add a phone or address to a stop in Edit day, or add a venue here.</span><div class="acts" style="justify-content:center"><button class="btn pri" data-vadd="1">Add a venue</button></div></div>`;
+  h+=list.map(v=>v.k===vEdit?`<div class="card"><div class="field"><span class="lbl">Name</span><input id="vName" value="${esc(v.name)}"></div>
+      <div class="row"><div class="field"><span class="lbl">Phone</span><input id="vPhone" type="tel" value="${esc(v.phone||'')}"></div><div class="field"><span class="lbl">Address</span><input id="vAddr" value="${esc(v.addr||'')}"></div></div>
+      <div class="field"><span class="lbl">Notes</span><input id="vNote" value="${esc(v.note||'')}" placeholder="Contact person, parking, booking tips"></div>
+      <div class="acts"><button class="btn pri sm" data-vsave="${esc(v.k)}">Save</button><button class="btn sm" data-vcancel="1">Cancel</button><button class="btn sm" data-vdel="${esc(v.k)}" style="margin-left:auto;color:var(--alert)">Delete</button></div></div>`
+    :`<div class="card"><div style="display:flex;gap:8px;align-items:flex-start"><div style="flex:1;min-width:0"><b>${esc(v.name)}</b>${v.addr?`<span class="note" style="display:block">${esc(v.addr)}</span>`:''}${v.note?`<span class="note" style="display:block">${esc(v.note)}</span>`:''}</div><button class="pill" data-vedit="${esc(v.k)}">Edit</button></div>${stopActs({place:v.name,phone:v.phone,addr:v.addr})}</div>`).join('')||'<p class="note">No venues match.</p>';
+  return h;
+}
 
 /* ---------- Headcount: tap guests back on board ---------- */
 let hc=new Set();
@@ -600,6 +622,7 @@ function renderMore(){
     ${li('cash','Cash and tips',cashSub(),'data-tab="cash"')}
     ${li('report','End-of-day report',`Day ${S.day+1}: times, changes, cash, notes for your operator`,'data-tab="report"')}
     ${li('late','Running late',`Shift Day ${S.day+1} and tell the group`,'data-tab="late"')}
+    ${li('docs','Venues',`${Object.keys(T.venues||{}).length} saved: phone, address, notes`,'data-tab="venues"')}
     ${li('intel','Local intel',`${S.intel.length} private note${S.intel.length===1?'':'s'}`,'data-tab="intel"')}
   </div>
   <p class="eyebrow">Plan faster</p><div class="list">
@@ -754,8 +777,8 @@ function renderHome(){
 function render(){
   renderChrome();
   setTimeout(()=>{if(tab==='docs')fillDocs();if(tab==='plan')fillDayDocs();if(tab==='acct')fillAcct();if(tab==='import'&&window.fillImport)fillImport();if(['today','plan','brief'].includes(tab)){const fd=tab==='today'?S.days[focusDay().i]:D();ensureWx(fd)}},0);
-  const v={welcome:renderWelcome,report:renderReport,today:renderToday,more:renderMore,count:renderCount,late:renderLate,cash:renderCash,home:renderHome,plan:renderPlan,guests:renderGuests,pack:renderPack,brief:renderBrief,docs:renderDocs,intel:renderIntel,plus:()=>(window.renderPlus?renderPlus():''),import:()=>(window.renderImport?renderImport():'<p class="note">Loading…</p>'),acct:window.renderAcct||(()=>'<p class="note">Backup is not available right now.</p>')}[tab]();
-  $('#main').innerHTML=v+(tab==='docs'||tab==='acct'||tab==='home'||tab==='plus'||tab==='import'||tab==='today'||tab==='more'||tab==='count'||tab==='late'||tab==='cash'||tab==='welcome'||tab==='report'?'':S.tour.includes('(sample)')?`<p class="sample">Sample tour loaded. Rename it and edit freely; your changes are saved in this browser. New here? <a href="setup.html">Setup guide</a></p>`:'');
+  const v={venues:renderVenues,welcome:renderWelcome,report:renderReport,today:renderToday,more:renderMore,count:renderCount,late:renderLate,cash:renderCash,home:renderHome,plan:renderPlan,guests:renderGuests,pack:renderPack,brief:renderBrief,docs:renderDocs,intel:renderIntel,plus:()=>(window.renderPlus?renderPlus():''),import:()=>(window.renderImport?renderImport():'<p class="note">Loading…</p>'),acct:window.renderAcct||(()=>'<p class="note">Backup is not available right now.</p>')}[tab]();
+  $('#main').innerHTML=v+(tab==='docs'||tab==='acct'||tab==='home'||tab==='plus'||tab==='import'||tab==='today'||tab==='more'||tab==='count'||tab==='late'||tab==='cash'||tab==='welcome'||tab==='report'||tab==='venues'?'':S.tour.includes('(sample)')?`<p class="sample">Sample tour loaded. Rename it and edit freely; your changes are saved in this browser. New here? <a href="setup.html">Setup guide</a></p>`:'');
 }
 
 document.addEventListener('click',e=>{
@@ -770,6 +793,12 @@ document.addEventListener('click',e=>{
     tab='today';render();return}
   if(ds.repwa){window.open('https://wa.me/?text='+encodeURIComponent(reportText()),'_blank','noopener');return}
   if(ds.repcopy){navigator.clipboard.writeText(reportText()).then(()=>toast('Report copied')).catch(()=>toast('Could not copy'));return}
+  if(ds.vedit){vEdit=ds.vedit;render();return}
+  if(ds.vcancel){const v=T.venues&&T.venues[vEdit];if(v&&!v.name&&!v.phone&&!v.addr)delete T.venues[vEdit];vEdit=null;render();return}
+  if(ds.vadd){T.venues=T.venues||{};let k='new venue',n=1;while(T.venues[k])k='new venue '+(++n);T.venues[k]={name:'',phone:'',addr:''};vEdit=k;vQ='';render();setTimeout(()=>{const e=$('#vName');e&&e.focus()},0);return}
+  if(ds.vsave){const old=ds.vsave,name=$('#vName').value.trim();if(!name){toast('Add a name');return}
+    const v={name,phone:$('#vPhone').value.trim(),addr:$('#vAddr').value.trim(),note:$('#vNote').value.trim()};delete T.venues[old];T.venues[vKey(name)]=v;vEdit=null;save();render();toast('Venue saved');return}
+  if(ds.vdel){if(!b.classList.contains('arm')){b.classList.add('arm');b.textContent='Tap again to delete';return}delete T.venues[ds.vdel];vEdit=null;save();render();return}
   if(ds.latemin){lateMin=+ds.latemin;render();return}
   if(ds.lateapply){const d=D(),i=+($('#lateFrom')||{}).value||0,st=lateStart(d),f=(d.date===todayIso()&&st.i===i)?st.f:'drive';
     d.stops[i][f]=(+d.stops[i][f]||0)+lateMin;lateDone={day:S.day,stop:i,field:f,mins:lateMin};
@@ -830,6 +859,7 @@ document.addEventListener('change',e=>{
 });
 document.addEventListener('input',e=>{
   const el=e.target,ds=el.dataset,d=D();
+  if(el.id==='vSearch'){vQ=el.value;const p=el.selectionStart;render();const n=$('#vSearch');if(n){n.focus();n.setSelectionRange(p,p)}return}
   if(el.id==='cashCur'){S.cur=el.value.trim()||'R';save();return}
   if(el.id==='lateFrom'){lateFrom=+el.value;return}
   if(el.id==='tourName'){S.tour=el.value;$('#tswName').textContent=S.tour||'Untitled tour'}
@@ -846,8 +876,9 @@ const DB=new Promise((res,rej)=>{try{const r=indexedDB.open('guidewise-docs',1);
 const tx=(mode,fn)=>DB.then(db=>new Promise((res,rej)=>{const t=db.transaction('files',mode);const st=t.objectStore('files');const out=fn(st);t.oncomplete=()=>res(out&&out.result!==undefined?out.result:undefined);t.onerror=()=>rej(t.error)}));
 const dbAll=()=>DB.then(db=>new Promise((res,rej)=>{const r=db.transaction('files').objectStore('files').getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
 const dbGet=id=>DB.then(db=>new Promise((res,rej)=>{const r=db.transaction('files').objectStore('files').get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
-const dbDel=id=>tx('readwrite',st=>st.delete(id));
-const dbMove=(id,day)=>dbGet(id).then(f=>{f.day=day;return tx('readwrite',st=>st.put(f))});
+/* backup.js listens: onDocGone(sid) records a deletion for the cloud copy, onDocsChanged() schedules a backup. */
+const dbDel=id=>dbGet(id).then(f=>{if(f&&f.sid&&window.onDocGone)onDocGone(f.sid);return tx('readwrite',st=>st.delete(id))}).then(r=>{window.onDocsChanged&&onDocsChanged();return r});
+const dbMove=(id,day)=>dbGet(id).then(f=>{f.day=day;return tx('readwrite',st=>st.put(f))}).then(r=>{window.onDocsChanged&&onDocsChanged();return r});
 const kb=n=>n>1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Math.round(n/1024))+' KB';
 const ext=n=>(n.split('.').pop()||'').slice(0,4).toUpperCase();
 const dayName=v=>v==='all'?'Whole tour':'Day '+(+v+1)+(S.days[+v]?' · '+S.days[+v].title:'');
@@ -858,7 +889,7 @@ async function addFiles(list){
   const day=($('#docDay')||{}).value??String(S.day);
   try{if(navigator.storage&&navigator.storage.persist)await navigator.storage.persist()}catch(e){}
   try{for(const f of files)await tx('readwrite',st=>st.add({tour:S.id,name:f.name,type:f.type||'application/octet-stream',size:f.size,day,added:new Date().toISOString().slice(0,10),blob:f}));
-    toast(files.length+' document'+(files.length>1?'s':'')+' added')}
+    toast(files.length+' document'+(files.length>1?'s':'')+' added');window.onDocsChanged&&onDocsChanged()}
   catch(e){toast('Could not save: phone storage may be full')}
   fillDocs();
 }
@@ -894,7 +925,7 @@ async function fillDocs(){
     <div class="meta"><b data-dopen="${f.id}" role="button" tabindex="0">${esc(f.name)}</b><span class="note">${kb(f.size)} · added ${esc(dLabel(f.added))}</span><br><select data-dmove="${f.id}" id="dm-${f.id}" aria-label="File under">${opts}</select></div>
     <button class="x del" data-ddel="${f.id}" aria-label="Delete document">×</button></div>`}).join('')
     :`<p class="note">No documents ${docFilter==='day'?'for this day':'yet'}. Add vouchers and tickets above so they are on hand without signal.</p>`;
-  try{const e=await navigator.storage.estimate();$('#docStore').textContent=`Using ${kb(e.usage||0)} of phone storage. Documents stay on this device only.`}catch(e){}
+  try{const e=await navigator.storage.estimate();$('#docStore').textContent=`Using ${kb(e.usage||0)} of phone storage. ${window.gwDocsBacked&&gwDocsBacked()?'Documents are backed up, encrypted.':'Documents stay on this device unless you switch on backup.'}`}catch(e){}
   const dr=$('#drop');if(dr&&!dr._w){dr._w=1;['dragover','dragenter'].forEach(t=>dr.addEventListener(t,ev=>{ev.preventDefault();dr.classList.add('over')}));['dragleave','drop'].forEach(t=>dr.addEventListener(t,ev=>{ev.preventDefault();dr.classList.remove('over')}));dr.addEventListener('drop',ev=>addFiles(ev.dataTransfer.files))}
 }
 async function fillDayDocs(){
