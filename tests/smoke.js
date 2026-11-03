@@ -52,6 +52,18 @@ const ok=(c,m)=>{console.log((c?'  ✓ ':'  ✗ ')+m);if(!c)fails++};
   ok(await pg.$$eval('[data-wa2]',x=>x.length)===2,'send translation or both');
   await pg.evaluate(()=>{user=null;plan=null;loaded=false;S.lang=''});
 
+  console.log('Venue and driver messages');
+  const m=await pg.evaluate(()=>{const i=S.days[0].stops.findIndex(s=>s.lunch);S.days[0].stops[i].phone='021 123 4567';
+    return{url:waTo(S.days[0].stops[i].phone,dietText(0,i)),diet:dietText(0,i),plan:planText(0),names:S.guests.map(g=>g.name.split(' ')[0])}});
+  ok(m.url.startsWith('https://wa.me/27211234567?text='),'dietaries go to the venue WhatsApp (+27)');
+  ok(/Gluten free/i.test(m.diet)&&/Shellfish/i.test(m.diet),'dietary message lists the needs');
+  ok(!m.names.some(n=>m.plan.includes(n)),'driver plan has no guest names');
+  console.log('Departure reminders');
+  const rm=await pg.evaluate(()=>{const d=S.days[0];d.date=todayIso();const now=new Date(),mm=now.getHours()*60+now.getMinutes();
+    d.start=fmt(mm-30);d.stops[0].drive=0;d.stops[0].stay=35;remOn=true;remDone.clear();remindTick();return document.querySelector('#toast').textContent});
+  ok(/Leave in 5 min/.test(rm),'reminder fires 10 min before leaving a stop: '+rm);
+  await pg.evaluate(()=>{remOn=false});
+
   console.log('Headcount');
   await pg.evaluate(()=>{hc.clear();tab='count';render()});await pg.click('[data-hc="0"]');ok(/1 of 4/.test(await pg.textContent('.hc-top')),'counts guests on board');
 

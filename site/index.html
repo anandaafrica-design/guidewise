@@ -523,6 +523,15 @@ function renderCash(){
   return h;
 }
 
+/* ---------- Departure reminders: while the app is open on a tour day ---------- */
+const REM='guidewise.remind';let remOn=false,remDone=new Set();try{remOn=localStorage.getItem(REM)==='1'}catch(e){}
+function remindTick(){if(!remOn)return;const t=todayIso(),di=S.days.findIndex(d=>d.date===t);if(di<0)return;const d=S.days[di],x=nowNext(d);
+  if(x.now<0||x.next<0)return;const leave=x.sc[x.now].leave,left=leave-x.m,k=t+'|'+x.now;
+  if(left<=10&&left>=0&&!remDone.has(k)){remDone.add(k);const nx=d.stops[x.next],msg=`Leave in ${left} min: next ${nx.place} at ${fmt(x.sc[x.next].arrive)}`;
+    toast('🔔 '+msg);navigator.vibrate&&navigator.vibrate([200,100,200]);
+    if('Notification' in window&&Notification.permission==='granted')navigator.serviceWorker?.getRegistration().then(r=>r?r.showNotification('Guidewise',{body:msg,icon:'icon-192.png',tag:'gw-leave'}):new Notification('Guidewise',{body:msg}))}}
+setInterval(remindTick,30000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')remindTick()});
+
 /* ---------- First run: three ways in ---------- */
 const ONB='guidewise.onb';
 function renderWelcome(){
@@ -573,7 +582,7 @@ function nextSteps(f){
   const bd=bdays(d);if(bd.length)out.push({ic:'🎂',c:'bday',t:`${bd.map(g=>g.name.split(' ')[0]).join(' and ')}: birthday ${f.rel.toLowerCase()}`,s:'Arrange a cake or card with the venue',go:'guests',cls:'warm'});
   if(f.n===1||(f.n===0&&hr<10))out.push({ic:'💬',c:'brief',t:f.n===1?"Send tomorrow's briefing":"Send today's briefing",s:'Ready to send to your WhatsApp group',go:'brief:'+f.i,cls:f.n===1&&hr>=15?'hot':''});
   if(n&&left&&f.n>=0&&f.n<=1)out.push({ic:'🎒',c:'pack',t:`${left} thing${left>1?'s':''} to pack for ${f.rel.toLowerCase()}`,s:d.checklist.filter(c=>!c.d).slice(0,2).map(c=>c.t).join(', '),go:'pack:'+f.i});
-  const lunch=d.stops.find(s=>s.lunch);if(lunch&&di.length&&f.n>=0&&f.n<=2)out.push({ic:'🍽',c:'food',t:`Tell ${lunch.place.replace(/^Lunch (at )?/i,'')} about ${di.length} dietary need${di.length>1?'s':''}`,s:di.slice(0,3).map(g=>g.name.split(' ')[0]+': '+g.diet).join(' · '),go:'plan:'+f.i,cls:'warm'});
+  const lunch=d.stops.find(s=>s.lunch);if(lunch&&di.length&&f.n>=0&&f.n<=2)out.push({ic:'🍽',c:'food',t:`Tell ${lunch.place.replace(/^Lunch (at )?/i,'')} about ${di.length} dietary need${di.length>1?'s':''}`,s:di.slice(0,3).map(g=>g.name.split(' ')[0]+': '+g.diet).join(' · '),go:'plan:'+f.i,diet:f.i+':'+d.stops.indexOf(lunch),cls:'warm'});
   const w=wxFor(d);if(w&&(w.wind>=40||w.rain>=60))out.unshift({ic:w.wind>=40?'💨':'🌧',c:'plan',t:w.wind>=40?`Strong wind ${f.rel.toLowerCase()}: ${w.wind} km/h`:`Rain likely ${f.rel.toLowerCase()}: ${w.rain}%`,s:'Check exposed stops, boat trips and the briefing',go:'plan:'+f.i,cls:'warm'});
   if(!d.area&&f.n>=0&&f.n<=15)out.push({ic:'🌤',c:'plan',t:'Add the area to get the weather',s:`Day ${f.i+1}: town or region, in Edit day`,go:'plan:'+f.i,edit:1});
   if(f.n===0&&hr>=16)out.unshift({ic:'📝',c:'plan',t:"Send today's report",s:'Times, changes and cash for your operator',go:'report:'+f.i,cls:hr>=18?'hot':''});
@@ -591,13 +600,13 @@ function renderToday(){
   else if(d.stops.length){hero+=`<div class="now">${d.stops.slice(0,3).map((s,k)=>`<div><span class="t">${fmt(sc[k].arrive)}</span> ${esc(s.place)}</div>`).join('')}${d.stops.length>3?`<div style="opacity:.8">+ ${d.stops.length-3} more</div>`:''}</div>`}
   const w=wxFor(d);if(w)hero+=`<div class="wxl">${w.ic} ${esc(wxText(w))}</div>`;
   let nx=null;if(f.n===0&&d.stops.length){const x=nowNext(d);nx=d.stops[x.next>=0?x.next:x.now]||null}else if(d.stops.length)nx=d.stops.find(s=>!/^free time$/i.test(s.place)&&!/^✈/.test(s.place))||null;
-  hero+=`<div class="go"><button data-go="plan:${f.i}">Open day plan</button><button class="ghost" data-wa="${f.i}">💬 Send briefing</button>${f.n===0&&d.stops.length?`<button class="ghost" data-go="late:${f.i}">⏱ Running late</button>`:''}${nx&&f.n===0&&!/^free time$/i.test(nx.place)&&!/^✈/.test(nx.place)?`<a class="ghost" style="background:rgb(255 255 255 / .16);color:#fff;border-radius:999px;padding:9px 14px;font:700 .9rem var(--body);text-decoration:none" href="${esc(dirUrl(nx))}" target="_blank" rel="noopener">🧭 Navigate</a>${nx.phone?`<a style="background:rgb(255 255 255 / .16);color:#fff;border-radius:999px;padding:9px 14px;font:700 .9rem var(--body);text-decoration:none" href="tel:${esc(telOf(nx.phone))}">📞 Call</a>`:''}`:''}</div></div>`;
+  hero+=`<div class="go"><button data-go="plan:${f.i}">Open day plan</button><button class="ghost" data-wa="${f.i}">💬 Send briefing</button>${f.n===0&&d.stops.length?`<button class="ghost" data-go="late:${f.i}">⏱ Running late</button><button class="ghost" data-rem="1">${remOn?'🔔 Reminders on':'🔕 Reminders off'}</button>`:''}${nx&&f.n===0&&!/^free time$/i.test(nx.place)&&!/^✈/.test(nx.place)?`<a class="ghost" style="background:rgb(255 255 255 / .16);color:#fff;border-radius:999px;padding:9px 14px;font:700 .9rem var(--body);text-decoration:none" href="${esc(dirUrl(nx))}" target="_blank" rel="noopener">🧭 Navigate</a>${nx.phone?`<a style="background:rgb(255 255 255 / .16);color:#fff;border-radius:999px;padding:9px 14px;font:700 .9rem var(--body);text-decoration:none" href="tel:${esc(telOf(nx.phone))}">📞 Call</a>`:''}`:''}</div></div>`;
   const steps=nextSteps(f);
   const n=d.checklist.length,done=d.checklist.filter(c=>c.d).length,di=diets().length;
   const tile=(ic,t,sub,go,pr)=>`<button class="tile t-${ic}" data-go="${go}"><span class="tic">${icons[ic]}</span><b>${t}</b><span>${sub}</span>${pr!==undefined?`<span class="bar2"><i style="width:${pr}%"></i></span>`:''}</button>`;
   let h=`<p class="hello">${greet}</p>${hero}`;
   if(f.n===0&&S.guests.length)h+=`<button class="step hot" data-tab="count" style="margin-top:10px"><span class="ic">👥</span><span class="tx"><b>Headcount: ${hc.size} of ${S.guests.length} on board</b><span>Tap guests back on the vehicle</span></span><span class="chev">›</span></button>`;
-  if(steps.length)h+=`<p class="eyebrow">Next steps</p><div class="steps">${steps.map(x=>`<button class="step ${x.cls||''}" data-go="${x.go}"${x.edit?' data-edit-after="1"':''}><span class="ic c-${x.c||''}">${x.ic}</span><span class="tx"><b>${esc(x.t)}</b>${x.s?`<span>${esc(x.s)}</span>`:''}</span><span class="chev">›</span></button>`).join('')}</div>`;
+  if(steps.length)h+=`<p class="eyebrow">Next steps</p><div class="steps">${steps.map(x=>`<button class="step ${x.cls||''}" ${x.diet?`data-diet="${x.diet}"`:`data-go="${x.go}"`}${x.edit?' data-edit-after="1"':''}><span class="ic c-${x.c||''}">${x.ic}</span><span class="tx"><b>${esc(x.t)}</b>${x.s?`<span>${esc(x.s)}</span>`:''}</span><span class="chev">›</span></button>`).join('')}</div>`;
   h+=`<p class="eyebrow">This tour</p><div class="tiles">
     ${tile('plan','Day plan',`${S.days.length} day${S.days.length===1?'':'s'}`,'plan:'+f.i)}
     ${tile('guests','Guests',`${S.guests.length} guest${S.guests.length===1?'':'s'}${di?' · '+di+' dietary':''}`,'guests')}
@@ -639,6 +648,14 @@ function renderMore(){
 
 const KIND=[['flight',/^✈|\bflight\b/i,'Flight'],['meal',/breakfast|lunch|dinner|brunch|drinks|tea\b|restaurant|picnic|braai/i,'Meal'],['game',/game (drive|activity|viewing|walk)|safari|cruise|mokoro|boat/i,'Wildlife'],['hotel',/hotel|lodge|camp\b|overnight|check-in|guesthouse|rovos rail$/i,'Stay'],['free',/^free time$/i,'']];
 function kindOf(s){if(s.lunch)return['meal','Lunch'];for(const[k,re,l]of KIND)if(re.test(s.place))return[k,l];return['visit','']}
+/* WhatsApp to a number: SA numbers starting 0 become +27; no number opens the contact picker. */
+const waTo=(phone,text)=>{let n=String(phone||'').replace(/[^\d+]/g,'');if(/^0\d{8,}$/.test(n))n='27'+n.slice(1);n=n.replace(/^\+/,'');return 'https://wa.me/'+(n.length>=9?n:'')+'?text='+encodeURIComponent(text)};
+function dietText(di,si){const d=S.days[di],st=d.stops[si],sc=schedule(d),gs=diets(),md=(d.date||'').slice(5),bd=S.guests.filter(g=>g.bday&&g.bday===md);
+  return `Good day 🙂 Booking for ${S.guests.length} guest${S.guests.length===1?'':'s'}${d.date?' on '+dLabel(d.date):''} at ${fmt(sc[si].arrive)} (${S.tour.replace(/\s*\(sample\)/,'')}).\n\nDietary needs:\n${gs.map(g=>`• ${g.name.split(' ')[0]}: ${g.diet}`).join('\n')||'• None'}${bd.length?`\n\nCelebrating: ${bd.map(g=>g.name.split(' ')[0]).join(' and ')}'s birthday 🎂`:''}\n\nThank you!`}
+function planText(di){const d=S.days[di],sc=schedule(d);
+  let t=`${d.title}${d.date?' · '+dLabel(d.date):''}\nPick-up ${fmt(toMin(d.start)-15)} at ${d.meet||'meeting point'}, depart ${d.start}\n${S.guests.length} guests\n\n`;
+  d.stops.forEach((s,i)=>{if(/^free time$/i.test(s.place))return;t+=`${fmt(sc[i].arrive)} ${s.place}${s.stay?` (until ${fmt(sc[i].leave)})`:''}\n`;if(s.addr)t+=`   📍 ${s.addr}\n`;if(s.phone)t+=`   📞 ${s.phone}\n`});
+  if(sc.length)t+=`\nBack about ${fmt(sc[sc.length-1].leave)}.`;return t}
 function renderPlanRead(){
   const d=D(),sc=schedule(d),b=bdays(d),di=diets(),isToday=d.date===todayIso(),x=isToday?nowNext(d):{now:-1};
   const n=d.checklist.length,done=d.checklist.filter(c=>c.d).length;
@@ -656,9 +673,10 @@ function renderPlanRead(){
       const[kk,kl]=kindOf(s);
       h+=`<div class="rs k-${kk} ${s.lunch?'lunch':''} ${free?'free':''} ${x.now===i?'nowp':''}"><span class="tm">${fmt(sc[i].arrive)}${s.stay&&!free?`<small>${fmt(sc[i].leave)}</small>`:''}</span><span class="dot"></span>
         <div class="bx">${kl?`<span class="kt">${kl}</span>`:''}<b>${esc(s.place)}${s.lunch?' 🍽':''}</b>${free?`<span class="note">${s.stay} min</span>`:''}${warnT?`<span class="note warn">${esc(warnT[1])}</span>`:''}${note?`<span class="note">${esc(note)}</span>`:''}${stopActs(s)}
-        ${s.lunch&&di.length?`<div class="chips" style="margin-top:6px">${di.map(g=>`<span class="flag">${esc(g.name.split(' ')[0])}: ${esc(g.diet)}</span>`).join('')}</div>`:''}</div></div>`});
+        ${s.lunch&&di.length?`<div class="chips" style="margin-top:6px">${di.map(g=>`<span class="flag">${esc(g.name.split(' ')[0])}: ${esc(g.diet)}</span>`).join('')}</div><div class="sacts"><button data-diet="${S.day}:${i}">🍽 Send dietaries${s.phone?' to venue':''}</button></div>`:''}</div></div>`});
     h+='</div>';
-    const end=sc[sc.length-1].leave;h+=`<p class="note">Day runs ${esc(d.start)} to ${fmt(end)} (${Math.round((end-toMin(d.start))/6)/10} hours).</p>`}
+    const end=sc[sc.length-1].leave;h+=`<p class="note">Day runs ${esc(d.start)} to ${fmt(end)} (${Math.round((end-toMin(d.start))/6)/10} hours).</p>
+    <div class="acts"><button class="btn wa" data-drv="${S.day}">🚐 Send plan to driver</button></div><p class="note">Times, stops, addresses and venue numbers. No guest details.</p>`}
   return h+'<div id="dayDocs"></div>';
 }
 function renderPlan(){
@@ -817,6 +835,11 @@ document.addEventListener('click',e=>{
       trErr=m==='signin'?'Sign in under Back up to use translation (Plus, 30 days free for new accounts).':m==='plus'||m==='plus_required'?'Translation is part of Guidewise Plus.':m==='limit'?'You have used your 30 translations this month.':!navigator.onLine?'Translation needs a signal.':'Could not translate just now. Try again.'})
       .finally(()=>{trBusy=false;if(tab==='brief')render()});return}
   if(ds.wa2){const t=trMem[trKey()];if(!t)return;window.open('https://wa.me/?text='+encodeURIComponent(ds.wa2==='both'?briefingText()+'\n\n· · ·\n\n'+t:t),'_blank','noopener');return}
+  if(ds.diet){const[a,c]=ds.diet.split(':').map(Number),st=S.days[a].stops[c];window.open(waTo(st.phone,dietText(a,c)),'_blank','noopener');return}
+  if(ds.drv!==undefined){window.open(waTo('',planText(+ds.drv)),'_blank','noopener');return}
+  if(ds.rem){remOn=!remOn;try{localStorage.setItem(REM,remOn?'1':'0')}catch(x){}
+    if(remOn&&'Notification' in window&&Notification.permission==='default')Notification.requestPermission().catch(()=>{});
+    toast(remOn?'Reminders on: 10 min before you leave each stop, while Guidewise is open':'Reminders off');render();remindTick();return}
   if(ds.latemin){lateMin=+ds.latemin;render();return}
   if(ds.lateapply){const d=D(),i=+($('#lateFrom')||{}).value||0,st=lateStart(d),f=(d.date===todayIso()&&st.i===i)?st.f:'drive';
     d.stops[i][f]=(+d.stops[i][f]||0)+lateMin;lateDone={day:S.day,stop:i,field:f,mins:lateMin};
