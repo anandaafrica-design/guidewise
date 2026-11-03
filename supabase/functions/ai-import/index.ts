@@ -78,7 +78,10 @@ Write in UK English, concisely.
 Privacy: never output passport, visa or ID numbers, full dates of birth or years of birth, phone numbers, email addresses, flight booking codes, or insurance details, even if present. Birthdays only as MM-DD.
 Times are local, 24-hour HH:MM. For each day, list stops in order with arrival and departure times where known; put hotel check-in or the overnight stay as the last stop.
 Include meals and drinks that have a time or a venue as stops, and mark lunches.
-If a date of birth or a "Birthday (MM-DD)" is given, put it in bday as MM-DD.`;
+If a date of birth or a "Birthday (MM-DD)" is given, put it in bday as MM-DD.
+Never state a guest's age or a numbered milestone ("75th birthday", "turning 60"), as that reveals the birth year: write "milestone birthday" instead. Wedding anniversary numbers are fine.
+If the documents give the tour dates but no day-by-day programme, still output one day per tour date with its date, a short title from the hotel or services that day, and the overnight hotel as the only stop. Never leave days empty when dates are known.
+Put medication and medical allergies in the guest's notes, starting with "Medical:".`;
 
 function usdCost(key: string, inTok: number, outTok: number) {
   const [pi, po] = PRICE[key];

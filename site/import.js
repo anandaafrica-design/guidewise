@@ -10,7 +10,7 @@ const AI_CONSENT='ai-v1', MAX_FILES=5, MAX_BYTES=12e6, LIMIT=5;
 let files=[], st='pick', draft=null, err='', mode='new', agreed=false, t0=0, tick=null, mine=[];
 
 /* ---------- on-device cleaning ---------- */
-const DROP=/passport|visa|\bid\b|id\s*(no|num)|identity|flight|pnr|e-?ticket|ticket\s*(no|num)|phone|mobile|\bcell|\btel\b|whats\s*app|e-?mail|insurance|policy|nationality|citizen|address|emergency|next of kin|frequent flyer/i;
+const DROP=/passport|visa|\bid\b|id\s*(no|num)|identity|flight|pnr|e-?ticket|ticket\s*(no|num)|phone|mobile|\bcell|\btel\b|whats\s*app|e-?mail|insurance|policy|nationality|citizen|address|emergency|next of kin|frequent flyer|^\s*age\s*$/i;
 const DOB=/birth|\bdob\b|d\.o\.b/i;
 const HEAD=/name|surname|room|diet|title|gender|\bage\b|notes?|remarks|date|time|\bday\b|pax|guest|sharing|bed/i;
 /* A heading row: at least one private-looking heading, and two or more short headings without digits. */
