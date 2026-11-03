@@ -81,7 +81,7 @@ async function refresh(){
     let sp=await sb.from('subscriptions').select('status,plan,trial_ends_at,current_period_end,paystack_customer_code,paystack_subscription_code').maybeSingle();plan=sp.data||null;
     if(plan&&plan.paystack_customer_code&&!plan.paystack_subscription_code&&!refresh._tried){refresh._tried=1; // paid but the return or webhook was missed
       const v=await sb.functions.invoke('billing-manage',{body:{action:'verify'}}).catch(()=>({}));
-      if(v.data?.status==='active'){sp=await sb.from('subscriptions').select('status,plan,trial_ends_at,current_period_end,paystack_customer_code,paystack_subscription_code').maybeSingle();plan=sp.data||plan}}
+      if(v.data?.status==='active'){refresh._welcome=1;sp=await sb.from('subscriptions').select('status,plan,trial_ends_at,current_period_end,paystack_customer_code,paystack_subscription_code').maybeSingle();plan=sp.data||plan}}
     meta=await getMeta();
     bk=(await kGet(user.id))||null;
     if(bk&&!bk.kid)bk=null; // key from the first version: set up again
@@ -90,6 +90,7 @@ async function refresh(){
     step=consented?(bk?'ready':'pass'):'consent';
   }catch(e){msg='Could not reach the backup service. Check your signal and try again.'}
   loaded=true;paint();
+  if(refresh._welcome){refresh._welcome=0;showWelcome()}
   if(ready()&&sync.pending)backupNow();
 }
 const ready=()=>!!(user&&consented&&bk);
@@ -178,12 +179,37 @@ const BUY=`<div class="acts"><button class="btn pri" data-a="buy" data-plan="yea
 function planCard(){const p=plan;if(!p)return'';
   if(p.status==='comp')return `<p class="note"><b>Guidewise Plus</b> · complimentary</p>`;
   const box=(h)=>`<div class="g"><div>${h}</div></div>`;
-  if(p.status==='active')return box(`<b>Guidewise Plus</b> · ${p.plan==='yearly'?'R490 a year':'R49 a month'}<br><span class="note">${p.current_period_end?'Renews '+esc(dayStr(p.current_period_end)):'Active'}</span><div class="acts"><button class="btn sm" data-a="manage">Change card or cancel</button></div>`);
+  if(p.status==='active')return box(`<b>Guidewise Plus</b> · ${p.plan==='yearly'?'R490 a year':'R49 a month'}<br><span class="note">${p.current_period_end?'Renews '+esc(dayStr(p.current_period_end)):'Active'}</span><div class="acts"><button class="btn sm" data-tab="plus">What's included</button><button class="btn sm" data-a="manage">Change card or cancel</button></div>`);
   if(p.status==='non_renewing'&&plus())return box(`<b>Guidewise Plus</b> · cancelled<br><span class="note">Backups continue until ${esc(dayStr(p.current_period_end))}.</span><div class="acts"><button class="btn sm" data-a="manage">Manage</button></div>`);
   if(p.status==='attention'&&plus())return box(`<b>Payment did not go through.</b><br><span class="note">Update your card to keep backing up.</span><div class="acts"><button class="btn sm pri" data-a="manage">Update card</button></div>`);
   if(p.status==='trialing'&&plus()){const d=daysLeft(p.trial_ends_at);return box(`<b>Free trial</b> · ${d} day${d===1?'':'s'} left<br><span class="note">Backup is part of Guidewise Plus. Subscribe any time to keep it after ${esc(dayStr(p.trial_ends_at))}.</span>${BUY}`)}
   return box(`<b>${p.status==='trialing'?'Your free trial has ended.':'Your Guidewise Plus has ended.'}</b><br><span class="note">Backups are paused. Your backup is safe and you can still restore or delete it. Subscribe to carry on backing up.</span>${BUY}`);
 }
+
+/* Welcome to Plus: shown once per subscription after payment, and any time via "What's included". */
+const WELCOME_KEY='guidewise.welcomed';
+function showWelcome(force){const id=plan&&(plan.paystack_subscription_code||plan.status);
+  let seen='';try{seen=localStorage.getItem(WELCOME_KEY)||''}catch(e){}
+  if(!force&&seen===id)return false;try{localStorage.setItem(WELCOME_KEY,id||'')}catch(e){}
+  tab='plus';render();scrollTo(0,0);return true}
+window.renderPlus=()=>{const p=plan||{},yearly=p.plan==='yearly';
+  const ren=p.current_period_end?dayStr(p.current_period_end):'';
+  const li=(i,t,d)=>`<div class="perk"><span class="pi" aria-hidden="true">${i}</span><div><b>${t}</b><br><span class="note">${d}</span></div></div>`;
+  const next=!ready()?`<button class="btn pri" data-tab="acct">Set up your backup</button>`:`<button class="btn pri" data-tab="home">Go to my tours</button>`;
+  return `<div class="welcome"><div class="burst" aria-hidden="true">✓</div>
+    <h2 class="wtitle">Congratulations! You're in!</h2>
+    <p>Welcome to <b>Guidewise Plus</b>${p.status==='comp'?'':' · '+(yearly?'R490 a year':'R49 a month')}.${ren?` Renews ${esc(ren)}.`:''}</p></div>
+  <h2>What you now have</h2>
+  ${li('☁','Encrypted cloud backup','Every tour, guest and checklist is locked on your phone, then backed up. Nobody else can read it, including us.')}
+  ${li('↻','Automatic backups','Saved 15 seconds after each change, and again when you get signal back.')}
+  ${li('⇄','Restore on any device','New or lost phone? Sign in, unlock, and your tours are back.')}
+  ${li('🔑','Recovery code','A second way in if you ever forget your passphrase.')}
+  ${li('▦','All your tours','Every tour on your Tours page is included, past and upcoming.')}
+  <h2>Coming to Plus</h2>
+  ${li('✦','AI import','Turn an itinerary or rooming list into a ready tour in a minute.')}
+  ${li('📎','Document backup','Vouchers and PDFs backed up with your tours.')}
+  <div class="acts" style="margin-top:18px">${next}<button class="btn" data-tab="acct">Backup settings</button></div>
+  <p class="note">Manage or cancel any time under <b>Back up</b>. <a href="terms.html">Terms and pricing</a></p>`};
 
 function acctHTML(){
   if(!sb||!loaded)return `<p class="note">${esc(msg)||'Loading…'}</p>`;
@@ -351,7 +377,7 @@ addEventListener('pageshow',e=>{if(e.persisted&&busy){busy='';paint()}});
 const payRef=(new URLSearchParams(location.search)).get('reference')||'';
 async function awaitPayment(){for(let i=0;i<10;i++){await sb.functions.invoke('billing-manage',{body:payRef?{action:'verify',reference:payRef}:{action:'verify'}}).catch(()=>{});
   const sp=await sb.from('subscriptions').select('status,plan,trial_ends_at,current_period_end').maybeSingle();
-  plan=sp.data||plan;if(plan&&plan.status==='active'){toast('Thank you. Guidewise Plus is on');paint();if(ready()){lastJSON=null;backupNow()}return}
+  plan=sp.data||plan;if(plan&&plan.status==='active'){paintBtn();if(ready()){lastJSON=null;backupNow()}showWelcome();return}
   await new Promise(r=>setTimeout(r,3000))}msg='If your payment went through, it can take a minute to show. Refresh this page shortly.';paint()}
 if(sync.acct||fromLink||fromPay)addEventListener('load',()=>{loadSB().then(()=>sb.auth.getSession()).then(async({data})=>{user=data.session?.user||null;await refresh();
   if(fromLink||fromPay){history.replaceState(null,'',location.pathname);tab='acct';render()}
