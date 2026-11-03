@@ -182,8 +182,9 @@ const BUY=`<div class="acts"><button class="btn pri" data-a="buy" data-plan="yea
 function planCard(){const p=plan;if(!p)return'';
   if(p.status==='comp')return `<p class="note"><b>Guidewise Plus</b> · complimentary</p>`;
   const box=(h)=>`<div class="g"><div>${h}</div></div>`;
-  if(p.status==='active')return box(`<b>Guidewise Plus</b> · ${p.plan==='yearly'?'R490 a year':'R49 a month'}<br><span class="note">${p.current_period_end?'Renews '+esc(dayStr(p.current_period_end)):'Active'}</span><div class="acts"><button class="btn sm" data-tab="plus">What's included</button><button class="btn sm" data-a="manage">Change card or cancel</button></div>`);
-  if(p.status==='non_renewing'&&plus())return box(`<b>Guidewise Plus</b> · cancelled<br><span class="note">Backups continue until ${esc(dayStr(p.current_period_end))}.</span><div class="acts"><button class="btn sm" data-a="manage">Manage</button></div>`);
+  if(p.status==='active')return box(`<b>Guidewise Plus</b> · ${p.plan==='yearly'?'R490 a year':'R49 a month'}<br><span class="note">${p.current_period_end?'Renews '+esc(dayStr(p.current_period_end)):'Active'}</span><div class="acts"><button class="btn sm" data-tab="plus">What's included</button><button class="btn sm" data-a="manage">Change card</button><button class="btn sm" data-a="cancelsub" data-arm="Tap again to cancel">Cancel subscription</button></div>
+    <span class="note">If you cancel, Plus keeps working until ${esc(dayStr(p.current_period_end||new Date().toISOString()))}.</span>`);
+  if(p.status==='non_renewing'&&plus())return box(`<b>Guidewise Plus</b> · cancelled<br><span class="note">Backups continue until ${esc(dayStr(p.current_period_end))}. You will not be charged again.</span><div class="acts"><button class="btn sm pri" data-a="resumesub">Keep my subscription</button></div>`);
   if(p.status==='attention'&&plus())return box(`<b>Payment did not go through.</b><br><span class="note">Update your card to keep backing up.</span><div class="acts"><button class="btn sm pri" data-a="manage">Update card</button></div>`);
   if(p.status==='trialing'&&plus()){const d=daysLeft(p.trial_ends_at);return box(`<b>Free trial</b> · ${d} day${d===1?'':'s'} left<br><span class="note">Backup is part of Guidewise Plus. Subscribe any time to keep it after ${esc(dayStr(p.trial_ends_at))}.</span>${BUY}`)}
   return box(`<b>${p.status==='trialing'?'Your free trial has ended.':'Your Guidewise Plus has ended.'}</b><br><span class="note">Backups are paused. Your backup is safe and you can still restore or delete it. Subscribe to carry on backing up.</span>${BUY}`);
@@ -348,6 +349,11 @@ document.addEventListener('click',async e=>{
       if(error||!data?.url){busy='';let code='';try{code=(await error.context.json()).error}catch(x){}
         msg=code==='already_active'?'You already have Guidewise Plus.':code==='not_configured'?'Payments are not switched on yet. Please try again soon.':'Could not open the payment page. Check your signal and try again.';return paint()}
       setTimeout(()=>{if(busy==='Opening secure payment…'){busy='';paint()}},8000);location.href=data.url;return}
+    if(a==='cancelsub'||a==='resumesub'){busy=a==='cancelsub'?'Cancelling…':'Restarting…';paint();
+      const{error}=await sb.functions.invoke('billing-manage',{body:{action:a==='cancelsub'?'cancel':'resume'}});
+      const sp=await sb.from('subscriptions').select('status,plan,trial_ends_at,current_period_end,paystack_customer_code,paystack_subscription_code').maybeSingle();plan=sp.data||plan;busy='';
+      if(error){msg='Could not reach Paystack. Check your signal and try again.';return paint()}
+      toast(a==='cancelsub'?'Cancelled. Plus continues until '+dayStr(plan.current_period_end):'Subscription kept');return paint()}
     if(a==='manage'){busy='Opening…';paint();const{data,error}=await sb.functions.invoke('billing-manage',{body:{action:'link'}});busy='';
       if(error||!data?.url){msg='Could not open subscription settings. Try again shortly.';return paint()}
       window.open(data.url,'_blank','noopener');return paint()}

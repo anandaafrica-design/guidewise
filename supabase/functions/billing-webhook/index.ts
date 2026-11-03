@@ -35,13 +35,16 @@ async function syncSubscription(code: string, metaUser?: string) {
   const s = await paystack("/subscription/" + encodeURIComponent(code));
   const userId = await userFor(s.customer?.customer_code, metaUser);
   if (!userId) { console.warn("no user for subscription", code); return; }
-  const { data: cur } = await admin.from("subscriptions").select("status").eq("user_id", userId).maybeSingle();
+  const { data: cur } = await admin.from("subscriptions").select("status,current_period_end").eq("user_id", userId).maybeSingle();
   if (cur?.status === "comp") return; // owner/complimentary accounts are never downgraded by billing
+  const end = s.next_payment_date || s.most_recent_invoice?.period_end || cur?.current_period_end || null;
+  let status = STATUS[s.status] || "attention";
+  if (status === "cancelled" && end && new Date(end).getTime() > Date.now()) status = "non_renewing"; // keep the paid period
   await admin.from("subscriptions").upsert({
     user_id: userId,
-    status: STATUS[s.status] || "attention",
+    status,
     plan: s.plan?.interval === "annually" ? "yearly" : "monthly",
-    current_period_end: s.next_payment_date || s.most_recent_invoice?.period_end || null,
+    current_period_end: end,
     paystack_customer_code: s.customer?.customer_code,
     paystack_subscription_code: s.subscription_code,
     paystack_email_token: s.email_token,

@@ -10,8 +10,14 @@ const cors = {
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 const STATUS: Record<string, string> = { active: "active", "non-renewing": "non_renewing", attention: "attention", completed: "cancelled", cancelled: "cancelled" };
 
-async function paystack(path: string) {
-  const r = await fetch("https://api.paystack.co" + path, { headers: { Authorization: "Bearer " + (Deno.env.get("PAYSTACK_SECRET_KEY") || "").replace(/[^\x21-\x7E]/g, "") } });
+// A cancelled subscription keeps Plus until the end of the period already paid for.
+function mapStatus(paystackStatus: string, periodEnd?: string | null) {
+  const m = STATUS[paystackStatus] || "attention";
+  if (m === "cancelled" && periodEnd && new Date(periodEnd).getTime() > Date.now()) return "non_renewing";
+  return m;
+}
+async function paystack(path: string, init: RequestInit = {}) {
+  const r = await fetch("https://api.paystack.co" + path, { ...init, headers: { Authorization: "Bearer " + (Deno.env.get("PAYSTACK_SECRET_KEY") || "").replace(/[^\x21-\x7E]/g, ""), "Content-Type": "application/json" } });
   const b = await r.json().catch(() => ({}));
   if (!r.ok || b.status === false) throw new Error("paystack " + path + ": " + (b.message || r.status));
   return b.data;
@@ -67,15 +73,23 @@ Deno.serve(async (req) => {
 
   if (!sub?.paystack_subscription_code) return json({ error: "no_subscription" }, 404);
   try {
+    // Cancel (stop renewing) or resume, in the app rather than on Paystack's page.
+    if ((action === "cancel" || action === "resume") && sub.status !== "comp") {
+      if (!sub.paystack_email_token) return json({ error: "no_token" }, 409);
+      await paystack("/subscription/" + (action === "cancel" ? "disable" : "enable"), {
+        method: "POST", body: JSON.stringify({ code: sub.paystack_subscription_code, token: sub.paystack_email_token }),
+      });
+    }
     const s = await paystack("/subscription/" + encodeURIComponent(sub.paystack_subscription_code));
     if (sub.status !== "comp") {
+      const end = s.next_payment_date || sub.current_period_end;
       await admin.from("subscriptions").update({
-        status: STATUS[s.status] || sub.status,
-        current_period_end: s.next_payment_date || sub.current_period_end,
+        status: mapStatus(s.status, end),
+        current_period_end: end,
         updated_at: new Date().toISOString(),
       }).eq("user_id", u.user.id);
     }
-    if (action === "sync") return json({ ok: true });
+    if (action === "sync" || action === "cancel" || action === "resume") return json({ ok: true });
     const link = await paystack("/subscription/" + encodeURIComponent(sub.paystack_subscription_code) + "/manage/link");
     return json({ url: link.link });
   } catch (e) {
