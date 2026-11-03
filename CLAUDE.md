@@ -10,7 +10,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 ## Files
 - site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
 - site/index.html: whole app (vanilla JS, no build step)
-- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v6). New precached files go in its F list
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v7). New precached files go in its F list
 - site/backup.js: cloud backup (sign-in, POPIA consent, passphrase, encrypt, sync). Shares globals with index.html
 - site/vendor/supabase-2.45.4.js: vendored so it works offline; site/privacy.html: POPIA notice; site/setup.html: setup guide to send to guides (install, first tour, backup, help). Keep it in step with the UI
 - supabase/: record of the deployed migration and edge function
@@ -23,11 +23,12 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 - Briefing: WhatsApp evening message generated from the day plan, copy button. Never include birthdays or dietaries
 - Documents: IndexedDB store "guidewise-docs", filed per day or whole tour, shown on day plan
 - Local intel: private notes
+- Tours home screen (tab 'home': Home in the bottom menu and Tours button top left): new, duplicate (no guests, checklists unticked), archive, delete (also deletes that tour's documents)
 - Install banner (hidden once installed or dismissed, key guidewise.inst), one-tap install via beforeinstallprompt
 - Light-only, high-contrast theme for outdoor reading. Keep it light
 
 ## Data
-State in localStorage key tourPrepKit.v1; documents in IndexedDB (device only).
+All tours in localStorage key guidewise.tours.v2: {v:2, cur, legacyDocs, tours:[{id, tour, day, days, guests, intel, archived}]}. S is the open tour. The old single-tour key tourPrepKit.v1 is migrated once and kept as a safety copy. Documents in IndexedDB (device only), tagged with tour id (untagged = legacyDocs tour). Backups encrypt the whole {T}; restore also accepts v1 {S}.
 Optional backup (v4): Supabase project "guidewise" (ref bqevxxhdtzlywjoqbogt, London, org Spot-it Kruger).
 - Email code sign-in. POPIA consent (version popia-v2) required before anything is uploaded; RLS also refuses backups without a consent row
 - Format 2: random data key (AES-256-GCM, user id as AAD) encrypts the tour. It is stored wrapped twice: by the passphrase (PBKDF2 600k, min 8 chars) and by a one-time recovery code (20 chars, PBKDF2 100k). Device keeps it non-extractable in IndexedDB "guidewise-keys". Changing passphrase or recovery code only re-wraps; other devices keep working. Server never sees a key or plaintext
