@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
     }).rpc("has_plus");
     if (!plus) return json({ error: "plus_required" }, 402);
     const since = new Date(); since.setUTCDate(1); since.setUTCHours(0, 0, 0, 0);
-    const { count } = await admin.from("ai_usage").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("ok", true).gte("created_at", since.toISOString());
+    const { count } = await admin.from("ai_usage").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("ok", true).not("model", "like", "%:translate").gte("created_at", since.toISOString());
     if ((count || 0) >= MONTHLY_LIMIT) return json({ error: "limit", limit: MONTHLY_LIMIT }, 429);
   }
   if (!MODELS[modelKey]) modelKey = "opus";

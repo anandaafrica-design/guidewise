@@ -149,6 +149,12 @@ async function wipeDocs(){ // remove every backed-up document (cloud backup dele
   for(let i=0;i<50;i++){const{data}=await sb.storage.from('docs').list(user.id,{limit:1000});if(!data||!data.length)break;
     const{error}=await sb.storage.from('docs').remove(data.map(f=>user.id+'/'+f.name));if(error)throw error}
   Object.assign(sync,{up:[],man:[],docDel:[]});saveSync()}
+/* Briefing translation (Plus). The briefing never holds guest birthdays or dietaries. */
+window.gwTranslate=async(text,lang)=>{
+  await loadSB();if(!user){const{data}=await sb.auth.getSession();user=data.session?.user||null;if(user&&!loaded)await refresh()}
+  if(!user)throw new Error('signin');if(!plan&&!loaded)await refresh();if(!plus())throw new Error('plus');
+  const{data}=await sb.auth.getSession();const r=await fetch(SB_URL+'/functions/v1/ai-translate',{method:'POST',headers:{Authorization:'Bearer '+data.session.access_token,apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({text,lang})});
+  const b=await r.json().catch(()=>({}));if(!r.ok||!b.text)throw new Error(b.error||'failed');return b};
 window.gwDocsBacked=()=>ready()&&plus()&&sync.docs!==false;
 window.onDocGone=sid=>{sync.docDel=[...new Set([...(sync.docDel||[]),sid])];sync.up=(sync.up||[]).filter(s=>s!==sid);saveSync()};
 window.onDocsChanged=()=>{if(quiet||!ready()||!sync.auto||!plus()||sync.docs===false)return;sync.pending=1;saveSync();paintBtn();clearTimeout(autoT);autoT=setTimeout(()=>{autoT=null;backupNow()},AUTO_MS)};
@@ -263,6 +269,7 @@ window.renderPlus=()=>{const p=plan||{},yearly=p.plan==='yearly';
   ${li('🔑','Recovery code','A second way in if you ever forget your passphrase.')}
   ${li('▦','All your tours','Every tour on your Tours page is included, past and upcoming.')}
   ${li('✦','AI import','Turn an itinerary, rooming list or recap into a ready tour in about a minute. 5 imports a month. Tours, then Import from documents.')}
+  ${li('🌍','Briefing in other languages','German, French, Spanish and 17 more, in one tap. 30 translations a month.')}
   ${li('📎','Document backup','Vouchers, PDFs and photos encrypted and backed up with your tours.')}
   <div class="acts" style="margin-top:18px">${next}<button class="btn" data-tab="acct">Backup settings</button></div>
   <p class="note">Manage or cancel any time under <b>Back up</b>. <a href="terms.html">Terms and pricing</a></p>`};

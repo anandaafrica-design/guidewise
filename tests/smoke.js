@@ -45,6 +45,13 @@ const ok=(c,m)=>{console.log((c?'  ✓ ':'  ✗ ')+m);if(!c)fails++};
   for(const [c,a] of [['float','5000'],['entry','1 240,50'],['mytip','800']]){await pg.click(`[data-cashcat="${c}"]`);await pg.fill('#cashAmt',a);await pg.click('[data-cashadd]')}
   const tt=await pg.evaluate(()=>cashTotals());ok(tt.bal===3759.5&&tt.tip===800,'balance excludes tips received, comma decimals work');
 
+  console.log('Briefing translation');
+  await ctx.route(/functions\/v1\/ai-translate/,r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({text:'Guten Abend zusammen 🌍',left:29})}));
+  await pg.evaluate(async()=>{await loadSB();user={id:'u1'};plan={status:'comp'};loaded=true;sb.auth.getSession=async()=>({data:{session:{access_token:'t',user}}});S.lang='German';tab='brief';render()});
+  await pg.click('[data-tr]');await pg.waitForSelector('#trBubble');ok(/Guten Abend/.test(await pg.textContent('#trBubble')),'briefing translates and shows send options');
+  ok(await pg.$$eval('[data-wa2]',x=>x.length)===2,'send translation or both');
+  await pg.evaluate(()=>{user=null;plan=null;loaded=false;S.lang=''});
+
   console.log('Headcount');
   await pg.evaluate(()=>{hc.clear();tab='count';render()});await pg.click('[data-hc="0"]');ok(/1 of 4/.test(await pg.textContent('.hc-top')),'counts guests on board');
 

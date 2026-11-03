@@ -744,6 +744,19 @@ function briefingText(){
   t+=`\nSleep well, see you in the morning!`;
   return t;
 }
+const LANGS=['German','French','Spanish','Italian','Dutch','Portuguese','Afrikaans','isiZulu','isiXhosa','Swedish','Danish','Norwegian','Polish','Russian','Hebrew','Arabic','Hindi','Mandarin Chinese','Japanese','Korean'];
+let trMem={},trBusy=false,trErr='';
+const trKey=()=>(S.lang||'')+'|'+briefingText();
+function trBlock(){
+  const opts=`<option value="">English only</option>`+LANGS.map(l=>`<option ${S.lang===l?'selected':''}>${l}</option>`).join('');
+  const t=S.lang&&trMem[trKey()];
+  let h=`<h2>Also in another language</h2><div class="row"><select id="trLang" aria-label="Translation language">${opts}</select>${S.lang?`<button class="btn" data-tr="1" ${trBusy?'disabled':''}>${trBusy?'Translating…':t?'Translate again':'✦ Translate'}</button>`:''}</div>`;
+  if(trErr)h+=`<div class="alert">${esc(trErr)}</div>`;
+  if(t)h+=`<div class="bubble" id="trBubble" style="margin-top:10px">${esc(t)}</div>
+    <div class="acts"><button class="btn pri wa" data-wa2="lang">💬 Send in ${esc(S.lang)}</button><button class="btn wa" data-wa2="both" style="opacity:.9">💬 Send both</button></div>`;
+  else if(S.lang)h+=`<p class="note">Plus: 30 translations a month. Only the briefing text is sent to our AI provider; it never holds guest birthdays or dietaries.</p>`;
+  return h;
+}
 function renderBrief(){
   const d=D();
   return `<h2>Evening briefing</h2>${wxCard(d)}
@@ -752,7 +765,7 @@ function renderBrief(){
   <div class="field" style="margin-top:8px"><span class="lbl">What to bring</span><input id="f-bring" data-f="bring" value="${esc(d.bring)}"></div>
   <h2>Preview</h2><div class="bubble" id="bubble">${esc(briefingText())}</div>
   <div class="acts"><button class="btn pri wa" data-wa="${S.day}">💬 Send on WhatsApp</button><button class="btn" data-copy="1">Copy</button></div>
-  <p class="note">Times come straight from the day plan, so edit stops there. Send opens WhatsApp with the message ready: pick your group and tap send. Birthdays and dietaries stay private and never appear here.</p>`;
+  <p class="note">Times come straight from the day plan, so edit stops there. Send opens WhatsApp with the message ready: pick your group and tap send. Birthdays and dietaries stay private and never appear here.</p>${trBlock()}`;
 }
 
 function renderIntel(){
@@ -799,6 +812,11 @@ document.addEventListener('click',e=>{
   if(ds.vsave){const old=ds.vsave,name=$('#vName').value.trim();if(!name){toast('Add a name');return}
     const v={name,phone:$('#vPhone').value.trim(),addr:$('#vAddr').value.trim(),note:$('#vNote').value.trim()};delete T.venues[old];T.venues[vKey(name)]=v;vEdit=null;save();render();toast('Venue saved');return}
   if(ds.vdel){if(!b.classList.contains('arm')){b.classList.add('arm');b.textContent='Tap again to delete';return}delete T.venues[ds.vdel];vEdit=null;save();render();return}
+  if(ds.tr){trBusy=true;trErr='';render();const k=trKey();
+    gwTranslate?.(briefingText(),S.lang).then(r=>{trMem[k]=r.text;toast(r.left>=0?`Translated · ${r.left} left this month`:'Translated')}).catch(e=>{const m=e.message;
+      trErr=m==='signin'?'Sign in under Back up to use translation (Plus, 30 days free for new accounts).':m==='plus'||m==='plus_required'?'Translation is part of Guidewise Plus.':m==='limit'?'You have used your 30 translations this month.':!navigator.onLine?'Translation needs a signal.':'Could not translate just now. Try again.'})
+      .finally(()=>{trBusy=false;if(tab==='brief')render()});return}
+  if(ds.wa2){const t=trMem[trKey()];if(!t)return;window.open('https://wa.me/?text='+encodeURIComponent(ds.wa2==='both'?briefingText()+'\n\n· · ·\n\n'+t:t),'_blank','noopener');return}
   if(ds.latemin){lateMin=+ds.latemin;render();return}
   if(ds.lateapply){const d=D(),i=+($('#lateFrom')||{}).value||0,st=lateStart(d),f=(d.date===todayIso()&&st.i===i)?st.f:'drive';
     d.stops[i][f]=(+d.stops[i][f]||0)+lateMin;lateDone={day:S.day,stop:i,field:f,mins:lateMin};
@@ -860,6 +878,7 @@ document.addEventListener('change',e=>{
 document.addEventListener('input',e=>{
   const el=e.target,ds=el.dataset,d=D();
   if(el.id==='vSearch'){vQ=el.value;const p=el.selectionStart;render();const n=$('#vSearch');if(n){n.focus();n.setSelectionRange(p,p)}return}
+  if(el.id==='trLang'){S.lang=el.value;trErr='';save();render();return}
   if(el.id==='cashCur'){S.cur=el.value.trim()||'R';save();return}
   if(el.id==='lateFrom'){lateFrom=+el.value;return}
   if(el.id==='tourName'){S.tour=el.value;$('#tswName').textContent=S.tour||'Untitled tour'}
