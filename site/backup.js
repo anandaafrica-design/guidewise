@@ -139,42 +139,42 @@ function acctHTML(){
   if(!sb||!loaded)return `<p class="note">${esc(msg)||'Loading…'}</p>`;
   const m=msg?`<div class="alert">${esc(msg)}</div>`:'',bz=busy?`<p class="note"><b>${esc(busy)}</b></p>`:'';
   if(!user){
-    if(step==='code')return m+`<p>We sent a code to <b>${esc(email)}</b>. Enter it below, or tap the link in the email on this phone.</p>
+    if(step==='code')return m+`<p>We sent a code to <b>${esc(email)}</b>. Enter it below, or tap the link in the email on this device.</p>
       <div class="field"><span class="lbl">6-digit code</span><input id="a-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></div>
       <div class="acts"><button class="btn pri" data-a="verify">Sign in</button><button class="btn" data-a="restart">Use another email</button></div>${bz}`;
     return m+`<p>Back up your tour so a lost or broken phone does not cost you your planning. It is off until you switch it on.</p>
       <div class="field"><span class="lbl">Your email</span><input id="a-email" type="email" autocomplete="email" value="${esc(email)}"></div>
       <div class="acts"><button class="btn pri" data-a="send">Email me a sign-in code</button></div>
-      <p class="note">Signing in sends only your email address. Your tour and guest details stay on this phone until you agree to the terms on the next screen.</p>${bz}`;
+      <p class="note">Signing in sends only your email address. Your tour and guest details stay on this device until you agree to the terms on the next screen.</p>${bz}`;
   }
-  if(!consented)return m+`<h2>Before anything leaves this phone</h2>
+  if(!consented)return m+`<h2>Before anything leaves this device</h2>
     <p class="note">Your backup includes guest details. Dietary needs and health notes are special personal information under POPIA, so we need your clear agreement. <a href="privacy.html" target="_blank" rel="noopener">Privacy notice</a></p>
     <label class="opt"><input type="checkbox" class="a-ok"><span>My guests know I keep their details to run the tour, and have agreed to dietary and health notes being recorded.</span></label>
     <label class="opt"><input type="checkbox" class="a-ok"><span>I agree to an encrypted backup being stored with Supabase in London, UK, outside South Africa.</span></label>
     <label class="opt"><input type="checkbox" class="a-ok"><span>I understand Guidewise cannot read or recover my backup. If I forget my passphrase, the cloud copy is lost.</span></label>
     <div class="acts"><button class="btn pri" data-a="consent" id="a-consent" disabled>I agree, continue</button><button class="btn" data-a="signout">Not now, sign out</button></div>${bz}`;
   if(!bk){
-    if(meta)return m+`<p>You already have a cloud backup${meta.updated_at?' from '+esc(when(meta.updated_at)):''}. Enter your backup passphrase to unlock it on this phone.</p>
+    if(meta)return m+`<p>You already have a cloud backup${meta.updated_at?' from '+esc(when(meta.updated_at)):''}. Enter your backup passphrase to unlock it on this device.</p>
       <div class="field"><span class="lbl">Backup passphrase</span><input id="a-p1" type="password" autocomplete="current-password"></div>
       <div class="acts"><button class="btn pri" data-a="unlock">Unlock</button></div>
       <p class="note">Forgotten it? <button class="btn sm" data-a="replace">Start a new backup</button> This permanently deletes the old cloud copy.</p>${bz}`;
-    return m+`<p>Create a backup passphrase. Your tour is encrypted with it on this phone before upload, so nobody else can read it, including us.</p>
+    return m+`<p>Create a backup passphrase. Your tour is encrypted with it on this device before upload, so nobody else can read it, including us.</p>
       <div class="field"><span class="lbl">Passphrase (10+ characters)</span><input id="a-p1" type="password" autocomplete="new-password"></div>
       <div class="field" style="margin-top:8px"><span class="lbl">Type it again</span><input id="a-p2" type="password" autocomplete="new-password"></div>
       <p class="note">Tip: three or four random words. Write it down somewhere safe, not in this app. It cannot be reset.</p>
       <div class="acts"><button class="btn pri" data-a="create">Encrypt and back up</button></div>${bz}`;
   }
   let h=m;
-  if(restoreOffer)h+=`<div class="alert"><b>Cloud backup unlocked.</b> Restore it to this phone? This replaces the tour on this phone.<div class="acts"><button class="btn pri" data-a="restore1">Restore backup</button><button class="btn" data-a="keep">Keep this phone's tour</button></div></div>`;
-  if(sync.conflict)h+=`<div class="alert"><b>The cloud has a newer backup, probably from another device.</b> Restore it here, or replace it with this phone's tour.<div class="acts"><button class="btn pri" data-a="restore1">Restore cloud backup</button><button class="btn" data-a="force">Replace with this phone</button></div></div>`;
+  if(restoreOffer)h+=`<div class="alert"><b>Cloud backup unlocked.</b> Restore it to this device? This replaces the tour on this device.<div class="acts"><button class="btn pri" data-a="restore1">Restore backup</button><button class="btn" data-a="keep">Keep this device's tour</button></div></div>`;
+  if(sync.conflict)h+=`<div class="alert"><b>The cloud has a newer backup, probably from another device.</b> Restore it here, or replace it with this device's tour.<div class="acts"><button class="btn pri" data-a="restore1">Restore cloud backup</button><button class="btn" data-a="force">Replace with this device</button></div></div>`;
   const last=sync.at?'Last backup: '+when(sync.at):'Not backed up yet';
   h+=`<p><b>${esc(last)}</b>${sync.pending&&!busy?`<br><span class="note">${navigator.onLine?'Changes waiting to back up.':'No signal. Will back up when you are online.'}</span>`:''}</p>
     <label class="opt"><input type="checkbox" id="a-auto" ${sync.auto?'checked':''}><span>Back up automatically after changes</span></label>
-    <div class="acts"><button class="btn pri" data-a="now">Back up now</button><button class="btn" data-a="restore" data-arm="Tap again to replace this phone's tour">Restore from cloud</button></div>${bz}
-    <p class="note">Encrypted on this phone before upload. Documents stay on this phone only for now.</p>
+    <div class="acts"><button class="btn pri" data-a="now">Back up now</button><button class="btn" data-a="restore" data-arm="Tap again to replace this device's tour">Restore from cloud</button></div>${bz}
+    <p class="note">Encrypted on this device before upload. Documents stay on this device only for now.</p>
     <h2>Account</h2><p class="note">Signed in as ${esc(user.email)}</p>
     <div class="acts"><button class="btn" data-a="signout">Sign out</button><button class="btn" data-a="delbk" data-arm="Tap again to delete">Delete cloud backup</button><button class="btn" data-a="delacct" data-arm="Tap again: deletes everything" style="color:var(--alert)">Delete account</button></div>
-    <p class="note">Signing out or deleting keeps the tour on this phone.</p>`;
+    <p class="note">Signing out or deleting keeps the tour on this device.</p>`;
   return h;
 }
 
