@@ -172,7 +172,7 @@ function acctHTML(){
     return m+`<p>Back up your tour so a lost or broken phone does not cost you your planning. It is off until you switch it on.</p>
       <div class="field"><span class="lbl">Your email</span><input id="a-email" type="email" autocomplete="email" value="${esc(email)}"></div>
       <div class="acts"><button class="btn pri" data-a="send">Email me a sign-in code</button></div>
-      <p class="note">Signing in sends only your email address. Your tour and guest details stay on this device until you agree to the terms on the next screen.</p>${bz}`;
+      <p class="note">Signing in sends only your email address. Your tour and guest details stay on this device until you agree to the terms on the next screen. <a href="setup.html#backup">How backup works</a></p>${bz}`;
   }
   if(!consented)return m+`<h2>Before anything leaves this device</h2>
     <p class="note">Your backup includes guest details. Dietary needs and health notes are special personal information under POPIA, so we need your clear agreement. <a href="privacy.html" target="_blank" rel="noopener">Privacy notice</a></p>
@@ -220,7 +220,7 @@ function acctHTML(){
     <p class="note">Encrypted on this device before upload. Documents stay on this device only for now.</p>
     <h2>Account</h2><p class="note">Signed in as ${esc(user.email)}</p>
     <div class="acts"><button class="btn" data-a="chpass">Change passphrase</button><button class="btn" data-a="newrec">New recovery code</button><button class="btn" data-a="signout">Sign out</button><button class="btn" data-a="delbk" data-arm="Tap again to delete">Delete cloud backup</button><button class="btn" data-a="delacct" data-arm="Tap again: deletes everything" style="color:var(--alert)">Delete account</button></div>
-    <p class="note">Signing out or deleting keeps the tour on this device.</p>`;
+    <p class="note">Signing out or deleting keeps the tour on this device. <a href="setup.html">Setup guide</a></p>`;
   return h;
 }
 

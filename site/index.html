@@ -44,6 +44,9 @@ input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);
 .opt input{width:22px;height:22px;min-height:0;flex:none;margin-top:2px;accent-color:var(--accent)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn.arm{background:var(--alert);color:#fff}
+.inst{max-width:640px;margin:12px auto 0;box-sizing:border-box;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:.92rem}
+@media (max-width:672px){.inst{margin:12px 16px 0}}
+a.btn{text-decoration:none;display:inline-flex;align-items:center}
 .rec{font:500 1.35rem/1.5 var(--mono);letter-spacing:.04em;background:var(--surface);border:2px dashed var(--accent);border-radius:12px;padding:14px;text-align:center;word-break:break-all;user-select:all}
 /* timeline */
 .tl{display:grid;gap:0}
@@ -110,6 +113,7 @@ nav button.on{color:var(--accent);box-shadow:inset 0 3px 0 var(--accent)}
   <div class="top"><input class="tour" id="tourName" aria-label="Tour name"><button class="acct off" id="acctBtn" data-tab="acct" aria-label="Backup"><svg viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.1 9.2 4.5 4.5 0 0 0 7 18z"/></svg><span>Back up</span></button></div>
   <div class="days" id="days"></div>
 </div></header>
+<div class="inst" id="inst" hidden><span>Install Guidewise on this device to use it with no signal.</span><span class="acts" style="margin:0"><button class="btn sm pri" data-inst="go" hidden>Install</button><a class="btn sm" href="setup.html">How to install</a><button class="x" data-inst="x" aria-label="Hide">×</button></span></div>
 <main class="wrap" id="main"></main>
 <nav><div class="in" id="tabs"></div></nav>
 <div class="toast" id="toast" hidden></div>
@@ -277,7 +281,7 @@ function render(){
   renderChrome();
   setTimeout(()=>{if(tab==='docs')fillDocs();if(tab==='plan')fillDayDocs();if(tab==='acct')fillAcct()},0);
   const v={plan:renderPlan,guests:renderGuests,pack:renderPack,brief:renderBrief,docs:renderDocs,intel:renderIntel,acct:window.renderAcct||(()=>'<p class="note">Backup is not available right now.</p>')}[tab]();
-  $('#main').innerHTML=v+(tab==='docs'||tab==='acct'?'':S.tour.includes('(sample)')?`<p class="sample">Sample tour loaded. Rename it and edit freely; your changes are saved in this browser.</p>`:'');
+  $('#main').innerHTML=v+(tab==='docs'||tab==='acct'?'':S.tour.includes('(sample)')?`<p class="sample">Sample tour loaded. Rename it and edit freely; your changes are saved in this browser. New here? <a href="setup.html">Setup guide</a></p>`:'');
 }
 
 document.addEventListener('click',e=>{
@@ -388,6 +392,19 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.dataset&&e.
 
 render();
 if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+</script>
+<script>
+/* Install banner: hidden once installed or dismissed. One-tap install where the browser allows it. */
+let installEvt=null;
+const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const instHidden=()=>{try{return localStorage.getItem('guidewise.inst')==='off'}catch(e){return false}};
+function paintInst(){const el=$('#inst');if(!el)return;el.hidden=isStandalone()||instHidden();el.querySelector('[data-inst=go]').hidden=!installEvt}
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;paintInst()});
+addEventListener('appinstalled',()=>{installEvt=null;paintInst();toast('Guidewise installed')});
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-inst]');if(!b)return;
+  if(b.dataset.inst==='go'&&installEvt){installEvt.prompt();await installEvt.userChoice.catch(()=>{});installEvt=null;paintInst()}
+  if(b.dataset.inst==='x'){try{localStorage.setItem('guidewise.inst','off')}catch(x){}paintInst()}});
+paintInst();
 </script>
 <script src="backup.js"></script>
 </body></html>
