@@ -420,19 +420,27 @@ const wxBusy=new Set();
 async function ensureWx(d){
   if(!d||!d.area||!d.date||!navigator.onLine)return;const k=d.area.toLowerCase()+'|'+d.date,c=wxMem[k];
   const ahead=daysBetween(todayIso(),d.date);if(ahead<0||ahead>15)return;
-  if(c&&Date.now()-c.at<3*3600e3){applyWx(d,c);return}if(wxBusy.has(k))return;wxBusy.add(k);
+  if(c&&Date.now()-c.at<3*3600e3){if(c.cc)ensureHols(c.cc,d.date.slice(0,4));applyWx(d,c);return}if(wxBusy.has(k))return;wxBusy.add(k);
   try{let g=wxMem['geo|'+d.area.toLowerCase()];
-    if(!g){const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&name='+encodeURIComponent(d.area)).then(r=>r.json());const x=r.results&&r.results[0];if(!x)throw 0;g={lat:x.latitude,lon:x.longitude,name:x.name+(x.country_code?', '+x.country_code:'')};wxMem['geo|'+d.area.toLowerCase()]=g}
-    const f=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${g.lat}&longitude=${g.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max&timezone=auto&start_date=${d.date}&end_date=${d.date}`).then(r=>r.json());
+    if(!g||g.cc===undefined){const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&name='+encodeURIComponent(d.area)).then(r=>r.json());const x=r.results&&r.results[0];if(!x)throw 0;g={lat:x.latitude,lon:x.longitude,cc:x.country_code||'',name:x.name+(x.country_code?', '+x.country_code:'')};wxMem['geo|'+d.area.toLowerCase()]=g}
+    const f=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${g.lat}&longitude=${g.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset&timezone=auto&start_date=${d.date}&end_date=${d.date}`).then(r=>r.json());
     const y=f.daily;if(!y||!y.time||!y.time.length)throw 0;
-    const [ic,word]=WMO(y.weather_code[0]),w={ic,word,lo:Math.round(y.temperature_2m_min[0]),hi:Math.round(y.temperature_2m_max[0]),rain:y.precipitation_probability_max[0]??0,wind:Math.round(y.wind_speed_10m_max[0]),place:g.name,at:Date.now()};
+    const [ic,word]=WMO(y.weather_code[0]),w={ic,word,lo:Math.round(y.temperature_2m_min[0]),hi:Math.round(y.temperature_2m_max[0]),rain:y.precipitation_probability_max[0]??0,wind:Math.round(y.wind_speed_10m_max[0]),sr:(y.sunrise&&y.sunrise[0]||'').slice(11,16),ss:(y.sunset&&y.sunset[0]||'').slice(11,16),cc:g.cc||'',place:g.name,at:Date.now()};
+    if(g.cc)ensureHols(g.cc,d.date.slice(0,4));
     wxMem[k]=w;try{localStorage.setItem(WX_KEY,JSON.stringify(wxMem))}catch(e){}applyWx(d,w,true);
   }catch(e){}finally{wxBusy.delete(k)}
 }
+/* Public holidays (free Nager.Date; only country and year are sent), cached per country and year. */
+const holBusy=new Set();
+async function ensureHols(cc,yr){const k='hol|'+cc+'|'+yr;if(wxMem[k]||holBusy.has(k)||!navigator.onLine)return;holBusy.add(k);
+  try{const r=await fetch(`https://date.nager.at/api/v3/PublicHolidays/${yr}/${cc}`).then(r=>r.json());if(Array.isArray(r)){wxMem[k]=r.filter(h=>h.global!==false).map(h=>({date:h.date,name:h.name}));try{localStorage.setItem(WX_KEY,JSON.stringify(wxMem))}catch(e){}if(['today','intel'].includes(tab))render()}}catch(e){}finally{holBusy.delete(k)}}
+function holidayOn(d){if(!d||!d.date)return null;const w=wxFor(d),cc=w&&w.cc||Object.values(wxMem).find(v=>v&&v.cc)?.cc;if(!cc)return null;
+  const l=wxMem['hol|'+cc+'|'+d.date.slice(0,4)];const h=l&&l.find(x=>x.date===d.date);return h?{...h,cc}:null}
+const sunLine=w=>w&&w.sr?`🌅 ${w.sr} · 🌇 ${w.ss}`:'';
 const wxText=w=>`${w.word}, ${w.lo} to ${w.hi}°C${w.wind>=25?`, wind up to ${w.wind} km/h`:''}${w.rain>=20?`, ${w.rain}% chance of rain`:''}`;
 function applyWx(d,w,fresh){const t=wxText(w);if((!d.weather||d.wxAuto)&&d.weather!==t){d.weather=t;d.wxAuto=true;save();if(fresh||tab==='brief'||tab==='today')render()}else if(fresh&&(tab==='today'||tab==='plan'))render()}
 function wxCard(d){const w=wxFor(d);if(!w)return d.area?'':`<button class="step" data-go="plan:${S.days.indexOf(d)}" data-edit-after="1" style="margin:10px 0"><span class="ic c-plan">🌤</span><span class="tx"><b>Get the weather for this day</b><span>Add the town or area in Edit day</span></span><span class="chev">›</span></button>`;
-  return `<div class="wx"><span class="i">${w.ic}</span><span><b>${esc(wxText(w))}</b><span class="note">${esc(w.place)} · forecast by Open-Meteo</span></span></div>`}
+  return `<div class="wx"><span class="i">${w.ic}</span><span><b>${esc(wxText(w))}</b><span class="note">${sunLine(w)?esc(sunLine(w))+' · ':''}${esc(w.place)} · forecast by Open-Meteo</span></span></div>`}
 
 /* ---------- Venues: phone and address remembered by name, offered again on later tours ---------- */
 const vKey=n=>String(n||'').trim().toLowerCase();
@@ -584,6 +592,7 @@ function nextSteps(f){
   if(n&&left&&f.n>=0&&f.n<=1)out.push({ic:'🎒',c:'pack',t:`${left} thing${left>1?'s':''} to pack for ${f.rel.toLowerCase()}`,s:d.checklist.filter(c=>!c.d).slice(0,2).map(c=>c.t).join(', '),go:'pack:'+f.i});
   const lunch=d.stops.find(s=>s.lunch);if(lunch&&di.length&&f.n>=0&&f.n<=2)out.push({ic:'🍽',c:'food',t:`Tell ${lunch.place.replace(/^Lunch (at )?/i,'')} about ${di.length} dietary need${di.length>1?'s':''}`,s:di.slice(0,3).map(g=>g.name.split(' ')[0]+': '+g.diet).join(' · '),go:'plan:'+f.i,diet:f.i+':'+d.stops.indexOf(lunch),cls:'warm'});
   const w=wxFor(d);if(w&&(w.wind>=40||w.rain>=60))out.unshift({ic:w.wind>=40?'💨':'🌧',c:'plan',t:w.wind>=40?`Strong wind ${f.rel.toLowerCase()}: ${w.wind} km/h`:`Rain likely ${f.rel.toLowerCase()}: ${w.rain}%`,s:'Check exposed stops, boat trips and the briefing',go:'plan:'+f.i,cls:'warm'});
+  const hol=holidayOn(d);if(hol&&f.n>=0&&f.n<=3)out.unshift({ic:'🗓',c:'plan',t:`Public holiday ${f.rel.toLowerCase()}: ${hol.name}`,s:'Expect busy roads and attractions; check opening hours',go:'plan:'+f.i,cls:'warm'});
   if(!d.area&&f.n>=0&&f.n<=15)out.push({ic:'🌤',c:'plan',t:'Add the area to get the weather',s:`Day ${f.i+1}: town or region, in Edit day`,go:'plan:'+f.i,edit:1});
   if(f.n===0&&hr>=16)out.unshift({ic:'📝',c:'plan',t:"Send today's report",s:'Times, changes and cash for your operator',go:'report:'+f.i,cls:hr>=18?'hot':''});
   if(typeof sync!=='undefined'&&!sync.acct&&!S.tour.includes('(sample)'))out.push({ic:'☁',c:'cloud',t:'Back up your tours',s:'So a lost phone does not cost you your planning',go:'acct'});
@@ -598,7 +607,7 @@ function renderToday(){
     const row=(lbl,k)=>`<div><span class="t">${fmt(x.sc[k].arrive)}</span> ${lbl} <b>${esc(d.stops[k].place)}</b></div>`;
     hero+=`<div class="now">${x.now>=0?row('Now',x.now)+`<div class="note" style="color:#fff;opacity:.85">Leave by ${fmt(x.sc[x.now].leave)}</div>`:''}${x.next>=0?row('Next',x.next)+(x.now<0?`<div style="opacity:.85">In ${x.sc[x.next].arrive-x.m} min</div>`:''):(x.now<0?'<div>Day done. Well guided.</div>':'')}</div>`}
   else if(d.stops.length){hero+=`<div class="now">${d.stops.slice(0,3).map((s,k)=>`<div><span class="t">${fmt(sc[k].arrive)}</span> ${esc(s.place)}</div>`).join('')}${d.stops.length>3?`<div style="opacity:.8">+ ${d.stops.length-3} more</div>`:''}</div>`}
-  const w=wxFor(d);if(w)hero+=`<div class="wxl">${w.ic} ${esc(wxText(w))}</div>`;
+  const w=wxFor(d);if(w)hero+=`<div class="wxl">${w.ic} ${esc(wxText(w))}${w.sr?`<br>${esc(sunLine(w))}`:''}</div>`;
   let nx=null;if(f.n===0&&d.stops.length){const x=nowNext(d);nx=d.stops[x.next>=0?x.next:x.now]||null}else if(d.stops.length)nx=d.stops.find(s=>!/^free time$/i.test(s.place)&&!/^✈/.test(s.place))||null;
   hero+=`<div class="go"><button data-go="plan:${f.i}">Open day plan</button><button class="ghost" data-wa="${f.i}">💬 Send briefing</button>${f.n===0&&d.stops.length?`<button class="ghost" data-go="late:${f.i}">⏱ Running late</button><button class="ghost" data-rem="1">${remOn?'🔔 Reminders on':'🔕 Reminders off'}</button>`:''}${nx&&f.n===0&&!/^free time$/i.test(nx.place)&&!/^✈/.test(nx.place)?`<a class="ghost" style="background:rgb(255 255 255 / .16);color:#fff;border-radius:999px;padding:9px 14px;font:700 .9rem var(--body);text-decoration:none" href="${esc(dirUrl(nx))}" target="_blank" rel="noopener">🧭 Navigate</a>${nx.phone?`<a style="background:rgb(255 255 255 / .16);color:#fff;border-radius:999px;padding:9px 14px;font:700 .9rem var(--body);text-decoration:none" href="tel:${esc(telOf(nx.phone))}">📞 Call</a>`:''}`:''}</div></div>`;
   const steps=nextSteps(f);
@@ -787,9 +796,12 @@ function renderBrief(){
 }
 
 function renderIntel(){
-  let h=`<h2>Local intel</h2><p class="note">Road closures, strikes, weather warnings, events. Optional, for your eyes only.</p>`;
+  let h=`<h2>Local intel</h2>`;
+  const auto=S.days.map((d,i)=>{const w=wxFor(d),hol=holidayOn(d),bits=[];if(hol)bits.push(`🗓 ${hol.name} (public holiday)`);if(w&&(w.wind>=40||w.rain>=60))bits.push(w.wind>=40?`💨 Wind up to ${w.wind} km/h`:`🌧 ${w.rain}% chance of rain`);if(w&&w.sr)bits.push(sunLine(w));return bits.length?{i,d,bits}:null}).filter(Boolean);
+  if(auto.length)h+=`<p class="eyebrow">Found for this tour</p><div class="list">${auto.map(a=>`<button class="li" data-go="plan:${a.i}"><span class="tx"><b>Day ${a.i+1} · ${esc(dLabel(a.d.date))}</b><span>${a.bits.map(esc).join(' · ')}</span></span><span class="chev">›</span></button>`).join('')}</div>`;
+  h+=`<p class="eyebrow">Your notes</p><p class="note">Road closures, strikes, contacts, tips. Private to you.</p>`;
   S.intel.forEach((n,i)=>{h+=`<div class="g"><div class="ghead"><textarea id="in-${i}" data-in="${i}" rows="2">${esc(n.t)}</textarea><button class="x" data-indel="${i}" aria-label="Remove note">×</button></div><span class="note">Added ${esc(dLabel(n.d))}</span></div>`});
-  return h+`<button class="btn" data-inadd="1">+ Add note</button><p class="sample">Next version: pull live alerts automatically for the tour's area.</p>`;
+  return h+`<button class="btn" data-inadd="1">+ Add note</button><p class="note">Weather, sun times and public holidays appear above for days with an area set (in Edit day), up to 15 days ahead.</p>`;
 }
 
 function renderHome(){
@@ -807,7 +819,7 @@ function renderHome(){
 
 function render(){
   renderChrome();
-  setTimeout(()=>{if(tab==='docs')fillDocs();if(tab==='plan')fillDayDocs();if(tab==='acct')fillAcct();if(tab==='import'&&window.fillImport)fillImport();if(['today','plan','brief'].includes(tab)){const fd=tab==='today'?S.days[focusDay().i]:D();ensureWx(fd)}},0);
+  setTimeout(()=>{if(tab==='docs')fillDocs();if(tab==='plan')fillDayDocs();if(tab==='acct')fillAcct();if(tab==='import'&&window.fillImport)fillImport();if(['today','plan','brief'].includes(tab)){const fd=tab==='today'?S.days[focusDay().i]:D();ensureWx(fd)}if(tab==='intel')S.days.forEach(d=>ensureWx(d));},0);
   const v={venues:renderVenues,welcome:renderWelcome,report:renderReport,today:renderToday,more:renderMore,count:renderCount,late:renderLate,cash:renderCash,home:renderHome,plan:renderPlan,guests:renderGuests,pack:renderPack,brief:renderBrief,docs:renderDocs,intel:renderIntel,plus:()=>(window.renderPlus?renderPlus():''),import:()=>(window.renderImport?renderImport():'<p class="note">Loading…</p>'),acct:window.renderAcct||(()=>'<p class="note">Backup is not available right now.</p>')}[tab]();
   $('#main').innerHTML=v+(tab==='docs'||tab==='acct'||tab==='home'||tab==='plus'||tab==='import'||tab==='today'||tab==='more'||tab==='count'||tab==='late'||tab==='cash'||tab==='welcome'||tab==='report'||tab==='venues'?'':S.tour.includes('(sample)')?`<p class="sample">Sample tour loaded. Rename it and edit freely; your changes are saved in this browser. New here? <a href="setup.html">Setup guide</a></p>`:'');
 }

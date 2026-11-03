@@ -9,7 +9,8 @@ const ok=(c,m)=>{console.log((c?'  ✓ ':'  ✗ ')+m);if(!c)fails++};
   const b=await chromium.launch();const ctx=await b.newContext({viewport:{width:390,height:844}});const errs=[];
   await ctx.route(/supabase\.co|wa\.me|maps\.google|google\.com\/maps/,r=>r.fulfill({status:200,contentType:'application/json',body:'{}'}));
   await ctx.route(/geocoding-api\.open-meteo/,r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({results:[{latitude:-34.19,longitude:18.43,name:'Simon\'s Town',country_code:'ZA'}]})}));
-  await ctx.route(/\/\/api\.open-meteo/,r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({daily:{time:['x'],weather_code:[61],temperature_2m_max:[21],temperature_2m_min:[14],precipitation_probability_max:[70],wind_speed_10m_max:[45]}})}));
+  await ctx.route(/\/\/api\.open-meteo/,r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({daily:{time:['x'],weather_code:[61],temperature_2m_max:[21],temperature_2m_min:[14],precipitation_probability_max:[70],wind_speed_10m_max:[45],sunrise:['2026-11-03T05:32'],sunset:['2026-11-03T19:41']}})}));
+  await ctx.route(/date\.nager\.at/,r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify([{date:new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10),name:'Test Day',global:true}])}));
   const pg=await ctx.newPage();pg.on('pageerror',e=>errs.push(e.message));
   await pg.goto(BASE);await pg.evaluate(()=>localStorage.clear());await pg.reload();await pg.waitForTimeout(600);
 
@@ -32,6 +33,11 @@ const ok=(c,m)=>{console.log((c?'  ✓ ':'  ✗ ')+m);if(!c)fails++};
   await pg.evaluate(()=>{S.days[0].date=todayIso();S.days[0].weather='';tab='today';render()});await pg.waitForTimeout(800);
   ok(await pg.evaluate(()=>/Rain, 14 to 21/.test(S.days[0].weather)),'forecast fills the briefing weather');
   ok(await pg.$$eval('.step b',x=>x.some(e=>/Strong wind/.test(e.textContent))),'strong wind becomes a next step');
+
+  await pg.waitForTimeout(600);await pg.evaluate(()=>render());
+  ok(await pg.$$eval('.step b',x=>x.some(e=>/Public holiday today: Test Day/.test(e.textContent))),'public holiday becomes a next step');
+  ok(/05:32/.test(await pg.textContent('.hero')),'sunrise and sunset on the Today card');
+  await pg.evaluate(()=>{tab='intel';render()});ok(/Test Day/.test(await pg.textContent('#main')),'local intel lists the holiday');
 
   console.log('Running late');
   await pg.evaluate(()=>{tab='late';lateDone=null;lateFrom=null;render()});const before=await pg.evaluate(()=>schedule(D()).map(x=>x.arrive));
