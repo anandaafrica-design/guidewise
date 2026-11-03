@@ -177,12 +177,12 @@ function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1
 function emailSuggestion(e){const at=e.lastIndexOf('@');if(at<1)return'';const dom=e.slice(at+1).toLowerCase();if(DOMAINS.includes(dom))return'';
   const max=dom.length>=10?2:1;let best='',bd=max+1;for(const k of DOMAINS){const d=lev(dom,k);if(d<bd){bd=d;best=k}}return best?e.slice(0,at+1)+best:''}
 
-const BUY=`<div class="acts"><button class="btn pri" data-a="buy" data-plan="yearly">R490 a year · 2 months free</button><button class="btn" data-a="buy" data-plan="monthly">R49 a month</button></div>
+const BUY=`<div class="acts"><button class="btn pri" data-a="buy" data-plan="yearly">R790 a year · 2 months free</button><button class="btn" data-a="buy" data-plan="monthly">R79 a month</button></div>
   <p class="note">Secure card payment by Paystack. Cancel any time. Everything on this device stays free.</p>`;
 function planCard(){const p=plan;if(!p)return'';
   if(p.status==='comp')return `<p class="note"><b>Guidewise Plus</b> · complimentary</p>`;
   const box=(h)=>`<div class="g"><div>${h}</div></div>`;
-  if(p.status==='active')return box(`<b>Guidewise Plus</b> · ${p.plan==='yearly'?'R490 a year':'R49 a month'}<br><span class="note">${p.current_period_end?'Renews '+esc(dayStr(p.current_period_end)):'Active'}</span><div class="acts"><button class="btn sm" data-tab="plus">What's included</button><button class="btn sm" data-a="manage">Change card</button><button class="btn sm" data-a="cancelsub" data-arm="Tap again to cancel">Cancel subscription</button></div>
+  if(p.status==='active')return box(`<b>Guidewise Plus</b> · ${p.plan==='yearly'?'R790 a year':'R79 a month'}<br><span class="note">${p.current_period_end?'Renews '+esc(dayStr(p.current_period_end)):'Active'}</span><div class="acts"><button class="btn sm" data-tab="plus">What's included</button><button class="btn sm" data-a="manage">Change card</button><button class="btn sm" data-a="cancelsub" data-arm="Tap again to cancel">Cancel subscription</button></div>
     <span class="note">If you cancel, Plus keeps working until ${esc(dayStr(p.current_period_end||new Date().toISOString()))}.</span>`);
   if(p.status==='non_renewing'&&plus())return box(`<b>Guidewise Plus</b> · cancelled<br><span class="note">Backups continue until ${esc(dayStr(p.current_period_end))}. You will not be charged again.</span><div class="acts"><button class="btn sm pri" data-a="resumesub">Keep my subscription</button></div>`);
   if(p.status==='attention'&&plus())return box(`<b>Payment did not go through.</b><br><span class="note">Update your card to keep backing up.</span><div class="acts"><button class="btn sm pri" data-a="manage">Update card</button></div>`);
@@ -202,15 +202,15 @@ window.renderPlus=()=>{const p=plan||{},yearly=p.plan==='yearly';
   const next=!ready()?`<button class="btn pri" data-tab="acct">Set up your backup</button>`:`<button class="btn pri" data-tab="home">Go to my tours</button>`;
   return `<div class="welcome"><div class="burst" aria-hidden="true">✓</div>
     <h2 class="wtitle">Congratulations! You're in!</h2>
-    <p>Welcome to <b>Guidewise Plus</b>${p.status==='comp'?'':' · '+(yearly?'R490 a year':'R49 a month')}.${ren?` Renews ${esc(ren)}.`:''}</p></div>
+    <p>Welcome to <b>Guidewise Plus</b>${p.status==='comp'?'':' · '+(yearly?'R790 a year':'R79 a month')}.${ren?` Renews ${esc(ren)}.`:''}</p></div>
   <h2>What you now have</h2>
   ${li('☁','Encrypted cloud backup','Every tour, guest and checklist is locked on your phone, then backed up. Nobody else can read it, including us.')}
   ${li('↻','Automatic backups','Saved 15 seconds after each change, and again when you get signal back.')}
   ${li('⇄','Restore on any device','New or lost phone? Sign in, unlock, and your tours are back.')}
   ${li('🔑','Recovery code','A second way in if you ever forget your passphrase.')}
   ${li('▦','All your tours','Every tour on your Tours page is included, past and upcoming.')}
+  ${li('✦','AI import','Turn an itinerary, rooming list or recap into a ready tour in about a minute. 5 imports a month. Tours, then Import from documents.')}
   <h2>Coming to Plus</h2>
-  ${li('✦','AI import','Turn an itinerary or rooming list into a ready tour in a minute.')}
   ${li('📎','Document backup','Vouchers and PDFs backed up with your tours.')}
   <div class="acts" style="margin-top:18px">${next}<button class="btn" data-tab="acct">Backup settings</button></div>
   <p class="note">Manage or cancel any time under <b>Back up</b>. <a href="terms.html">Terms and pricing</a></p>`};

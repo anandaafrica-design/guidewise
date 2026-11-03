@@ -10,8 +10,10 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 ## Files
 - site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
 - site/index.html: whole app (vanilla JS, no build step)
-- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v14). New precached files go in its F list
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v15). New precached files go in its F list
 - site/backup.js: cloud backup (sign-in, POPIA consent, passphrase, encrypt, sync). Shares globals with index.html
+- site/import.js: AI import (tab 'import', Tours > Import from documents). Loaded after backup.js and uses its globals (sb, user, plan, plus, refresh, SB_URL, SB_KEY)
+- site/vendor/xlsx-mini-0.18.5.js: SheetJS (Apache-2.0), lazy-loaded by import.js for .xlsx/.csv
 - site/vendor/supabase-2.45.4.js: vendored so it works offline; site/privacy.html: POPIA notice; site/terms.html: terms, pricing, refunds (Paystack needs it); site/setup.html: setup guide to send to guides (install, first tour, backup, help). Keep it in step with the UI
 - supabase/: record of the deployed migration and edge function
 - site/manifest.webmanifest, site/icon-192.png, site/icon-512.png
@@ -36,7 +38,7 @@ Optional backup (v4): Supabase project "guidewise" (ref bqevxxhdtzlywjoqbogt, Lo
 - Changing consent wording: bump to popia-v3 in backup.js, privacy.html and the consents check constraint and has_consent()
 
 ## Payments (v8): Guidewise Plus via Paystack
-- Free: everything on device. Plus: cloud backup (and later AI import). R49/month or R490/year, ZAR. 30-day trial for every new account (trigger on auth.users), no card needed
+- Free: everything on device. Plus: cloud backup and AI import. R79/month or R790/year (was R49/R490 before AI import), ZAR. 30-day trial for every new account (trigger on auth.users), no card needed
 - Table subscriptions (read-only to users; written by triggers and edge functions). has_plus() is mirrored by plus() in backup.js
 - Uploading new backup data needs Plus (insert policy + trigger on ciphertext change). Restore, delete, passphrase/recovery re-wraps always allowed (POPIA access and erasure)
 - Welcome screen (tab 'plus', renderPlus in backup.js): 'Congratulations! You're in!' plus what's included; shown once per subscription after payment (key guidewise.welcomed), and via "What's included" on the Plus card. Keep the list in step with what Plus really includes
@@ -45,9 +47,17 @@ Optional backup (v4): Supabase project "guidewise" (ref bqevxxhdtzlywjoqbogt, Lo
 - Edge functions: billing-checkout (JWT; Paystack customer + transaction with plan; returns to /?paid=1), billing-webhook (no JWT; HMAC-SHA512 signature check; re-fetches the subscription from Paystack), billing-manage (JWT; in-app cancel (Paystack disable) and resume (Paystack cannot reactivate a cancelled subscription, so resume creates a new one on the same card with start_date = paid period end); hosted page for changing card; sync, run once per session when Backup opens so status does not depend on the webhook; verify on return from checkout). delete-account also disables the Paystack subscription
 - Secrets in Supabase (owner enters them, never in code): PAYSTACK_SECRET_KEY, PAYSTACK_PLAN_MONTHLY, PAYSTACK_PLAN_YEARLY. Webhook URL: https://bqevxxhdtzlywjoqbogt.supabase.co/functions/v1/billing-webhook
 
+## AI import (v9, Plus)
+- Edge function ai-import (verify_jwt false, does its own auth): JWT + has_plus() + consent 'ai-v1' in the body + 5 successful imports per calendar month (ai_usage). Claude Opus 5.5, effort low (64s, about R3 per tour; medium took 134s, too close to the 150s edge limit), structured JSON output, server-side fallback beta. Secret ANTHROPIC_API_KEY. Optional env AI_MODEL, AI_EFFORT
+- Never stores documents or drafts; ai_usage keeps only counts and tokens
+- On the phone first: spreadsheets lose passport/visa/flight/phone/email/address/insurance columns (heading row detection), DOB becomes MM-DD; text files lose emails and phone numbers; photos resized; PDFs sent as is. Any year in a returned bday is dropped
+- Draft review screen, then arrive/leave clock times are converted to drive/stay minutes; day notes and warnings go to Local intel; check flags become '⚠ Check:' in notes
+- Per-import consent ticks (operator policy + transfer to Anthropic, USA); privacy.html#ai explains. Changing that wording: bump ai-v1 in import.js, ai-import and privacy.html
+- Test path: header x-gw-test with a row in admin_test_tokens (owner only); delete tokens after testing
+
 ## Roadmap
 1. Accounts + cloud backup: done in v4 (documents not yet backed up: phase 2 via Supabase Storage, encrypted the same way)
-2. Payments: done in v8 (Paystack, see Payments section). Next: AI document import for Plus, with per-document consent
+2. Payments: done in v8 (Paystack). AI import: done in v9
 3. Custom domain (guidewise.app or .co, to be bought)
 4. Live local intel for the tour's area
 
