@@ -1,0 +1,380 @@
+<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#ffffff"><meta name="color-scheme" content="light"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style>
+<title>Guidewise</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: a field kit. Sticky day header, one working panel, bottom tab bar for thumb use. */
+:root{
+  --bg:#f6f7f5; --surface:#ffffff; --ink:#111a16; --muted:#46534c; --line:#d6ddd8;
+  --accent:#24584a; --accent-ink:#ffffff; --ochre:#9a6212; --alert:#a3321f; --soft:#e8f0eb; color-scheme:light;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",ui-sans-serif,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+/* Light only: designed for reading outdoors in bright sun. */
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:17px/1.55 var(--body);margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 110px}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);color:var(--ink);border-bottom:1px solid var(--line);box-shadow:0 2px 10px rgb(17 26 22 / .05);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 12px}
+header .in{max-width:640px;margin:0 auto;display:grid;gap:8px}
+.tour{font:800 1.45rem/1.15 var(--display);margin:0;background:none;border:0;color:inherit;width:100%;padding:0}
+.days{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.days button{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 14px;font:700 .9rem var(--body);cursor:pointer}
+.days button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+h2{font:700 1.25rem var(--display);margin:26px 0 12px;text-wrap:balance}
+.lbl{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+input,textarea,select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:11px 12px;width:100%;box-sizing:border-box;min-height:46px}
+textarea{resize:vertical;min-height:64px}
+input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.row{display:grid;gap:8px;grid-template-columns:1fr 1fr}
+.field{display:grid;gap:4px;min-width:0}
+.btn{border:0;border-radius:10px;padding:12px 16px;min-height:46px;font:700 1rem var(--body);cursor:pointer;background:var(--soft);color:var(--ink)}
+.btn.pri{background:var(--accent);color:var(--accent-ink)}
+.btn.sm{padding:6px 10px;font-size:.82rem}
+.x{background:none;border:0;color:var(--muted);font-size:1.4rem;cursor:pointer;padding:6px 10px;min-width:44px;min-height:44px}
+/* timeline */
+.tl{display:grid;gap:0}
+.stop{display:grid;grid-template-columns:66px 1fr;gap:12px;position:relative}
+.time{font:500 1.05rem var(--mono);color:var(--ink);font-variant-numeric:tabular-nums;padding-top:12px;text-align:right}
+.time small{display:block;color:var(--muted);font-size:.8rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:0 1px 3px rgb(17 26 22 / .04);display:grid;gap:8px;min-width:0;margin-block:6px}
+.card.lunch{border-left:4px solid var(--ochre)}
+.drive{grid-column:2;font:500 .85rem var(--mono);color:var(--muted);display:flex;align-items:center;gap:6px;padding-left:4px}
+.drive input{width:72px;padding:6px 8px;font-size:.9rem;min-height:36px}
+.mini{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.mini .field{gap:2px}
+.mini input{padding:8px 10px;font-size:1rem}
+.flag{display:inline-flex;gap:6px;align-items:center;font-size:.9rem;font-weight:700;background:color-mix(in srgb,var(--ochre) 16%,transparent);color:var(--ink);border-radius:6px;padding:4px 8px}
+.alert{background:color-mix(in srgb,var(--alert) 10%,var(--surface));border-left:4px solid var(--alert);border-radius:8px;padding:10px 12px;margin:12px 0;font-size:.92rem}
+/* guests */
+.g{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:8px;margin-bottom:8px}
+.ghead{display:flex;gap:8px;align-items:center}
+.ghead input{font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:.85rem;border-radius:999px;padding:3px 9px;background:var(--soft)}
+.chip.d{background:color-mix(in srgb,var(--ochre) 20%,transparent)}
+.chip.b{background:color-mix(in srgb,var(--alert) 18%,transparent)}
+/* checklist */
+.ck{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.ck input[type=checkbox]{width:26px;height:26px;min-height:0;accent-color:var(--accent);flex:none}
+.ck input[type=text]{border:0;background:transparent;padding:4px}
+.ck.done input[type=text]{text-decoration:line-through;color:var(--muted)}
+.prog{height:6px;background:var(--soft);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.prog i{display:block;height:100%;background:var(--accent);transition:width .3s}
+/* briefing */
+/* briefing bubble on white */
+.bubble{background:color-mix(in srgb,var(--accent) 10%,var(--surface));border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:14px;white-space:pre-wrap;font-size:1rem;line-height:1.6;overflow-wrap:anywhere}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.note{font-size:.92rem;color:var(--muted)}
+/* tabbar */
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);z-index:6}
+nav .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
+nav button{background:none;border:0;padding:10px 2px 12px;font:700 .78rem var(--body);color:var(--muted);cursor:pointer;display:grid;gap:3px;justify-items:center}
+nav button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--accent);box-shadow:inset 0 3px 0 var(--accent)}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:.88rem;z-index:9}
+/* documents */
+.drop{border:2px dashed var(--line);border-radius:12px;padding:16px;display:grid;gap:10px;justify-items:start;background:var(--surface)}
+.drop.over{border-color:var(--accent);background:var(--soft)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 13px;font:700 .88rem var(--body);cursor:pointer}
+.seg button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.doc{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-bottom:8px}
+.doc .th{width:44px;height:44px;border-radius:8px;background:var(--soft);display:grid;place-items:center;font:700 .7rem var(--mono);color:var(--muted);overflow:hidden}
+.doc .th img{width:100%;height:100%;object-fit:cover}
+.doc .meta{min-width:0}
+.doc .meta b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--accent)}
+.doc select{width:auto;padding:5px 8px;font-size:.85rem;margin-top:6px;min-height:36px}
+.doc .del.arm{color:var(--alert);font-size:.8rem;font-weight:700}
+.daydocs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.daydocs button{border:1px solid var(--line);background:var(--surface);color:var(--accent);border-radius:8px;padding:5px 9px;font:700 .8rem var(--body);cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sample{font-size:.78rem;color:var(--muted);margin-top:8px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head><body>
+
+<header><div class="in">
+  <input class="tour" id="tourName" aria-label="Tour name">
+  <div class="days" id="days"></div>
+</div></header>
+<main class="wrap" id="main"></main>
+<nav><div class="in" id="tabs"></div></nav>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const KEY='tourPrepKit.v1';
+const sample={
+  tour:'Cape & Winelands · Smith party (sample)',
+  day:0,
+  days:[
+    {date:'2026-11-04',title:'Cape Peninsula',meet:'Hotel lobby',start:'08:00',weather:'Sunny, 24°C, strong south-easter after lunch',dress:'Layers and flat walking shoes. Windbreaker for Cape Point.',bring:'Sunscreen, hat, sunglasses, camera, passport copy',
+     stops:[
+      {place:'Chapman\'s Peak Drive',drive:40,stay:20,note:'Photo stop. Toll: cash or card.',lunch:false},
+      {place:'Cape Point Nature Reserve',drive:45,stay:120,note:'Funicular tickets pre-booked. Watch baboons with food.',lunch:false},
+      {place:'Lunch at Two Oceans Restaurant',drive:5,stay:75,note:'Table for 8 booked under A&K.',lunch:true},
+      {place:'Boulders Beach penguins',drive:30,stay:60,note:'SANParks entry per person.',lunch:false},
+      {place:'Back at hotel',drive:50,stay:0,note:'',lunch:false}
+     ],
+     checklist:[{t:'Cash for tolls and tips (R2 000 in small notes)',d:true},{t:'Cape Point funicular vouchers',d:false},{t:'Boulders entry: Wild Card or cash',d:false},{t:'Lunch booking confirmation',d:true},{t:'First aid kit and water',d:false}]},
+    {date:'2026-11-05',title:'Stellenbosch & Franschhoek',meet:'Hotel lobby',start:'09:00',weather:'Warm, 28°C, light wind',dress:'Smart casual for the wine estates.',bring:'Hat, sunscreen, light jacket for cellars',
+     stops:[
+      {place:'Babylonstoren garden walk',drive:55,stay:90,note:'',lunch:false},
+      {place:'Lunch at La Petite Ferme',drive:30,stay:90,note:'Confirm dietaries 24h ahead.',lunch:true},
+      {place:'Franschhoek village stroll',drive:10,stay:60,note:'',lunch:false},
+      {place:'Back at hotel',drive:75,stay:0,note:'',lunch:false}
+     ],
+     checklist:[{t:'Tasting vouchers',d:false},{t:'Cash for tips',d:false}]}
+  ],
+  guests:[
+    {name:'Robert Smith',room:'412',diet:'',bday:'',notes:'Bad knee: avoid long stairs'},
+    {name:'Linda Smith',room:'412',diet:'Gluten free',bday:'11-05',notes:''},
+    {name:'Megan Lee',room:'415',diet:'Vegetarian',bday:'',notes:'Keen birder'},
+    {name:'Tom Lee',room:'415',diet:'Shellfish allergy',bday:'',notes:'Carries EpiPen'}
+  ],
+  intel:[
+    {t:'Chapman\'s Peak may close at short notice in high wind. Check status at 07:00.',d:'2026-11-03'},
+    {t:'Load-shedding unlikely this week.',d:'2026-11-03'}
+  ]
+};
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!S||!S.days)S=structuredClone(sample);
+let tab='plan';
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const D=()=>S.days[S.day]||S.days[0];
+const toMin=t=>{const[h,m]=(t||'08:00').split(':').map(Number);return h*60+(m||0)};
+const fmt=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
+const dLabel=iso=>{if(!iso)return'';const d=new Date(iso+'T12:00');return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})};
+function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(t._t);t._t=setTimeout(()=>t.hidden=true,1800)}
+function schedule(day){let cur=toMin(day.start);return day.stops.map((s,i)=>{const arrive=cur+(+s.drive||0);const leave=arrive+(+s.stay||0);cur=leave;return{arrive,leave}})}
+function bdays(day){const md=(day.date||'').slice(5);return S.guests.filter(g=>g.bday&&g.bday===md)}
+function diets(){return S.guests.filter(g=>g.diet)}
+
+const icons={
+ plan:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+ guests:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c.8-3.2 3.2-5 6-5s5.2 1.8 6 5"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14c2.4 0 4.2 1.4 5 4"/></svg>',
+ pack:'<svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M9 7V5h6v2M9 13l2 2 4-4"/></svg>',
+ brief:'<svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>',
+ docs:'<svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>',
+ intel:'<svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>'
+};
+const names={plan:'Day plan',guests:'Guests',pack:'Checklist',brief:'Briefing',docs:'Documents',intel:'Local intel'};
+
+function renderChrome(){
+  $('#tourName').value=S.tour;
+  $('#days').innerHTML=S.days.map((d,i)=>`<button class="${i===S.day?'on':''}" data-day="${i}">Day ${i+1} · ${esc(dLabel(d.date))}</button>`).join('')+`<button data-addday="1" aria-label="Add a day">+ Day</button>`;
+  $('#tabs').innerHTML=Object.keys(names).map(k=>`<button class="${k===tab?'on':''}" data-tab="${k}">${icons[k]}<span>${k==='pack'?'Check':k==='docs'?'Docs':names[k].split(' ')[0]}</span></button>`).join('');
+}
+
+function renderPlan(){
+  const d=D(),sc=schedule(d),b=bdays(d),di=diets();
+  let h='';
+  if(b.length)h+=`<div class="alert"><b>Birthday today:</b> ${b.map(g=>esc(g.name)).join(', ')}. Arrange cake or a card with the lunch venue.</div>`;
+  h+=`<h2>${esc(d.title)||'Untitled day'}</h2>
+  <div class="row">
+    <div class="field"><span class="lbl">Date</span><input type="date" id="f-date" data-f="date" value="${esc(d.date)}"></div>
+    <div class="field"><span class="lbl">Depart</span><input type="time" id="f-start" data-f="start" value="${esc(d.start)}"></div>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <div class="field"><span class="lbl">Day title</span><input id="f-title" data-f="title" value="${esc(d.title)}"></div>
+    <div class="field"><span class="lbl">Meeting point</span><input id="f-meet" data-f="meet" value="${esc(d.meet)}"></div>
+  </div>
+  <h2>Timeline</h2><div class="tl">
+  <div class="stop"><div class="time">${fmt(toMin(d.start)-15)}<small>meet</small></div><div class="card" style="background:var(--soft)"><b>Meet at ${esc(d.meet)||'meeting point'}</b><span class="note">Depart ${esc(d.start)}</span></div></div>`;
+  d.stops.forEach((s,i)=>{
+    h+=`<div class="stop"><div></div><div class="drive">↓ drive <input type="number" min="0" id="dr-${i}" data-s="${i}" data-k="drive" value="${s.drive}"> min</div></div>
+    <div class="stop"><div class="time">${fmt(sc[i].arrive)}${s.stay?`<small>to ${fmt(sc[i].leave)}</small>`:''}</div>
+    <div class="card ${s.lunch?'lunch':''}">
+      <div style="display:flex;gap:6px;align-items:center"><input id="pl-${i}" data-s="${i}" data-k="place" value="${esc(s.place)}" style="font-weight:700"><button class="x" data-del="${i}" aria-label="Remove stop">×</button></div>
+      <div class="mini">
+        <div class="field"><span class="lbl">Stay (min)</span><input type="number" min="0" id="st-${i}" data-s="${i}" data-k="stay" value="${s.stay}"></div>
+        <div class="field"><span class="lbl">Leave by</span><input disabled value="${fmt(sc[i].leave)}"></div>
+        <label class="field"><span class="lbl">Lunch?</span><input type="checkbox" id="lu-${i}" data-s="${i}" data-k="lunch" ${s.lunch?'checked':''} style="width:22px;height:22px;accent-color:var(--ochre)"></label>
+      </div>
+      <input id="nt-${i}" data-s="${i}" data-k="note" value="${esc(s.note)}" placeholder="Notes: tickets, bookings, tolls">
+      ${s.lunch&&di.length?`<div class="chips">${di.map(g=>`<span class="flag">${esc(g.name.split(' ')[0])}: ${esc(g.diet)}</span>`).join('')}</div>`:''}
+    </div></div>`;
+  });
+  h+=`</div><div class="acts"><button class="btn" data-addstop="1">+ Add stop</button></div>`;
+  const end=sc.length?sc[sc.length-1].leave:toMin(d.start);
+  h+=`<p class="note">Day runs ${esc(d.start)} to ${fmt(end)} (${Math.round((end-toMin(d.start))/6)/10} hours). Change any drive or stay time and every later stop moves with it.</p>`;
+  h+='<div id="dayDocs"></div>';
+  return h;
+}
+
+function renderGuests(){
+  const di=diets();
+  let h=`<h2>Guests (${S.guests.length})</h2>`;
+  if(di.length)h+=`<p class="note">${di.length} dietary need${di.length>1?'s':''} flagged on every lunch stop.</p>`;
+  S.guests.forEach((g,i)=>{
+    h+=`<div class="g"><div class="ghead"><input id="gn-${i}" data-g="${i}" data-k="name" value="${esc(g.name)}" placeholder="Name"><button class="x" data-gdel="${i}" aria-label="Remove guest">×</button></div>
+    <div class="row">
+      <div class="field"><span class="lbl">Room</span><input id="gr-${i}" data-g="${i}" data-k="room" value="${esc(g.room)}"></div>
+      <div class="field"><span class="lbl">Birthday (MM-DD)</span><input id="gb-${i}" data-g="${i}" data-k="bday" value="${esc(g.bday)}" placeholder="11-05"></div>
+    </div>
+    <div class="field"><span class="lbl">Dietary</span><input id="gd-${i}" data-g="${i}" data-k="diet" value="${esc(g.diet)}" placeholder="None"></div>
+    <div class="field"><span class="lbl">Notes</span><input id="go-${i}" data-g="${i}" data-k="notes" value="${esc(g.notes)}" placeholder="Mobility, interests, preferences"></div>
+    </div>`;
+  });
+  return h+`<button class="btn" data-gadd="1">+ Add guest</button>`;
+}
+
+function renderPack(){
+  const d=D(),n=d.checklist.length,done=d.checklist.filter(c=>c.d).length;
+  let h=`<h2>Before you leave: ${esc(d.title)}</h2><div class="prog"><i style="width:${n?done/n*100:0}%"></i></div><p class="note">${done} of ${n} ready</p>`;
+  d.checklist.forEach((c,i)=>{h+=`<div class="ck ${c.d?'done':''}"><input type="checkbox" id="cd-${i}" data-c="${i}" ${c.d?'checked':''} aria-label="Done"><input type="text" id="ct-${i}" data-ct="${i}" value="${esc(c.t)}"><button class="x" data-cdel="${i}" aria-label="Remove item">×</button></div>`});
+  h+=`<div class="acts"><button class="btn" data-cadd="1">+ Add item</button><button class="btn" data-creset="1">Untick all</button></div>`;
+  return h;
+}
+
+function briefingText(){
+  const d=D(),sc=schedule(d);
+  const meet=fmt(toMin(d.start)-15);
+  const stops=d.stops.filter(s=>s.stay>0).map((s,i)=>s.place).filter(Boolean);
+  let t=`Good evening everyone 🌍\n\nTomorrow, ${dLabel(d.date)}: *${d.title}*\n\n`;
+  t+=`🕗 Please meet at ${d.meet} at *${meet}*. We depart at ${d.start} sharp.\n\n`;
+  if(d.weather)t+=`☀️ Weather: ${d.weather}\n`;
+  if(d.dress)t+=`👟 Wear: ${d.dress}\n`;
+  if(d.bring)t+=`🎒 Bring: ${d.bring}\n`;
+  if(stops.length){t+=`\n📍 What to expect:\n`;d.stops.forEach((s,i)=>{if(s.stay>0)t+=`${fmt(sc[i].arrive)}  ${s.place}\n`});
+    const last=sc[sc.length-1];if(last)t+=`\nWe should be back around ${fmt(last.leave)}.\n`}
+  t+=`\nSleep well, see you in the morning!`;
+  return t;
+}
+function renderBrief(){
+  const d=D();
+  return `<h2>Evening briefing</h2>
+  <div class="field"><span class="lbl">Weather</span><input id="f-weather" data-f="weather" value="${esc(d.weather)}"></div>
+  <div class="field" style="margin-top:8px"><span class="lbl">What to wear</span><input id="f-dress" data-f="dress" value="${esc(d.dress)}"></div>
+  <div class="field" style="margin-top:8px"><span class="lbl">What to bring</span><input id="f-bring" data-f="bring" value="${esc(d.bring)}"></div>
+  <h2>Preview</h2><div class="bubble" id="bubble">${esc(briefingText())}</div>
+  <div class="acts"><button class="btn pri" data-copy="1">Copy for WhatsApp</button></div>
+  <p class="note">Times come straight from the day plan, so edit stops there. Paste into your group chat. Birthdays and dietaries stay private and never appear here.</p>`;
+}
+
+function renderIntel(){
+  let h=`<h2>Local intel</h2><p class="note">Road closures, strikes, weather warnings, events. Optional, for your eyes only.</p>`;
+  S.intel.forEach((n,i)=>{h+=`<div class="g"><div class="ghead"><textarea id="in-${i}" data-in="${i}" rows="2">${esc(n.t)}</textarea><button class="x" data-indel="${i}" aria-label="Remove note">×</button></div><span class="note">Added ${esc(dLabel(n.d))}</span></div>`});
+  return h+`<button class="btn" data-inadd="1">+ Add note</button><p class="sample">Next version: pull live alerts automatically for the tour's area.</p>`;
+}
+
+function render(){
+  renderChrome();
+  setTimeout(()=>{if(tab==='docs')fillDocs();if(tab==='plan')fillDayDocs()},0);
+  const v={plan:renderPlan,guests:renderGuests,pack:renderPack,brief:renderBrief,docs:renderDocs,intel:renderIntel}[tab]();
+  $('#main').innerHTML=v+(tab==='docs'?'':S.tour.includes('(sample)')?`<p class="sample">Sample tour loaded. Rename it and edit freely; your changes are saved in this browser.</p>`:'');
+}
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;const ds=b.dataset,d=D();
+  if(ds.tab){tab=ds.tab;render();scrollTo(0,0);return}
+  if(ds.dopen){openDoc(+ds.dopen);return}
+  if(ds.ddel){if(b.classList.contains('arm')){dbDel(+ds.ddel).then(fillDocs)}else{b.classList.add('arm');b.textContent='Delete?';setTimeout(()=>{b.classList.remove('arm');b.textContent='×'},3000)}return}
+  if(ds.dfilter!==undefined){docFilter=ds.dfilter;fillDocs();return}
+  if(ds.dpick){$('#docFile').click();return}
+  if(ds.day){S.day=+ds.day}
+  else if(ds.addday){const last=S.days[S.days.length-1];const nd=new Date((last?.date||'2026-11-04')+'T12:00');nd.setDate(nd.getDate()+1);
+    S.days.push({date:nd.toISOString().slice(0,10),title:'New day',meet:'Hotel lobby',start:'08:00',weather:'',dress:'',bring:'',stops:[{place:'First stop',drive:30,stay:60,note:'',lunch:false}],checklist:[{t:'Cash',d:false},{t:'Tickets',d:false}]});S.day=S.days.length-1}
+  else if(ds.addstop){d.stops.push({place:'New stop',drive:20,stay:45,note:'',lunch:false})}
+  else if(ds.del!==undefined){d.stops.splice(+ds.del,1)}
+  else if(ds.gadd){S.guests.push({name:'',room:'',diet:'',bday:'',notes:''})}
+  else if(ds.gdel!==undefined){S.guests.splice(+ds.gdel,1)}
+  else if(ds.cadd){d.checklist.push({t:'',d:false})}
+  else if(ds.cdel!==undefined){d.checklist.splice(+ds.cdel,1)}
+  else if(ds.creset){d.checklist.forEach(c=>c.d=false)}
+  else if(ds.inadd){S.intel.unshift({t:'',d:new Date().toISOString().slice(0,10)})}
+  else if(ds.indel!==undefined){S.intel.splice(+ds.indel,1)}
+  else if(ds.copy){const txt=briefingText();
+    navigator.clipboard.writeText(txt).then(()=>toast('Briefing copied')).catch(()=>{const r=document.createRange();r.selectNodeContents($('#bubble'));const s=getSelection();s.removeAllRanges();s.addRange(r);toast('Selected: long-press to copy')});return}
+  else return;
+  save();render();
+});
+document.addEventListener('change',e=>{
+  const el=e.target,ds=el.dataset,d=D();
+  if(el.id==='docFile'){addFiles(el.files);el.value='';return}
+  if(ds.dmove){dbMove(+ds.dmove,el.value).then(fillDocs);return}
+  if(ds.c!==undefined){d.checklist[+ds.c].d=el.checked;save();render();return}
+  if(ds.s!==undefined&&ds.k==='lunch'){d.stops[+ds.s].lunch=el.checked;save();render();return}
+  if(ds.f||ds.s!==undefined){save();render()}
+});
+document.addEventListener('input',e=>{
+  const el=e.target,ds=el.dataset,d=D();
+  if(el.id==='tourName'){S.tour=el.value}
+  else if(ds.f){d[ds.f]=el.value;if(tab==='brief')$('#bubble').textContent=briefingText()}
+  else if(ds.s!==undefined&&ds.k!=='lunch'){d.stops[+ds.s][ds.k]=(ds.k==='drive'||ds.k==='stay')?+el.value:el.value}
+  else if(ds.g!==undefined){S.guests[+ds.g][ds.k]=el.value}
+  else if(ds.ct!==undefined){d.checklist[+ds.ct].t=el.value}
+  else if(ds.in!==undefined){S.intel[+ds.in].t=el.value}
+  save();
+});
+/* ---------- Documents: stored offline in IndexedDB ---------- */
+let docFilter='day';
+const DB=new Promise((res,rej)=>{try{const r=indexedDB.open('guidewise-docs',1);r.onupgradeneeded=()=>r.result.createObjectStore('files',{keyPath:'id',autoIncrement:true});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}});
+const tx=(mode,fn)=>DB.then(db=>new Promise((res,rej)=>{const t=db.transaction('files',mode);const st=t.objectStore('files');const out=fn(st);t.oncomplete=()=>res(out&&out.result!==undefined?out.result:undefined);t.onerror=()=>rej(t.error)}));
+const dbAll=()=>DB.then(db=>new Promise((res,rej)=>{const r=db.transaction('files').objectStore('files').getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
+const dbGet=id=>DB.then(db=>new Promise((res,rej)=>{const r=db.transaction('files').objectStore('files').get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
+const dbDel=id=>tx('readwrite',st=>st.delete(id));
+const dbMove=(id,day)=>dbGet(id).then(f=>{f.day=day;return tx('readwrite',st=>st.put(f))});
+const kb=n=>n>1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Math.round(n/1024))+' KB';
+const ext=n=>(n.split('.').pop()||'').slice(0,4).toUpperCase();
+const dayName=v=>v==='all'?'Whole tour':'Day '+(+v+1)+(S.days[+v]?' · '+S.days[+v].title:'');
+const thumbs=new Map();
+function thumb(f){if(!f.type.startsWith('image/'))return'';if(!thumbs.has(f.id))thumbs.set(f.id,URL.createObjectURL(f.blob));return thumbs.get(f.id)}
+async function addFiles(list){
+  const files=[...list];if(!files.length)return;
+  const day=($('#docDay')||{}).value??String(S.day);
+  try{if(navigator.storage&&navigator.storage.persist)await navigator.storage.persist()}catch(e){}
+  try{for(const f of files)await tx('readwrite',st=>st.add({name:f.name,type:f.type||'application/octet-stream',size:f.size,day,added:new Date().toISOString().slice(0,10),blob:f}));
+    toast(files.length+' document'+(files.length>1?'s':'')+' added')}
+  catch(e){toast('Could not save: phone storage may be full')}
+  fillDocs();
+}
+async function openDoc(id){
+  const f=await dbGet(id);if(!f)return;
+  const url=URL.createObjectURL(f.blob);
+  const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';
+  if(!/^(application\/pdf|image\/|text\/)/.test(f.type))a.download=f.name;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+function renderDocs(){
+  const opts=`<option value="all">Whole tour</option>`+S.days.map((d,i)=>`<option value="${i}" ${i===S.day?'selected':''}>${esc(dayName(i))}</option>`).join('');
+  return `<h2>Documents</h2>
+  <div class="drop" id="drop">
+    <span class="note">Vouchers, tickets, rooming lists, contracts, maps. PDFs and photos open offline.</span>
+    <div class="field" style="width:100%"><span class="lbl">File under</span><select id="docDay">${opts}</select></div>
+    <button class="btn pri" data-dpick="1">Add documents</button>
+    <input type="file" id="docFile" multiple hidden accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.eml">
+  </div>
+  <div class="seg" style="margin:14px 0 10px" id="docSeg"></div>
+  <div id="docList"><p class="note">Loading documents…</p></div>
+  <p class="note" id="docStore"></p>`;
+}
+async function fillDocs(){
+  const list=$('#docList');if(!list)return;
+  let all=[];try{all=await dbAll()}catch(e){list.innerHTML='<p class="note">Document storage is not available in this browser.</p>';return}
+  const cur=String(S.day);
+  $('#docSeg').innerHTML=[['day','This day ('+all.filter(f=>f.day===cur||f.day==='all').length+')'],['tour','Whole tour only ('+all.filter(f=>f.day==='all').length+')'],['','Everything ('+all.length+')']].map(([k,l])=>`<button class="${docFilter===k?'on':''}" data-dfilter="${k}">${l}</button>`).join('');
+  const shown=all.filter(f=>docFilter==='day'?(f.day===cur||f.day==='all'):docFilter==='tour'?f.day==='all':true).sort((a,b)=>(a.day==='all'?-1:+a.day)-(b.day==='all'?-1:+b.day)||b.id-a.id);
+  list.innerHTML=shown.length?shown.map(f=>{const t=thumb(f);const opts=`<option value="all" ${f.day==='all'?'selected':''}>Whole tour</option>`+S.days.map((d,i)=>`<option value="${i}" ${f.day===String(i)?'selected':''}>Day ${i+1}</option>`).join('');
+    return `<div class="doc"><div class="th">${t?`<img src="${t}" alt="">`:esc(ext(f.name))}</div>
+    <div class="meta"><b data-dopen="${f.id}" role="button" tabindex="0">${esc(f.name)}</b><span class="note">${kb(f.size)} · added ${esc(dLabel(f.added))}</span><br><select data-dmove="${f.id}" id="dm-${f.id}" aria-label="File under">${opts}</select></div>
+    <button class="x del" data-ddel="${f.id}" aria-label="Delete document">×</button></div>`}).join('')
+    :`<p class="note">No documents ${docFilter==='day'?'for this day':'yet'}. Add vouchers and tickets above so they are on hand without signal.</p>`;
+  try{const e=await navigator.storage.estimate();$('#docStore').textContent=`Using ${kb(e.usage||0)} of phone storage. Documents stay on this device only.`}catch(e){}
+  const dr=$('#drop');if(dr&&!dr._w){dr._w=1;['dragover','dragenter'].forEach(t=>dr.addEventListener(t,ev=>{ev.preventDefault();dr.classList.add('over')}));['dragleave','drop'].forEach(t=>dr.addEventListener(t,ev=>{ev.preventDefault();dr.classList.remove('over')}));dr.addEventListener('drop',ev=>addFiles(ev.dataTransfer.files))}
+}
+async function fillDayDocs(){
+  const box=$('#dayDocs');if(!box)return;
+  let all=[];try{all=await dbAll()}catch(e){return}
+  const mine=all.filter(f=>f.day===String(S.day)||f.day==='all');
+  box.innerHTML=`<h2>Documents for today</h2>`+(mine.length?`<div class="daydocs">${mine.map(f=>`<button data-dopen="${f.id}">${esc(f.name)}</button>`).join('')}</div>`:`<p class="note">None filed yet. <button class="btn sm" data-tab="docs">Add documents</button></p>`);
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.dopen)openDoc(+e.target.dataset.dopen)});
+
+render();
+if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+</script>
+</body></html>
