@@ -352,7 +352,8 @@ document.addEventListener('click',async e=>{
     if(a==='cancelsub'||a==='resumesub'){busy=a==='cancelsub'?'Cancelling…':'Restarting…';paint();
       const{error}=await sb.functions.invoke('billing-manage',{body:{action:a==='cancelsub'?'cancel':'resume'}});
       const sp=await sb.from('subscriptions').select('status,plan,trial_ends_at,current_period_end,paystack_customer_code,paystack_subscription_code').maybeSingle();plan=sp.data||plan;busy='';
-      if(error){msg='Could not reach Paystack. Check your signal and try again.';return paint()}
+      if(error){let code='';try{code=(await error.context.json()).error}catch(x){}
+        msg=!navigator.onLine?'No signal. Try again when you are online.':code==='resubscribe'?'This subscription cannot be restarted. Choose a plan again once it ends.':'Something went wrong with Paystack. Please try again in a minute.';return paint()}
       toast(a==='cancelsub'?'Cancelled. Plus continues until '+dayStr(plan.current_period_end):'Subscription kept');return paint()}
     if(a==='manage'){busy='Opening…';paint();const{data,error}=await sb.functions.invoke('billing-manage',{body:{action:'link'}});busy='';
       if(error||!data?.url){msg='Could not open subscription settings. Try again shortly.';return paint()}

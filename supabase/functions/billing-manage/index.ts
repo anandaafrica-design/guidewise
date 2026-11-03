@@ -74,11 +74,30 @@ Deno.serve(async (req) => {
   if (!sub?.paystack_subscription_code) return json({ error: "no_subscription" }, 404);
   try {
     // Cancel (stop renewing) or resume, in the app rather than on Paystack's page.
-    if ((action === "cancel" || action === "resume") && sub.status !== "comp") {
+    if (action === "cancel" && sub.status !== "comp") {
       if (!sub.paystack_email_token) return json({ error: "no_token" }, 409);
-      await paystack("/subscription/" + (action === "cancel" ? "disable" : "enable"), {
-        method: "POST", body: JSON.stringify({ code: sub.paystack_subscription_code, token: sub.paystack_email_token }),
+      await paystack("/subscription/disable", { method: "POST", body: JSON.stringify({ code: sub.paystack_subscription_code, token: sub.paystack_email_token }) });
+    }
+    if (action === "resume" && sub.status !== "comp") {
+      // Paystack cannot reactivate a cancelled subscription. Start a new one on the same card,
+      // beginning when the paid period ends: nothing is charged now and there is no gap.
+      const old = await paystack("/subscription/" + encodeURIComponent(sub.paystack_subscription_code));
+      if (old.status === "active") return json({ ok: true });
+      const auth = old.authorization?.authorization_code;
+      const end = sub.current_period_end && new Date(sub.current_period_end).getTime() > Date.now() ? sub.current_period_end : null;
+      if (!auth || !old.plan?.plan_code) return json({ error: "resubscribe" }, 409);
+      const created = await paystack("/subscription", {
+        method: "POST",
+        body: JSON.stringify({ customer: old.customer?.customer_code, plan: old.plan.plan_code, authorization: auth, ...(end ? { start_date: end } : {}) }),
       });
+      await admin.from("subscriptions").update({
+        status: "active",
+        paystack_subscription_code: created.subscription_code,
+        paystack_email_token: created.email_token,
+        current_period_end: end || created.next_payment_date || null,
+        updated_at: new Date().toISOString(),
+      }).eq("user_id", u.user.id);
+      return json({ ok: true });
     }
     const s = await paystack("/subscription/" + encodeURIComponent(sub.paystack_subscription_code));
     if (sub.status !== "comp") {
