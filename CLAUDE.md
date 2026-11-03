@@ -73,6 +73,12 @@ Optional backup (v4): Supabase project "guidewise" (ref bqevxxhdtzlywjoqbogt, Lo
 - Per-import consent ticks (operator policy + transfer to Anthropic, USA); privacy.html#ai explains. Changing that wording: bump ai-v1 in import.js, ai-import and privacy.html
 - Test path: header x-gw-test with a row in admin_test_tokens (owner only); delete tokens after testing
 
+## Status (end of 3 Nov 2026)
+- Live (main): everything up to PR #9 (Today, switcher, WhatsApp, weather, headcount, running late, cash, report, welcome, landing page)
+- Open: PR #10 (branch claude/docs-venues-qa): document backup, venues, translation, venue/driver messages, reminders, sun times, holidays, tests. Owner to test document upload and a German translation on the preview, then merge
+- Owner to do: run the clean-up SQL in Supabase SQL Editor (delete admin_test_tokens rows, drop ai_test_payload, delete net._http_response); finish guidewiseapp.co.za (Netlify domain, DNS, Supabase Site URL + redirect URLs), then switch links; Paystack live mode
+- Paystack test plans are R79/R790 (updated via a retired one-off function admin-plans, now a 410 stub)
+
 ## Roadmap
 1. Accounts + cloud backup: done in v4; documents backed up in v13
 2. Payments: done in v8 (Paystack). AI import: done in v9
