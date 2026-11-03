@@ -2,7 +2,7 @@
 // (never trusts the event body for status or dates). Deployed with verify_jwt = false.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
-const KEY = () => Deno.env.get("PAYSTACK_SECRET_KEY") || "";
+const KEY = () => (Deno.env.get("PAYSTACK_SECRET_KEY") || "").replace(/[^\x21-\x7E]/g, "");
 const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 
 async function hmac512(key: string, body: string) {

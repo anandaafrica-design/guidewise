@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
   if (sub?.paystack_subscription_code && sub.paystack_email_token && ["active", "attention", "non_renewing"].includes(sub.status)) {
     const r = await fetch("https://api.paystack.co/subscription/disable", {
       method: "POST",
-      headers: { Authorization: "Bearer " + Deno.env.get("PAYSTACK_SECRET_KEY"), "Content-Type": "application/json" },
+      headers: { Authorization: "Bearer " + (Deno.env.get("PAYSTACK_SECRET_KEY") || "").replace(/[^\x21-\x7E]/g, ""), "Content-Type": "application/json" },
       body: JSON.stringify({ code: sub.paystack_subscription_code, token: sub.paystack_email_token }),
     });
     if (!r.ok && sub.status !== "non_renewing") return json({ error: "cancel_failed" }, 502);

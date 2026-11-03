@@ -13,7 +13,7 @@ const ALLOWED_RETURN = /^https:\/\/(guidewise-app\.netlify\.app|deploy-preview-\
 async function paystack(path: string, init: RequestInit = {}) {
   const r = await fetch("https://api.paystack.co" + path, {
     ...init,
-    headers: { Authorization: "Bearer " + Deno.env.get("PAYSTACK_SECRET_KEY"), "Content-Type": "application/json", ...(init.headers || {}) },
+    headers: { Authorization: "Bearer " + (Deno.env.get("PAYSTACK_SECRET_KEY") || "").replace(/[^\x21-\x7E]/g, ""), "Content-Type": "application/json", ...(init.headers || {}) },
   });
   const b = await r.json().catch(() => ({}));
   if (!r.ok || b.status === false) throw new Error("paystack " + path + ": " + (b.message || r.status));
@@ -30,9 +30,9 @@ Deno.serve(async (req) => {
   const user = u.user;
 
   const { plan } = await req.json().catch(() => ({}));
-  const planCode = plan === "yearly" ? Deno.env.get("PAYSTACK_PLAN_YEARLY") : plan === "monthly" ? Deno.env.get("PAYSTACK_PLAN_MONTHLY") : null;
+  const planCode = plan === "yearly" ? (Deno.env.get("PAYSTACK_PLAN_YEARLY") || "").replace(/[^\x21-\x7E]/g, "") : plan === "monthly" ? (Deno.env.get("PAYSTACK_PLAN_MONTHLY") || "").replace(/[^\x21-\x7E]/g, "") : null;
   if (!planCode) return json({ error: "plan" }, 400);
-  if (!Deno.env.get("PAYSTACK_SECRET_KEY")) return json({ error: "not_configured" }, 503);
+  if (!(Deno.env.get("PAYSTACK_SECRET_KEY") || "").replace(/[^\x21-\x7E]/g, "")) return json({ error: "not_configured" }, 503);
 
   const origin = req.headers.get("Origin") || "";
   const back = (ALLOWED_RETURN.test(origin) ? origin : "https://guidewise-app.netlify.app") + "/?paid=1";

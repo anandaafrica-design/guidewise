@@ -11,7 +11,7 @@ const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: 
 const STATUS: Record<string, string> = { active: "active", "non-renewing": "non_renewing", attention: "attention", completed: "cancelled", cancelled: "cancelled" };
 
 async function paystack(path: string) {
-  const r = await fetch("https://api.paystack.co" + path, { headers: { Authorization: "Bearer " + Deno.env.get("PAYSTACK_SECRET_KEY") } });
+  const r = await fetch("https://api.paystack.co" + path, { headers: { Authorization: "Bearer " + (Deno.env.get("PAYSTACK_SECRET_KEY") || "").replace(/[^\x21-\x7E]/g, "") } });
   const b = await r.json().catch(() => ({}));
   if (!r.ok || b.status === false) throw new Error("paystack " + path + ": " + (b.message || r.status));
   return b.data;
