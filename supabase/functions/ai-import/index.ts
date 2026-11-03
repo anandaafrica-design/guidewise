@@ -36,11 +36,13 @@ const SCHEMA = {
             type: "array",
             items: {
               type: "object", additionalProperties: false,
-              required: ["place", "arrive", "leave", "note", "lunch", "check"],
+              required: ["place", "kind", "arrive", "leave", "travel", "note", "lunch", "check"],
               properties: {
                 place: { type: "string" },
+                kind: { type: "string", enum: ["visit", "meal", "activity", "hotel", "transfer", "flight", "free"], description: "meal for breakfast/lunch/dinner/drinks; activity for game drives, tours, tastings; transfer for road or rail legs that are the activity; flight for a flight leg" },
                 arrive: { type: "string", description: "HH:MM arrival, or empty" },
-                leave: { type: "string", description: "HH:MM departure, or empty" },
+                leave: { type: "string", description: "HH:MM departure, or empty. For a flight: landing time" },
+                travel: { type: "integer", description: "Realistic minutes of travel from the previous stop to this one (road time, walking, or to the airport). 0 if in the same place. Never include waiting or free time." },
                 note: { type: "string", description: "Bookings, tickets, transfers, what to know. Short." },
                 lunch: { type: "boolean", description: "True if this stop is lunch" },
                 check: { type: "boolean", description: "True if a time or detail was unclear and the guide should check it" },
@@ -81,7 +83,10 @@ Include meals and drinks that have a time or a venue as stops, and mark lunches.
 If a date of birth or a "Birthday (MM-DD)" is given, put it in bday as MM-DD.
 Never state a guest's age or a numbered milestone ("75th birthday", "turning 60"), as that reveals the birth year: write "milestone birthday" instead. Wedding anniversary numbers are fine.
 If the documents give the tour dates but no day-by-day programme, still output one day per tour date with its date, a short title from the hotel or services that day, and the overnight hotel as the only stop. Never leave days empty when dates are known.
-Put medication and medical allergies in the guest's notes, starting with "Medical:".`;
+Put medication and medical allergies in the guest's notes, starting with "Medical:".
+Stops: in time order. Parse times written inside text ("Depart for Constantia 15:00") into arrive/leave. A flight is its own stop (kind flight, place like "Flight Johannesburg to Victoria Falls", arrive = departure time, leave = landing time); if a time is "to be advised", leave it empty and set check. Give each stop a realistic travel estimate from the previous stop using your knowledge of the area (e.g. Chapman's Peak to Cape Point about 45 minutes; border crossings add time). Multi-hour activities: give both arrive and leave when the documents give a duration.
+List every guest named in a rooming list, recap or guest list.
+Do not put tour or booking codes in notes. Do not repeat the same point in several places: put each warning once. Pre-trip reminders (passport validity, visas to arrange) go in warnings, not in day checklists.`;
 
 function usdCost(key: string, inTok: number, outTok: number) {
   const [pi, po] = PRICE[key];

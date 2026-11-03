@@ -10,7 +10,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 ## Files
 - site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
 - site/index.html: whole app (vanilla JS, no build step)
-- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v19; own files are fetched network-first, cache when offline). New precached files go in its F list
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v20; own files are fetched network-first, cache when offline). New precached files go in its F list
 - site/backup.js: cloud backup (sign-in, POPIA consent, passphrase, encrypt, sync). Shares globals with index.html
 - site/import.js: AI import (tab 'import', from Tours > Import from documents or the Docs tab; can use documents already saved in the tour). Loaded after backup.js and uses its globals (sb, user, plan, plus, refresh, SB_URL, SB_KEY)
 - site/vendor/xlsx-mini-0.18.5.js: SheetJS (Apache-2.0), lazy-loaded by import.js for .xlsx/.csv
@@ -51,7 +51,8 @@ Optional backup (v4): Supabase project "guidewise" (ref bqevxxhdtzlywjoqbogt, Lo
 - Edge function ai-import (verify_jwt false, does its own auth): JWT + has_plus() + consent 'ai-v1' in the body + 5 successful imports per calendar month (ai_usage). Claude Opus 5.5, effort low (64s, about R3 per tour; medium took 134s, too close to the 150s edge limit), structured JSON output, server-side fallback beta. Secret ANTHROPIC_API_KEY. Optional env AI_MODEL, AI_EFFORT
 - Never stores documents or drafts; ai_usage keeps only counts and tokens
 - On the phone first: spreadsheets lose passport/visa/flight/phone/email/address/insurance columns (heading row detection), DOB becomes MM-DD; text files lose emails and phone numbers; photos resized; PDFs sent as is. Any year in a returned bday is dropped
-- Draft review screen, then arrive/leave clock times are converted to drive/stay minutes; day notes and warnings go to Local intel; check flags become '⚠ Check:' in notes
+- AI returns per stop: kind (visit/meal/activity/hotel/transfer/flight/free), arrive/leave clock times, travel (estimated minutes from previous stop). import.js build() converts once: stops sorted by time, source times kept exactly, travel from the estimate (never from gaps), gaps over 30 min become a 'Free time' stop (or extend an airport/station/hotel stop), overlaps trim the previous stop, flights are '✈' stops, guessed times marked '⚠ Time estimated'. The review screen renders build()'s output, so preview = saved. Day notes and warnings go to Local intel. An untouched empty 'New tour' is reused, not left behind
+- Acceptance check: window.gwImportBuild(draft) in the browser; expect no drive over 90 min except road transfers, times ascending, source times kept
 - Per-import consent ticks (operator policy + transfer to Anthropic, USA); privacy.html#ai explains. Changing that wording: bump ai-v1 in import.js, ai-import and privacy.html
 - Test path: header x-gw-test with a row in admin_test_tokens (owner only); delete tokens after testing
 

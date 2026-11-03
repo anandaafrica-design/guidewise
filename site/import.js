@@ -73,35 +73,66 @@ const bd=g=>/^\d{2}-\d{2}$/.test(g.bday||'')?g.bday:mmdd(g.bday); // never keep 
 const hm=t=>/^\d{1,2}:\d{2}$/.test(String(t||'').trim())?toMin(t):null;
 const isoOk=s=>/^\d{4}-\d{2}-\d{2}$/.test(s||'')&&!isNaN(new Date(s+'T12:00'));
 const nextIso=s=>{const d=new Date((s||new Date().toISOString().slice(0,10))+'T12:00');d.setDate(d.getDate()+1);return d.toISOString().slice(0,10)};
-/* The AI gives clock times; Guidewise plans in drive and stay minutes, so convert. Missing times get a sensible guess. */
+/* The AI gives clock times plus an estimated travel time per leg; Guidewise plans in drive and stay minutes.
+   Source times are kept exactly. Travel uses the AI's estimate (never a gap), and leftover time becomes a
+   "Free time" stop, so nothing turns into a fake six-hour drive. Guessed times are marked. */
+const STAY={meal:60,visit:45,activity:120,hotel:15,transfer:15,flight:60,free:60};
+const STOPTIME=s=>hm(s.arrive)??hm(s.leave);
+function sortStops(stops){let k=-1;return stops.map((s,i)=>{const t=STOPTIME(s);if(t!=null)k=t;return{s,k:t??k,i}}).sort((a,b)=>a.k-b.k||a.i-b.i).map(x=>x.s)}
 function convDay(d,prev){
-  const stops=d.stops||[];const times=stops.map(s=>hm(s.arrive)??hm(s.leave)).filter(x=>x!=null);
-  let start=hm(d.start);if(start==null)start=times.length?Math.max(0,times[0]-30):480;else if(times.length&&times[0]<start)start=times[0]; // e.g. breakfast before departure
-  let cur=start;const out=stops.map((s,i)=>{
-    let a=hm(s.arrive),l=hm(s.leave);const last=i===stops.length-1;
-    const nextA=stops.slice(i+1).map(x=>hm(x.arrive)).find(x=>x!=null);
-    if(a==null)a=l!=null?Math.max(cur,l-60):cur+15;
-    if(a<cur)a=cur;
-    if(l==null||l<a)l=last?a:(nextA!=null&&nextA>=a?Math.min(a+60,nextA):a+60);
-    const dr=a-cur;cur=l;
-    return{place:String(s.place||'Stop'),drive:dr,stay:l-a,note:(s.check?'⚠ Check: ':'')+String(s.note||''),lunch:!!s.lunch};
+  const stops=sortStops(d.stops||[]),out=[];
+  const travelOf=s=>{let t=Number.isFinite(+s.travel)?Math.round(+s.travel):null;if(t==null||t<0)t=s.kind==='flight'||s.kind==='free'?0:20;return Math.min(t,s.kind==='transfer'?600:240)};
+  const firstT=stops.length?STOPTIME(stops[0]):null;
+  let start=hm(d.start);
+  if(start==null)start=firstT!=null?Math.max(0,firstT-travelOf(stops[0])):480;
+  else if(firstT!=null&&firstT<start)start=Math.max(0,firstT-travelOf(stops[0])); // e.g. breakfast before departure
+  // Untimed stops before the first timed one (e.g. breakfast before a 07:30 tour) need room: start earlier.
+  const ft=stops.findIndex(s=>STOPTIME(s)!=null);
+  if(ft>0){const need=stops.slice(0,ft).reduce((n,s)=>n+travelOf(s)+(STAY[s.kind||'visit']??45),0)+travelOf(stops[ft]);start=Math.min(start,Math.max(0,STOPTIME(stops[ft])-need))}
+  let cur=start;
+  stops.forEach((s,i)=>{
+    const last=i===stops.length-1,kind=s.kind||'visit';let tr=travelOf(s);
+    let a=hm(s.arrive),l=hm(s.leave),guess=false;
+    if(a==null&&l!=null&&kind!=='flight')a=Math.max(cur+tr,l-(STAY[kind]??45));
+    if(a==null){a=cur+tr;guess=!last||kind!=='hotel'}
+    if(a<cur&&out.length){const p=out[out.length-1],cut=Math.min(cur-a,p.stay);p.stay-=cut;cur-=cut} // overlap: previous stop ends when this one starts
+    if(a<cur+tr){tr=Math.max(0,a-cur)} // source time wins over the estimate
+    const gap=a-cur-tr;
+    const prevK=i?(stops[i-1].kind||'visit'):'';
+    if(gap>0&&out.length&&(prevK==='transfer'||prevK==='hotel')){out[out.length-1].stay+=gap} // waiting at the airport, station or hotel is part of that stop
+    else if(gap>30&&out.length){out.push({place:'Free time',drive:0,stay:gap,note:'',lunch:false})}
+    else if(gap>0&&out.length){out[out.length-1].stay+=gap}
+    else if(gap>0&&!out.length){start+=gap} // nothing before the first stop: leave later
+    let stay=l!=null&&l>=a?l-a:(last&&(kind==='hotel'||kind==='transfer')?0:(STAY[kind]??45));
+    const flags=[s.check?'⚠ Check':'',guess&&kind!=='hotel'?'⚠ Time estimated':'',kind==='flight'&&(hm(s.arrive)==null||hm(s.leave)==null)?'⚠ Flight time not confirmed':''].filter(Boolean);
+    out.push({place:(kind==='flight'&&!/^✈/.test(s.place)?'✈ ':'')+String(s.place||'Stop'),drive:tr,stay,note:(flags.length?flags.join(' · ')+': ':'')+String(s.note||''),lunch:!!s.lunch});
+    cur=a+stay;
   });
   return{date:isoOk(d.date)?d.date:nextIso(prev),title:String(d.title||'Day'),meet:String(d.meet||''),start:fmt(start),weather:'',dress:'',bring:'',
     stops:out,checklist:(d.checklist||[]).filter(Boolean).map(t=>({t:String(t),d:false}))};
 }
-function apply(){
+/* Built once when the draft arrives, so the review shows exactly what will be saved. */
+function build(dr){
   const today=new Date().toISOString().slice(0,10);let prev=null;
-  const days=(draft.days||[]).map(d=>{const x=convDay(d,prev);prev=x.date;return x});
-  const guests=(draft.guests||[]).map(g=>({name:String(g.name||''),room:String(g.room||''),diet:String(g.diet||''),bday:bd(g),notes:(g.check?'⚠ Check: ':'')+String(g.notes||'')}));
-  const intel=[...(draft.warnings||[]).map(w=>({t:'Import note: '+w,d:today})),...(draft.days||[]).map((d,i)=>d.notes?{t:`Day ${i+1}${days[i]?' ('+dLabel(days[i].date)+')':''}: ${d.notes}`,d:today}:null).filter(Boolean)];
+  const days=(dr.days||[]).map(d=>{const x=convDay(d,prev);prev=x.date;return x});
+  const guests=(dr.guests||[]).map(g=>({name:String(g.name||''),room:String(g.room||''),diet:String(g.diet||''),bday:bd(g),notes:(g.check?'⚠ Check: ':'')+String(g.notes||''),_chk:!!g.check}));
+  const intel=[...(dr.warnings||[]).map(w=>({t:'Import note: '+w,d:today})),...(dr.days||[]).map((d,i)=>d.notes?{t:`Day ${i+1}${days[i]?' ('+dLabel(days[i].date)+')':''}: ${d.notes}`,d:today}:null).filter(Boolean)];
+  return{tour:dr.tour||'Imported tour',days,guests,intel,warnings:dr.warnings||[]};
+}
+let built=null;
+window.gwImportBuild=build; // used by the acceptance check script
+const blankTour=t=>t.guests.length===0&&t.days.length===1&&t.days[0].title==='New day'&&t.days[0].stops.length<=1&&(t.days[0].stops[0]?.place||'First stop')==='First stop'&&!(t.intel||[]).length;
+function apply(){
+  const b=built,guests=b.guests.map(({_chk,...g})=>g);
   if(mode==='add'){
     const have=new Set(S.guests.map(g=>g.name.trim().toLowerCase()));
-    S.days.push(...days);S.guests.push(...guests.filter(g=>!have.has(g.name.trim().toLowerCase())));S.intel.unshift(...intel);
-    save();reset();tab='plan';render();toast(days.length+' days and '+guests.length+' guests added');return}
-  const t={id:uid(),tour:($('#ik-name')?.value||draft.tour||'Imported tour').trim(),day:0,days:days.length?days:[{...convDay({stops:[]},null)}],guests,intel};
-  T.tours.push(t);reset();openTour(t.id);toast('Tour created. Check the ⚠ items');
+    S.days.push(...b.days);S.guests.push(...guests.filter(g=>!have.has(g.name.trim().toLowerCase())));S.intel.unshift(...b.intel);
+    save();reset();tab='plan';render();toast(b.days.length+' days and '+guests.length+' guests added');return}
+  const t={id:uid(),tour:($('#ik-name')?.value||b.tour).trim(),day:0,days:b.days.length?b.days:[newDay(nextIso(null))],guests,intel:b.intel};
+  if(blankTour(S)){Object.assign(S,t,{id:S.id});t.id=S.id}else T.tours.push(t); // reuse an untouched empty 'New tour' (keeps its documents)
+  reset();openTour(t.id);toast('Tour created. Check the ⚠ items');
 }
-function reset(){files=[];draft=null;st='pick';err='';agreed=false;mine=[]}
+function reset(){files=[];draft=null;built=null;st='pick';err='';agreed=false;mine=[]}
 
 /* ---------- server ---------- */
 const ERR={plus_required:'AI import is part of Guidewise Plus. Your trial or subscription has ended.',limit:`You have used your ${LIMIT} imports for this month. They reset on the 1st.`,
@@ -116,7 +147,7 @@ async function send(){
       body:JSON.stringify({consent:AI_CONSENT,files:mine.map(({how,doc,...f})=>f)})});clearTimeout(to);
     const b=await r.json().catch(()=>({}));
     if(!r.ok||!b.draft)throw{code:b.error||'x'};
-    draft=b.draft;mode=S.tour.includes('(sample)')?'new':mode;st='review';
+    draft=b.draft;built=build(draft);mode=S.tour.includes('(sample)')?'new':mode;st='review';
   }catch(e){st='pick';err=ERR[e.code]||(e.name==='AbortError'?'This took too long. Try fewer documents at a time.':!navigator.onLine?'No signal. AI import needs the internet.':'Something went wrong reading the documents. Please try again.')}
   clearInterval(tick);if(tab==='import'){paintImp();scrollTo(0,0)}else toast(st==='review'?'Import ready: Tours, then Import':'Import did not work: Tours, then Import');
 }
@@ -149,21 +180,21 @@ function pickHTML(){
 }
 function busyHTML(){return`<div class="card" style="text-align:center;padding:28px 14px"><b>Reading your documents…</b><span class="note">Usually about a minute. Keep Guidewise open. <span id="ik-sec">0s</span></span></div>`}
 function reviewHTML(){
-  const d=draft,chk=x=>x?' <span class="flag">⚠ check</span>':'';
-  const days=(d.days||[]).map((x,i)=>`<details class="card"${i===0?' open':''}><summary><b>Day ${i+1}${x.date?' · '+esc(dLabel(x.date)):''}</b> ${esc(x.title)}${chk((x.stops||[]).some(s=>s.check))}</summary>
-    ${x.start?`<span class="note">Depart ${esc(x.start)}${x.meet?' from '+esc(x.meet):''}</span>`:''}
-    ${(x.stops||[]).map(s=>`<div><b>${esc(s.arrive||'··:··')}</b> ${esc(s.place)}${s.lunch?' 🍽':''}${chk(s.check)}${s.note?`<br><span class="note">${esc(s.note)}</span>`:''}</div>`).join('')||'<span class="note">No stops found.</span>'}
-    ${(x.checklist||[]).length?`<span class="note">Checklist: ${x.checklist.map(esc).join(' · ')}</span>`:''}</details>`).join('');
-  const guests=(d.guests||[]).map(g=>`<div><b>${esc(g.name)}</b>${chk(g.check)}<br><span class="note">${[g.room&&'Room: '+g.room,g.diet&&'Diet: '+g.diet,bd(g)&&'Birthday: '+bd(g),g.notes].filter(Boolean).map(esc).join(' · ')||'No details'}</span></div>`).join('');
-  return`<p>Here is what Guidewise found. Check the <span class="flag">⚠ check</span> items against your documents after creating the tour; they are marked in the plan too.</p>
-  ${(d.warnings||[]).length?`<div class="alert"><b>Worth checking</b><br>${d.warnings.map(esc).join('<br>')}</div>`:''}
-  <div class="field"><span class="lbl">Tour name</span><input id="ik-name" value="${esc(d.tour||'Imported tour')}"></div>
-  <h2>${(d.days||[]).length} days</h2>${days||'<p class="note">No days found.</p>'}
-  <h2>${(d.guests||[]).length} guests</h2>${guests?`<div class="card">${guests}</div>`:'<p class="note">No guests found.</p>'}
+  const b=built,flag=t=>/⚠/.test(t||''),chk=x=>x?' <span class="flag">⚠ check</span>':'';
+  const days=b.days.map((x,i)=>{const sc=schedule(x);return`<details class="card"${i===0?' open':''}><summary><b>Day ${i+1} · ${esc(dLabel(x.date))}</b> ${esc(x.title)}${chk(x.stops.some(s=>flag(s.note)))}</summary>
+    <span class="note">Depart ${esc(x.start)}${x.meet?' from '+esc(x.meet):''}</span>
+    ${x.stops.map((s,k)=>`<div><b>${fmt(sc[k].arrive)}</b> ${esc(s.place)}${s.lunch?' 🍽':''}${flag(s.note)?chk(1):''}<br><span class="note">${s.drive?'↓ '+s.drive+' min travel · ':''}${s.stay?s.stay+' min':''}${s.note?' · '+esc(s.note.replace(/^(⚠[^:]*: )/,'')):''}</span></div>`).join('')||'<span class="note">No stops found.</span>'}
+    ${x.checklist.length?`<span class="note">Checklist: ${x.checklist.map(c=>esc(c.t)).join(' · ')}</span>`:''}</details>`}).join('');
+  const guests=b.guests.map(g=>`<div><b>${esc(g.name)}</b>${chk(g._chk)}<br><span class="note">${[g.room&&'Room: '+g.room,g.diet&&'Diet: '+g.diet,g.bday&&'Birthday: '+g.bday,g.notes.replace(/^⚠ Check: /,'')].filter(Boolean).map(esc).join(' · ')||'No details'}</span></div>`).join('');
+  return`<p>This is exactly what will be saved. Items marked <span class="flag">⚠ check</span> were unclear or estimated; they are marked in the plan too.</p>
+  ${b.warnings.length?`<div class="alert"><b>Worth checking</b><br>${b.warnings.map(esc).join('<br>')}</div>`:''}
+  <div class="field"><span class="lbl">Tour name</span><input id="ik-name" value="${esc(b.tour)}"></div>
+  <h2>${b.days.length} days</h2>${days||'<p class="note">No days found.</p>'}
+  <h2>${b.guests.length} guests</h2>${guests?`<div class="card">${guests}</div>`:'<div class="alert">No guests found. Add the rooming list or recap to this import, or add guests by hand later.</div>'}
   <h2>Where to put it</h2>
   <div class="seg"><button class="${mode==='new'?'on':''}" data-ik="mode" data-m="new">New tour</button><button class="${mode==='add'?'on':''}" data-ik="mode" data-m="add">Add to ${esc(S.tour.slice(0,28))}</button></div>
   <div class="acts" style="margin-top:12px"><button class="btn pri" data-ik="apply">${mode==='add'?'Add to this tour':'Create tour'}</button><button class="btn" data-ik="discard">Discard</button></div>
-  <p class="note">Times are turned into drive and stay minutes. Where a time was missing Guidewise guessed, so glance over each day.</p>`;
+  <p class="note">Times from your documents are kept. Travel times are estimates, and gaps show as free time, so glance over each day.</p>`;
 }
 window.renderImport=()=>`<h2>Import from documents</h2><div id="imp">${st==='busy'?busyHTML():st==='review'?reviewHTML():pickHTML()}</div>`;
 function paintImp(){const el=$('#imp');if(el&&tab==='import'){el.outerHTML=renderImport().replace(/^<h2>[^<]*<\/h2>/,'');fillSaved()}}
