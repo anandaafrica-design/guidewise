@@ -12,7 +12,7 @@ const saveSync=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify(sync))}catc
 if(sync.auto===undefined)sync.auto=true;
 
 let sb=null,sbLoad=null,user=null,consented=false,bk=null,meta=null,loaded=false;
-let step='email',email='',busy='',msg='',restoreOffer=false,lastJSON=null,autoT=null,quiet=false;
+let step='email',email='',busy='',msg='',restoreOffer=false,lastJSON=null,autoT=null,quiet=false,changing=false,suggest='';
 
 /* ---------- Supabase client, loaded only when needed ---------- */
 function loadSB(){
@@ -135,6 +135,13 @@ function paint(){paintBtn();const el=$('#acct');if(el)el.innerHTML=acctHTML()}
 window.renderAcct=()=>`<h2>Backup</h2><div id="acct">${acctHTML()}</div>`;
 window.fillAcct=()=>{if(!sb)loadSB().then(()=>{if(!user)sb.auth.getSession().then(({data})=>{user=data.session?.user||null;refresh()})}).catch(()=>{msg='Backup needs a signal the first time. Try again when you are online.';loaded=true;paint()});else paint()};
 
+/* Catch typos like gmail.coma or gmial.com before a code goes to a dead address. */
+const DOMAINS=['gmail.com','googlemail.com','yahoo.com','yahoo.co.uk','outlook.com','hotmail.com','hotmail.co.uk','live.com','icloud.com','me.com','aol.com','protonmail.com','proton.me','mweb.co.za','telkomsa.net','vodamail.co.za','webmail.co.za','afrihost.co.za','iafrica.com','xsinet.co.za'];
+function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;
+  for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++){d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1)}return d[a.length][b.length]}
+function emailSuggestion(e){const at=e.lastIndexOf('@');if(at<1)return'';const dom=e.slice(at+1).toLowerCase();if(DOMAINS.includes(dom))return'';
+  const max=dom.length>=10?2:1;let best='',bd=max+1;for(const k of DOMAINS){const d=lev(dom,k);if(d<bd){bd=d;best=k}}return best?e.slice(0,at+1)+best:''}
+
 function acctHTML(){
   if(!sb||!loaded)return `<p class="note">${esc(msg)||'Loading…'}</p>`;
   const m=msg?`<div class="alert">${esc(msg)}</div>`:'',bz=busy?`<p class="note"><b>${esc(busy)}</b></p>`:'';
@@ -142,6 +149,7 @@ function acctHTML(){
     if(step==='code')return m+`<p>We sent a code to <b>${esc(email)}</b>. Enter it below, or tap the link in the email on this device.</p>
       <div class="field"><span class="lbl">6-digit code</span><input id="a-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></div>
       <div class="acts"><button class="btn pri" data-a="verify">Sign in</button><button class="btn" data-a="restart">Use another email</button></div>${bz}`;
+    if(suggest)return m+`<div class="alert">Did you mean <b>${esc(suggest)}</b>?<div class="acts"><button class="btn pri" data-a="usesug">Yes, use ${esc(suggest)}</button><button class="btn" data-a="keepmail">No, send to ${esc(email)}</button></div></div>${bz}`;
     return m+`<p>Back up your tour so a lost or broken phone does not cost you your planning. It is off until you switch it on.</p>
       <div class="field"><span class="lbl">Your email</span><input id="a-email" type="email" autocomplete="email" value="${esc(email)}"></div>
       <div class="acts"><button class="btn pri" data-a="send">Email me a sign-in code</button></div>
@@ -164,6 +172,12 @@ function acctHTML(){
       <p class="note">Tip: three or four random words. Write it down somewhere safe, not in this app. It cannot be reset.</p>
       <div class="acts"><button class="btn pri" data-a="create">Encrypt and back up</button></div>${bz}`;
   }
+  if(changing)return m+`<h2>Change passphrase</h2>
+    <div class="field"><span class="lbl">Current passphrase</span><input id="a-p0" type="password" autocomplete="current-password"></div>
+    <div class="field" style="margin-top:8px"><span class="lbl">New passphrase (10+ characters)</span><input id="a-p1" type="password" autocomplete="new-password"></div>
+    <div class="field" style="margin-top:8px"><span class="lbl">Type the new one again</span><input id="a-p2" type="password" autocomplete="new-password"></div>
+    <p class="note">Your backup is re-encrypted with the new passphrase. The old one stops working, and your other devices will ask for the new one.</p>
+    <div class="acts"><button class="btn pri" data-a="chsave">Change passphrase</button><button class="btn" data-a="chcancel">Cancel</button></div>${bz}`;
   let h=m;
   if(restoreOffer)h+=`<div class="alert"><b>Cloud backup unlocked.</b> Restore it to this device? This replaces the tour on this device.<div class="acts"><button class="btn pri" data-a="restore1">Restore backup</button><button class="btn" data-a="keep">Keep this device's tour</button></div></div>`;
   if(sync.conflict)h+=`<div class="alert"><b>The cloud has a newer backup, probably from another device.</b> Restore it here, or replace it with this device's tour.<div class="acts"><button class="btn pri" data-a="restore1">Restore cloud backup</button><button class="btn" data-a="force">Replace with this device</button></div></div>`;
@@ -173,7 +187,7 @@ function acctHTML(){
     <div class="acts"><button class="btn pri" data-a="now">Back up now</button><button class="btn" data-a="restore" data-arm="Tap again to replace this device's tour">Restore from cloud</button></div>${bz}
     <p class="note">Encrypted on this device before upload. Documents stay on this device only for now.</p>
     <h2>Account</h2><p class="note">Signed in as ${esc(user.email)}</p>
-    <div class="acts"><button class="btn" data-a="signout">Sign out</button><button class="btn" data-a="delbk" data-arm="Tap again to delete">Delete cloud backup</button><button class="btn" data-a="delacct" data-arm="Tap again: deletes everything" style="color:var(--alert)">Delete account</button></div>
+    <div class="acts"><button class="btn" data-a="chpass">Change passphrase</button><button class="btn" data-a="signout">Sign out</button><button class="btn" data-a="delbk" data-arm="Tap again to delete">Delete cloud backup</button><button class="btn" data-a="delacct" data-arm="Tap again: deletes everything" style="color:var(--alert)">Delete account</button></div>
     <p class="note">Signing out or deleting keeps the tour on this device.</p>`;
   return h;
 }
@@ -188,10 +202,14 @@ document.addEventListener('click',async e=>{
   const a=b.dataset.a,val=id=>($(id)||{}).value||'';msg='';
   try{
     if(a==='send'){email=val('#a-email').trim();if(!/^\S+@\S+\.\S+$/.test(email)){msg='Enter a valid email address.';return paint()}
+      suggest=emailSuggestion(email);if(suggest)return paint()}
+    if(a==='usesug'){email=suggest;suggest=''}
+    if(a==='keepmail')suggest='';
+    if(a==='send'||a==='usesug'||a==='keepmail'){
       busy='Sending…';paint();const{error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:true,emailRedirectTo:location.origin+location.pathname}});
       busy='';if(error){msg=/rate|seconds/i.test(error.message)?'Too many attempts. Wait a minute, then try again.':'Could not send the email. Check your signal and try again.';return paint()}
       step='code';return paint()}
-    if(a==='restart'){step='email';return paint()}
+    if(a==='restart'){step='email';suggest='';return paint()}
     if(a==='verify'){const token=val('#a-code').replace(/\s/g,'');busy='Checking…';paint();
       const{error}=await sb.auth.verifyOtp({email,token,type:'email'});busy='';if(error){msg='That code did not work. Check it, or request a new one.';return paint()}return}
     if(a==='consent'){busy='Saving…';paint();const{error}=await sb.from('consents').insert({version:CONSENT});busy='';if(error)throw error;consented=true;return paint()}
@@ -209,6 +227,28 @@ document.addEventListener('click',async e=>{
     if(a==='restore'||a==='restore1')return restoreNow();
     if(a==='force'){sync.conflict=0;return backupNow(true)}
     if(a==='now')return backupNow();
+    if(a==='chpass'){changing=true;return paint()}
+    if(a==='chcancel'){changing=false;return paint()}
+    if(a==='chsave'){const p0=val('#a-p0'),p1=val('#a-p1'),p2=val('#a-p2');
+      if(p1.length<10){msg='Use at least 10 characters for the new passphrase.';return paint()}
+      if(p1!==p2){msg='The two new passphrases do not match.';return paint()}
+      if(p1===p0){msg='The new passphrase is the same as the current one.';return paint()}
+      if(!navigator.onLine){msg='Changing the passphrase needs a signal.';return paint()}
+      busy='Checking…';paint();
+      const probe=await seal(bk.key,{app:'guidewise',v:1,S:{days:[]}});
+      try{await unseal(await deriveKey(p0,unb64(bk.salt),ITER),probe)}catch(x){busy='';msg='Your current passphrase is not right.';return paint()}
+      const m=await getMeta();
+      if(m&&m.rev>(sync.rev||0)){busy='';sync.conflict=m.rev;saveSync();changing=false;msg='There is a newer backup from another device. Sort that out first, then change the passphrase.';return paint()}
+      busy='Re-encrypting…';paint();
+      const salt=crypto.getRandomValues(new Uint8Array(16)),nb={key:await deriveKey(p1,salt,ITER),salt:b64(salt)};
+      const snap=JSON.stringify(S);
+      const{iv,ciphertext}=await seal(nb.key,{app:'guidewise',v:1,at:new Date().toISOString(),S:JSON.parse(snap)});
+      const row={iv,ciphertext,salt:nb.salt,kdf_iter:ITER,format:1,rev:(m?.rev||0)+1};
+      const q=m?sb.from('backups').update(row).eq('user_id',user.id).eq('rev',m.rev):sb.from('backups').insert(row);
+      const{data,error}=await q.select('rev,updated_at');if(error)throw error;
+      if(!data||!data.length){busy='';msg='The backup changed on another device. Try again.';return paint()}
+      bk=nb;await kPut(user.id,bk);Object.assign(sync,{rev:data[0].rev,at:data[0].updated_at,pending:0,conflict:0});saveSync();lastJSON=snap;meta={...data[0],salt:bk.salt};
+      busy='';changing=false;toast('Passphrase changed');return paint()}
     if(a==='delbk'){busy='Deleting…';paint();const{error}=await sb.from('backups').delete().eq('user_id',user.id);busy='';if(error)throw error;
       meta=null;Object.assign(sync,{rev:0,at:null,pending:0,auto:false});saveSync();toast('Cloud backup deleted. Automatic backup is off');return paint()}
     if(a==='delacct'){busy='Deleting account…';paint();const{error}=await sb.functions.invoke('delete-account',{method:'POST'});if(error){busy='';throw error}
