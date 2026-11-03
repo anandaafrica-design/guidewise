@@ -82,6 +82,9 @@ async function refresh(){
     if(plan&&plan.paystack_customer_code&&!plan.paystack_subscription_code&&!refresh._tried){refresh._tried=1; // paid but the return or webhook was missed
       const v=await sb.functions.invoke('billing-manage',{body:{action:'verify'}}).catch(()=>({}));
       if(v.data?.status==='active'){refresh._welcome=1;sp=await sb.from('subscriptions').select('status,plan,trial_ends_at,current_period_end,paystack_customer_code,paystack_subscription_code').maybeSingle();plan=sp.data||plan}}
+    else if(plan&&plan.paystack_subscription_code&&plan.status!=='comp'&&!refresh._synced){refresh._synced=1; // once per session: pick up renewals, failed cards and cancellations straight from Paystack
+      const r=await sb.functions.invoke('billing-manage',{body:{action:'sync'}}).catch(()=>({}));
+      if(!r.error){sp=await sb.from('subscriptions').select('status,plan,trial_ends_at,current_period_end,paystack_customer_code,paystack_subscription_code').maybeSingle();plan=sp.data||plan}}
     meta=await getMeta();
     bk=(await kGet(user.id))||null;
     if(bk&&!bk.kid)bk=null; // key from the first version: set up again

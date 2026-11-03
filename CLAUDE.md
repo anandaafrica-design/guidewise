@@ -10,7 +10,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 ## Files
 - site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
 - site/index.html: whole app (vanilla JS, no build step)
-- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v11). New precached files go in its F list
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v12). New precached files go in its F list
 - site/backup.js: cloud backup (sign-in, POPIA consent, passphrase, encrypt, sync). Shares globals with index.html
 - site/vendor/supabase-2.45.4.js: vendored so it works offline; site/privacy.html: POPIA notice; site/terms.html: terms, pricing, refunds (Paystack needs it); site/setup.html: setup guide to send to guides (install, first tour, backup, help). Keep it in step with the UI
 - supabase/: record of the deployed migration and edge function
@@ -41,7 +41,7 @@ Optional backup (v4): Supabase project "guidewise" (ref bqevxxhdtzlywjoqbogt, Lo
 - Uploading new backup data needs Plus (insert policy + trigger on ciphertext change). Restore, delete, passphrase/recovery re-wraps always allowed (POPIA access and erasure)
 - Welcome screen (tab 'plus', renderPlus in backup.js): 'Congratulations! You're in!' plus what's included; shown once per subscription after payment (key guidewise.welcomed), and via "What's included" on the Plus card. Keep the list in step with what Plus really includes
 - Owner account anandaafrica@gmail.com is status 'comp'; billing never downgrades comp
-- Edge functions: billing-checkout (JWT; Paystack customer + transaction with plan; returns to /?paid=1), billing-webhook (no JWT; HMAC-SHA512 signature check; re-fetches the subscription from Paystack), billing-manage (JWT; hosted manage link, sync). delete-account also disables the Paystack subscription
+- Edge functions: billing-checkout (JWT; Paystack customer + transaction with plan; returns to /?paid=1), billing-webhook (no JWT; HMAC-SHA512 signature check; re-fetches the subscription from Paystack), billing-manage (JWT; hosted manage link; sync, run once per session when Backup opens so status does not depend on the webhook; verify on return from checkout). delete-account also disables the Paystack subscription
 - Secrets in Supabase (owner enters them, never in code): PAYSTACK_SECRET_KEY, PAYSTACK_PLAN_MONTHLY, PAYSTACK_PLAN_YEARLY. Webhook URL: https://bqevxxhdtzlywjoqbogt.supabase.co/functions/v1/billing-webhook
 
 ## Roadmap
