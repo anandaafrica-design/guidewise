@@ -44,6 +44,15 @@ input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);
 .opt input{width:22px;height:22px;min-height:0;flex:none;margin-top:2px;accent-color:var(--accent)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn.arm{background:var(--alert);color:#fff}
+.homebtn{flex:none;display:flex;flex-direction:column;align-items:center;gap:1px;border:0;background:none;color:var(--ink);font:700 .7rem var(--body);cursor:pointer;padding:2px 4px;min-width:44px;min-height:44px}
+.homebtn svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8}
+.homebtn.on{color:var(--accent)}
+.hometitle{flex:1}
+.tcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0;box-shadow:0 1px 3px rgb(17 26 22 / .04)}
+.tcard.cur{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.topen{display:grid;gap:2px;width:100%;text-align:left;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer}
+.topen b{font:700 1.15rem var(--display)}
+.arch summary{cursor:pointer;font-weight:700;margin:18px 0 6px;color:var(--muted)}
 .inst{max-width:640px;margin:12px auto 0;box-sizing:border-box;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:.92rem}
 @media (max-width:672px){.inst{margin:12px 16px 0}}
 a.btn{text-decoration:none;display:inline-flex;align-items:center}
@@ -110,7 +119,7 @@ nav button.on{color:var(--accent);box-shadow:inset 0 3px 0 var(--accent)}
 </head><body>
 
 <header><div class="in">
-  <div class="top"><input class="tour" id="tourName" aria-label="Tour name"><button class="acct off" id="acctBtn" data-tab="acct" aria-label="Backup"><svg viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.1 9.2 4.5 4.5 0 0 0 7 18z"/></svg><span>Back up</span></button></div>
+  <div class="top"><button class="homebtn" id="homeBtn" data-tab="home" aria-label="All tours"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg><span>Tours</span></button><input class="tour" id="tourName" aria-label="Tour name"><b class="tour hometitle" id="homeTitle" hidden>Guidewise</b><button class="acct off" id="acctBtn" data-tab="acct" aria-label="Backup"><svg viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.1 9.2 4.5 4.5 0 0 0 7 18z"/></svg><span>Back up</span></button></div>
   <div class="days" id="days"></div>
 </div></header>
 <div class="inst" id="inst" hidden><span>Install Guidewise on this device to use it with no signal.</span><span class="acts" style="margin:0"><button class="btn sm pri" data-inst="go" hidden>Install</button><a class="btn sm" href="setup.html">How to install</a><button class="x" data-inst="x" aria-label="Hide">×</button></span></div>
@@ -153,11 +162,24 @@ const sample={
     {t:'Load-shedding unlikely this week.',d:'2026-11-03'}
   ]
 };
-let S;
-try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-if(!S||!S.days)S=structuredClone(sample);
+/* Several tours. T holds them all; S is the open tour. The v1 single tour (KEY) is migrated once and left in place as a safety copy. */
+const KEY2='guidewise.tours.v2';
+const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+let T;
+try{T=JSON.parse(localStorage.getItem(KEY2))}catch(e){}
+if(!T||!Array.isArray(T.tours)||!T.tours.length){let old;try{old=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+  if(!old||!old.days)old=structuredClone(sample);
+  old.id=old.id||uid();T={v:2,cur:old.id,legacyDocs:old.id,tours:[old]}}
+let S=T.tours.find(t=>t.id===T.cur)||T.tours[0];
 let tab='plan';
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}if(window.onSaved)onSaved()};
+const save=()=>{try{localStorage.setItem(KEY2,JSON.stringify(T))}catch(e){}if(window.onSaved)onSaved()};
+/* Used by backup.js on restore: accepts v2 {T} or a v1 single tour {S}. */
+window.applyBackup=o=>{let nt=o.T;if(!nt){const t=o.S;t.id=t.id||uid();nt={v:2,cur:t.id,tours:[t]}}
+  nt.legacyDocs=T.legacyDocs;T=nt;S=T.tours.find(t=>t.id===T.cur)||T.tours[0];T.cur=S.id};
+const newDay=date=>({date,title:'New day',meet:'Hotel lobby',start:'08:00',weather:'',dress:'',bring:'',stops:[{place:'First stop',drive:30,stay:60,note:'',lunch:false}],checklist:[{t:'Cash',d:false},{t:'Tickets',d:false}]});
+function openTour(id){const t=T.tours.find(x=>x.id===id);if(!t)return;S=t;T.cur=id;tab='plan';save();render();scrollTo(0,0)}
+function tourMeta(t){const ds=t.days.map(d=>d.date).filter(Boolean).sort(),a=ds[0],b=ds[ds.length-1];return{a,b,range:a?(a===b?dLabel(a):dLabel(a)+' to '+dLabel(b)):'No dates yet'}}
+const docMine=f=>(f.tour||T.legacyDocs)===S.id;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const D=()=>S.days[S.day]||S.days[0];
@@ -180,6 +202,7 @@ const icons={
 const names={plan:'Day plan',guests:'Guests',pack:'Checklist',brief:'Briefing',docs:'Documents',intel:'Local intel'};
 
 function renderChrome(){
+  const home=tab==='home';$('#tourName').hidden=home;$('#homeTitle').hidden=!home;$('#days').hidden=home;$('#homeBtn').classList.toggle('on',home);
   $('#tourName').value=S.tour;
   $('#days').innerHTML=S.days.map((d,i)=>`<button class="${i===S.day?'on':''}" data-day="${i}">Day ${i+1} · ${esc(dLabel(d.date))}</button>`).join('')+`<button data-addday="1" aria-label="Add a day">+ Day</button>`;
   $('#tabs').innerHTML=Object.keys(names).map(k=>`<button class="${k===tab?'on':''}" data-tab="${k}">${icons[k]}<span>${k==='pack'?'Check':k==='docs'?'Docs':names[k].split(' ')[0]}</span></button>`).join('');
@@ -277,11 +300,24 @@ function renderIntel(){
   return h+`<button class="btn" data-inadd="1">+ Add note</button><p class="sample">Next version: pull live alerts automatically for the tour's area.</p>`;
 }
 
+function renderHome(){
+  const today=new Date().toISOString().slice(0,10);
+  const list=T.tours.slice().sort((x,y)=>(tourMeta(x).a||'9999')<(tourMeta(y).a||'9999')?-1:1);
+  const card=t=>{const m=tourMeta(t),live=m.a&&m.a<=today&&m.b>=today,past=m.b&&m.b<today,g=t.guests.length;
+    return `<div class="tcard ${t.id===S.id?'cur':''}"><button class="topen" data-topen="${t.id}"><b>${esc(t.tour)||'Untitled tour'}</b>
+      <span class="note">${esc(m.range)} · ${t.days.length} day${t.days.length===1?'':'s'} · ${g} guest${g===1?'':'s'}</span>${live?'<span><span class="flag">On tour now</span></span>':past?'<span class="note">Finished</span>':''}</button>
+      <div class="acts" style="margin-top:8px"><button class="btn sm" data-tdup="${t.id}">Duplicate</button><button class="btn sm" data-tarc="${t.id}">${t.archived?'Restore':'Archive'}</button><button class="btn sm" data-tdel="${t.id}">Delete</button></div></div>`};
+  const act=list.filter(t=>!t.archived),arc=list.filter(t=>t.archived);
+  let h=`<h2>Your tours</h2><div class="acts"><button class="btn pri" data-tnew="1">+ New tour</button></div>`+(act.length?act.map(card).join(''):'<p class="note">No current tours. Start a new one above.</p>');
+  if(arc.length)h+=`<details class="arch"><summary>Archived (${arc.length})</summary>${arc.map(card).join('')}</details>`;
+  return h+`<p class="note">Tap a tour to open it. Duplicate copies the days and checklists without the guests, so you can reuse an itinerary.</p>`;
+}
+
 function render(){
   renderChrome();
   setTimeout(()=>{if(tab==='docs')fillDocs();if(tab==='plan')fillDayDocs();if(tab==='acct')fillAcct()},0);
-  const v={plan:renderPlan,guests:renderGuests,pack:renderPack,brief:renderBrief,docs:renderDocs,intel:renderIntel,acct:window.renderAcct||(()=>'<p class="note">Backup is not available right now.</p>')}[tab]();
-  $('#main').innerHTML=v+(tab==='docs'||tab==='acct'?'':S.tour.includes('(sample)')?`<p class="sample">Sample tour loaded. Rename it and edit freely; your changes are saved in this browser. New here? <a href="setup.html">Setup guide</a></p>`:'');
+  const v={home:renderHome,plan:renderPlan,guests:renderGuests,pack:renderPack,brief:renderBrief,docs:renderDocs,intel:renderIntel,acct:window.renderAcct||(()=>'<p class="note">Backup is not available right now.</p>')}[tab]();
+  $('#main').innerHTML=v+(tab==='docs'||tab==='acct'||tab==='home'?'':S.tour.includes('(sample)')?`<p class="sample">Sample tour loaded. Rename it and edit freely; your changes are saved in this browser. New here? <a href="setup.html">Setup guide</a></p>`:'');
 }
 
 document.addEventListener('click',e=>{
@@ -291,9 +327,20 @@ document.addEventListener('click',e=>{
   if(ds.ddel){if(b.classList.contains('arm')){dbDel(+ds.ddel).then(fillDocs)}else{b.classList.add('arm');b.textContent='Delete?';setTimeout(()=>{b.classList.remove('arm');b.textContent='×'},3000)}return}
   if(ds.dfilter!==undefined){docFilter=ds.dfilter;fillDocs();return}
   if(ds.dpick){$('#docFile').click();return}
+  if(ds.topen){openTour(ds.topen);return}
+  if(ds.tnew){const nd=new Date();nd.setDate(nd.getDate()+1);const t={id:uid(),tour:'New tour',day:0,days:[newDay(nd.toISOString().slice(0,10))],guests:[],intel:[]};
+    T.tours.push(t);openTour(t.id);setTimeout(()=>{const n=$('#tourName');n.focus();n.select()},50);return}
+  if(ds.tdup){const src=T.tours.find(t=>t.id===ds.tdup);const t=structuredClone(src);Object.assign(t,{id:uid(),tour:src.tour.replace(/\s*\(sample\)/,'')+' (copy)',guests:[],archived:false,day:0});
+    t.days.forEach(x=>x.checklist.forEach(c=>c.d=false));T.tours.push(t);save();render();toast('Tour duplicated, without guests');return}
+  if(ds.tarc){const t=T.tours.find(x=>x.id===ds.tarc);t.archived=!t.archived;save();render();toast(t.archived?'Tour archived':'Tour restored');return}
+  if(ds.tdel){if(!b.classList.contains('arm')){b.classList.add('arm');b.textContent='Tap again to delete';setTimeout(()=>{b.classList.remove('arm');b.textContent='Delete'},3000);return}
+    const id=ds.tdel;T.tours=T.tours.filter(t=>t.id!==id);
+    dbAll().then(all=>all.filter(f=>(f.tour||T.legacyDocs)===id).forEach(f=>dbDel(f.id))).catch(()=>{});
+    if(!T.tours.length){const nd=new Date();nd.setDate(nd.getDate()+1);T.tours.push({id:uid(),tour:'New tour',day:0,days:[newDay(nd.toISOString().slice(0,10))],guests:[],intel:[]})}
+    if(!T.tours.includes(S)){S=T.tours[0];T.cur=S.id}save();render();toast('Tour deleted');return}
   if(ds.day){S.day=+ds.day}
   else if(ds.addday){const last=S.days[S.days.length-1];const nd=new Date((last?.date||'2026-11-04')+'T12:00');nd.setDate(nd.getDate()+1);
-    S.days.push({date:nd.toISOString().slice(0,10),title:'New day',meet:'Hotel lobby',start:'08:00',weather:'',dress:'',bring:'',stops:[{place:'First stop',drive:30,stay:60,note:'',lunch:false}],checklist:[{t:'Cash',d:false},{t:'Tickets',d:false}]});S.day=S.days.length-1}
+    S.days.push(newDay(nd.toISOString().slice(0,10)));S.day=S.days.length-1}
   else if(ds.addstop){d.stops.push({place:'New stop',drive:20,stay:45,note:'',lunch:false})}
   else if(ds.del!==undefined){d.stops.splice(+ds.del,1)}
   else if(ds.gadd){S.guests.push({name:'',room:'',diet:'',bday:'',notes:''})}
@@ -343,7 +390,7 @@ async function addFiles(list){
   const files=[...list];if(!files.length)return;
   const day=($('#docDay')||{}).value??String(S.day);
   try{if(navigator.storage&&navigator.storage.persist)await navigator.storage.persist()}catch(e){}
-  try{for(const f of files)await tx('readwrite',st=>st.add({name:f.name,type:f.type||'application/octet-stream',size:f.size,day,added:new Date().toISOString().slice(0,10),blob:f}));
+  try{for(const f of files)await tx('readwrite',st=>st.add({tour:S.id,name:f.name,type:f.type||'application/octet-stream',size:f.size,day,added:new Date().toISOString().slice(0,10),blob:f}));
     toast(files.length+' document'+(files.length>1?'s':'')+' added')}
   catch(e){toast('Could not save: phone storage may be full')}
   fillDocs();
@@ -370,7 +417,7 @@ function renderDocs(){
 }
 async function fillDocs(){
   const list=$('#docList');if(!list)return;
-  let all=[];try{all=await dbAll()}catch(e){list.innerHTML='<p class="note">Document storage is not available in this browser.</p>';return}
+  let all=[];try{all=(await dbAll()).filter(docMine)}catch(e){list.innerHTML='<p class="note">Document storage is not available in this browser.</p>';return}
   const cur=String(S.day);
   $('#docSeg').innerHTML=[['day','This day ('+all.filter(f=>f.day===cur||f.day==='all').length+')'],['tour','Whole tour only ('+all.filter(f=>f.day==='all').length+')'],['','Everything ('+all.length+')']].map(([k,l])=>`<button class="${docFilter===k?'on':''}" data-dfilter="${k}">${l}</button>`).join('');
   const shown=all.filter(f=>docFilter==='day'?(f.day===cur||f.day==='all'):docFilter==='tour'?f.day==='all':true).sort((a,b)=>(a.day==='all'?-1:+a.day)-(b.day==='all'?-1:+b.day)||b.id-a.id);
@@ -384,7 +431,7 @@ async function fillDocs(){
 }
 async function fillDayDocs(){
   const box=$('#dayDocs');if(!box)return;
-  let all=[];try{all=await dbAll()}catch(e){return}
+  let all=[];try{all=(await dbAll()).filter(docMine)}catch(e){return}
   const mine=all.filter(f=>f.day===String(S.day)||f.day==='all');
   box.innerHTML=`<h2>Documents for today</h2>`+(mine.length?`<div class="daydocs">${mine.map(f=>`<button data-dopen="${f.id}">${esc(f.name)}</button>`).join('')}</div>`:`<p class="note">None filed yet. <button class="btn sm" data-tab="docs">Add documents</button></p>`);
 }

@@ -3,7 +3,7 @@
    Nothing about the tour leaves the phone before consent. The server only stores AES-256-GCM
    ciphertext. Format 2: a random data key encrypts the tour; that key is stored twice, wrapped
    by the passphrase and by a one-time recovery code. No key ever leaves the device unwrapped.
-   Shares globals with index.html: S, KEY, save, render, tab, toast, esc, $, dLabel. */
+   Shares globals with index.html: T (all tours), S, KEY, save, render, applyBackup, tab, toast, esc, $, dLabel. */
 const SB_URL='https://bqevxxhdtzlywjoqbogt.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxZXZ4eGhkdHpseXdqb3Fib2d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM2OTczMjksImV4cCI6MjEwOTI3MzMyOX0.ih_90aBSe0XLXbs_6JduPTtHQbNLdTL-mHjk4EdlJBQ';
 const CONSENT='popia-v2', ITER=600000, REC_ITER=100000, MIN_PASS=8, SYNC_KEY='guidewise.sync', AUTO_MS=15000;
@@ -63,7 +63,7 @@ async function seal(key,obj){
 async function unseal(key,row){
   const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(row.iv),additionalData:enc(user.id)},key,unb64(row.ciphertext));
   const o=JSON.parse(new TextDecoder().decode(pt));
-  if(o.app!=='guidewise'||!o.S||!Array.isArray(o.S.days))throw new Error('format');
+  if(o.app!=='guidewise'||!((o.T&&Array.isArray(o.T.tours))||(o.S&&Array.isArray(o.S.days))))throw new Error('format');
   return o;
 }
 
@@ -98,8 +98,8 @@ async function backupNow(force){
   try{
     const m=await getMeta();
     if(m&&m.rev>(sync.rev||0)&&!force){sync.conflict=m.rev;saveSync();throw new Error('conflict')}
-    const snap=JSON.stringify(S);
-    const{iv,ciphertext}=await seal(bk.key,{app:'guidewise',v:1,at:new Date().toISOString(),S:JSON.parse(snap)});
+    const snap=JSON.stringify(T);
+    const{iv,ciphertext}=await seal(bk.key,{app:'guidewise',v:2,at:new Date().toISOString(),T:JSON.parse(snap)});
     if(m&&m.key_id!==bk.kid){bk=null;throw new Error('rekeyed')}
     const row={iv,ciphertext,format:2,rev:(m?.rev||0)+1};
     if(!m)throw new Error('nobackup');
@@ -120,8 +120,8 @@ async function restoreNow(){
   try{
     const row=await getFull();if(!row)throw new Error('none');
     const o=await unseal(bk.key,row);
-    try{localStorage.setItem(KEY+'.beforeRestore',JSON.stringify(S))}catch(e){}
-    quiet=true;S=o.S;save();quiet=false;lastJSON=JSON.stringify(S);
+    try{localStorage.setItem(KEY+'.beforeRestore',JSON.stringify(T))}catch(e){}
+    quiet=true;applyBackup(o);save();quiet=false;lastJSON=JSON.stringify(T);
     Object.assign(sync,{rev:row.rev,at:row.updated_at,pending:0,conflict:0});saveSync();
     restoreOffer=false;busy='';render();toast('Tour restored from backup');return;
   }catch(e){msg=e.message==='none'?'There is no cloud backup yet.':'Could not restore. Check your signal and try again.'}
@@ -131,7 +131,7 @@ async function restoreNow(){
 /* Called by save() in index.html after every local change. */
 window.onSaved=function(){
   if(quiet||!ready()||!sync.auto)return;
-  const j=JSON.stringify(S);if(j===lastJSON)return;
+  const j=JSON.stringify(T);if(j===lastJSON)return;
   sync.pending=1;saveSync();paintBtn();
   clearTimeout(autoT);autoT=setTimeout(()=>{autoT=null;backupNow()},AUTO_MS);
 };
@@ -179,6 +179,7 @@ function acctHTML(){
     <label class="opt"><input type="checkbox" class="a-ok"><span>My guests know I keep their details to run the tour, and have agreed to dietary and health notes being recorded.</span></label>
     <label class="opt"><input type="checkbox" class="a-ok"><span>I agree to an encrypted backup being stored with Supabase in London, UK, outside South Africa.</span></label>
     <label class="opt"><input type="checkbox" class="a-ok"><span>I understand Guidewise cannot read or recover my backup. If I lose both my passphrase and my recovery code, the cloud copy is lost.</span></label>
+    <p class="note"><a href="setup.html#ticks" target="_blank" rel="noopener">What do these mean?</a></p>
     <div class="acts"><button class="btn pri" data-a="consent" id="a-consent" disabled>I agree, continue</button><button class="btn" data-a="signout">Not now, sign out</button></div>${bz}`;
   if(recShow)return `<h2>Your recovery code</h2>
     <p class="rec" id="a-rec">${esc(recShow)}</p>
@@ -251,7 +252,7 @@ document.addEventListener('click',async e=>{
       busy='Encrypting…';paint();
       const raw=crypto.getRandomValues(new Uint8Array(32)),kid=b64(crypto.getRandomValues(new Uint8Array(12))),code=newRecoveryCode();
       const key=await importDEK(raw),wp=await passWrap(raw,p1),wr=await recWrap(raw,code);raw.fill(0);
-      const snap=JSON.stringify(S);const{iv,ciphertext}=await seal(key,{app:'guidewise',v:1,at:new Date().toISOString(),S:JSON.parse(snap)});
+      const snap=JSON.stringify(T);const{iv,ciphertext}=await seal(key,{app:'guidewise',v:2,at:new Date().toISOString(),T:JSON.parse(snap)});
       const m=await getMeta();
       const row={iv,ciphertext,format:2,kdf_iter:ITER,salt:null,key_id:kid,...wp,...wr,rev:(m?.rev||0)+1};
       const q=m?sb.from('backups').update(row).eq('user_id',user.id).eq('rev',m.rev):sb.from('backups').insert(row);
