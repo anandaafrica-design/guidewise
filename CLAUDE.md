@@ -8,9 +8,10 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 - Netlify site "guidewise-app", site-id 9e36a9ca-6f37-416e-8e51-31229de5132e, team spookstories
 
 ## Files
-- index.html: whole app (vanilla JS, no build step)
-- sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v3)
-- manifest.webmanifest, icon-192.png, icon-512.png
+- site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
+- site/index.html: whole app (vanilla JS, no build step)
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v3)
+- site/manifest.webmanifest, site/icon-192.png, site/icon-512.png
 
 ## Features (v3)
 - Day plan: depart time + drive/stay minutes per stop, all times cascade; lunch stops show guest dietaries
@@ -31,4 +32,5 @@ State in localStorage key tourPrepKit.v1; documents in IndexedDB. Device-only fo
 4. Live local intel for the tour's area
 
 ## Deploy
-Netlify MCP deploy-site with the site-id, run the returned npx command from this folder. If the proxy URL contains "//proxy/", change it to "/proxy/". Verify sw.js shows the new tp-vN.
+Git-linked: merging to main deploys to production; PRs get a Netlify deploy preview. Repo: anandaafrica-design/guidewise.
+Work on a branch, open a PR, check the preview, then merge. Verify sw.js shows the new tp-vN.
