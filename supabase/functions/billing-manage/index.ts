@@ -25,8 +25,36 @@ Deno.serve(async (req) => {
   const { data: u, error: ue } = await admin.auth.getUser(jwt);
   if (ue || !u?.user) return json({ error: "unauthorised" }, 401);
 
-  const { action } = await req.json().catch(() => ({}));
+  const { action, reference } = await req.json().catch(() => ({}));
   const { data: sub } = await admin.from("subscriptions").select("*").eq("user_id", u.user.id).maybeSingle();
+
+  // Back from checkout: confirm with Paystack directly, so the app does not depend on the webhook alone.
+  if (action === "verify") {
+    if (!reference || !/^[\w.-]{4,100}$/.test(reference)) return json({ error: "reference" }, 400);
+    try {
+      const t = await paystack("/transaction/verify/" + encodeURIComponent(reference));
+      if (t.status !== "success" || t.metadata?.user_id !== u.user.id) return json({ status: "unpaid" });
+      if (sub?.status === "comp") return json({ status: "comp" });
+      const list = await paystack("/subscription?customer=" + encodeURIComponent(String(t.customer?.id)) + "&perPage=20");
+      const s = (list || []).filter((x: any) => x.status === "active").sort((a: any, b: any) => (b.id || 0) - (a.id || 0))[0];
+      if (!s) return json({ status: "pending" }); // subscription is created a few seconds after the charge
+      await admin.from("subscriptions").upsert({
+        user_id: u.user.id,
+        status: "active",
+        plan: s.plan?.interval === "annually" ? "yearly" : "monthly",
+        current_period_end: s.next_payment_date || null,
+        paystack_customer_code: t.customer?.customer_code,
+        paystack_subscription_code: s.subscription_code,
+        paystack_email_token: s.email_token,
+        updated_at: new Date().toISOString(),
+      });
+      return json({ status: "active" });
+    } catch (e) {
+      console.error(e);
+      return json({ error: "verify_failed" }, 502);
+    }
+  }
+
   if (!sub?.paystack_subscription_code) return json({ error: "no_subscription" }, 404);
   try {
     const s = await paystack("/subscription/" + encodeURIComponent(sub.paystack_subscription_code));

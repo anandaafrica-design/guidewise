@@ -345,7 +345,9 @@ const fromPay=/[?&]paid=1/.test(location.search);
 /* Coming back with the browser Back button restores the old page: clear any stuck 'Opening…' state. */
 addEventListener('pageshow',e=>{if(e.persisted&&busy){busy='';paint()}});
 /* Back from Paystack: the webhook may take a few seconds, so check the plan a few times. */
-async function awaitPayment(){for(let i=0;i<10;i++){const sp=await sb.from('subscriptions').select('status,plan,trial_ends_at,current_period_end').maybeSingle();
+const payRef=(new URLSearchParams(location.search)).get('reference')||'';
+async function awaitPayment(){for(let i=0;i<10;i++){if(payRef)await sb.functions.invoke('billing-manage',{body:{action:'verify',reference:payRef}}).catch(()=>{});
+  const sp=await sb.from('subscriptions').select('status,plan,trial_ends_at,current_period_end').maybeSingle();
   plan=sp.data||plan;if(plan&&plan.status==='active'){toast('Thank you. Guidewise Plus is on');paint();if(ready()){lastJSON=null;backupNow()}return}
   await new Promise(r=>setTimeout(r,3000))}msg='Payment received. It can take a minute to show here.';paint()}
 if(sync.acct||fromLink||fromPay)addEventListener('load',()=>{loadSB().then(()=>sb.auth.getSession()).then(async({data})=>{user=data.session?.user||null;await refresh();
