@@ -113,7 +113,7 @@ async function send(){
     const{data}=await sb.auth.getSession();const tok=data.session?.access_token;if(!tok)throw{code:'unauthorised'};
     const ac=new AbortController(),to=setTimeout(()=>ac.abort(),170000);
     const r=await fetch(SB_URL+'/functions/v1/ai-import',{method:'POST',signal:ac.signal,headers:{Authorization:'Bearer '+tok,apikey:SB_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({consent:AI_CONSENT,files:mine.map(({how,...f})=>f)})});clearTimeout(to);
+      body:JSON.stringify({consent:AI_CONSENT,files:mine.map(({how,doc,...f})=>f)})});clearTimeout(to);
     const b=await r.json().catch(()=>({}));
     if(!r.ok||!b.draft)throw{code:b.error||'x'};
     draft=b.draft;mode=S.tour.includes('(sample)')?'new':mode;st='review';
@@ -137,6 +137,7 @@ function pickHTML(){
   <div class="acts"><button class="btn${mine.length?'':' pri'}" data-ik="pick">${mine.length?'+ Add another file':'Choose documents'}</button></div>
   <input type="file" id="ik-file" multiple hidden accept="application/pdf,image/*,.xlsx,.xlsm,.csv,.txt,.eml">
   <p class="note">PDF, Excel (.xlsx), CSV, text or photos. Up to ${MAX_FILES} files. Older .xls or Word files: save as PDF first.</p>
+  <div id="ik-saved"></div>
   ${list}
   ${mine.length?`<div class="card" style="background:var(--soft)"><b>Before you send</b>
     <span class="note">On your phone, spreadsheets lose passport, visa, flight, phone, email and address columns, and dates of birth become day and month only. PDFs and photos go as they are; the AI is told never to copy those details.</span>
@@ -164,8 +165,14 @@ function reviewHTML(){
   <p class="note">Times are turned into drive and stay minutes. Where a time was missing Guidewise guessed, so glance over each day.</p>`;
 }
 window.renderImport=()=>`<h2>Import from documents</h2><div id="imp">${st==='busy'?busyHTML():st==='review'?reviewHTML():pickHTML()}</div>`;
-function paintImp(){const el=$('#imp');if(el&&tab==='import')el.outerHTML=renderImport().replace(/^<h2>[^<]*<\/h2>/,'')}
-window.fillImport=()=>{if(sb&&loaded||fillImport._p)return;
+function paintImp(){const el=$('#imp');if(el&&tab==='import'){el.outerHTML=renderImport().replace(/^<h2>[^<]*<\/h2>/,'');fillSaved()}}
+/* Documents already saved under Docs for this tour can be imported without picking them again. */
+const usable=f=>/\.(pdf|xlsx|xlsm|csv|txt|eml)$/i.test(f.name)||/^image\//.test(f.type);
+async function fillSaved(){const box=$('#ik-saved');if(!box)return;
+  let all=[];try{all=(await dbAll()).filter(f=>docMine(f)&&usable(f))}catch(e){return}
+  const left=all.filter(f=>!mine.some(m=>m.doc===f.id));if(!left.length){box.innerHTML='';return}
+  box.innerHTML=`<p class="note" style="margin-top:14px"><b>Or use documents saved in this tour</b></p><div class="acts">${left.map(f=>`<button class="btn sm" data-ik="usedoc" data-id="${f.id}">+ ${esc(f.name)}</button>`).join('')}</div>`}
+window.fillImport=()=>{fillSaved();if(sb&&loaded||fillImport._p)return;
   fillImport._p=loadSB().then(()=>sb.auth.getSession()).then(async({data})=>{user=data.session?.user||null;await refresh()})
     .catch(()=>{err='AI import needs a signal.'}).finally(()=>{fillImport._p=null;paintImp()})};
 
@@ -173,6 +180,10 @@ document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-ik]');if(!b)return;const a=b.dataset.ik;
   if(a==='pick'){$('#ik-file').click();return}
   if(a==='rm'){mine.splice(+b.dataset.i,1);paintImp();return}
+  if(a==='usedoc'){const r=await dbGet(+b.dataset.id);if(!r)return;err='';
+    if(mine.length>=MAX_FILES){err=ERR.too_many_files;return paintImp()}
+    try{const p=await prepare(new File([r.blob],r.name,{type:r.type}));p.doc=r.id;mine.push(p)}catch(x){err=x.message==='offline'?'Reading spreadsheets needs a signal the first time.':`Could not read ${r.name}.`}
+    return paintImp()}
   if(a==='go'){if(!agreed){err=ERR.consent;return paintImp()}return send()}
   if(a==='mode'){mode=b.dataset.m;return paintImp()}
   if(a==='discard'){reset();tab='home';render();return}
