@@ -139,11 +139,11 @@ function pickHTML(){
   <p class="note">PDF, Excel (.xlsx), CSV, text or photos. Up to ${MAX_FILES} files. Older .xls or Word files: save as PDF first.</p>
   <div id="ik-saved"></div>
   ${list}
-  ${mine.length?`<div class="card" style="background:var(--soft)"><b>Before you send</b>
+  <div class="card" style="background:var(--soft)"><b>Before you send</b>
     <span class="note">On your phone, spreadsheets lose passport, visa, flight, phone, email and address columns, and dates of birth become day and month only. PDFs and photos go as they are; the AI is told never to copy those details.</span>
     <span class="note">The files go through our server to <b>Anthropic</b> (USA), the AI provider, to be read. We do not keep them. Anthropic does not train on them and deletes them within 30 days. <a href="privacy.html#ai">More</a></span>
     <label style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" id="ik-ok" ${agreed?'checked':''} style="width:22px;height:22px;flex:none;margin-top:2px"><span>I am allowed to share these documents for this purpose (check your operator's policy), and I agree to them being sent to Anthropic in the USA to be read.</span></label>
-    <div class="acts"><button class="btn pri" data-ik="go" ${agreed?'':'disabled'}>Read my documents</button></div></div>`:''}
+    <div class="acts"><button class="btn pri" data-ik="go" ${agreed&&mine.length?'':'disabled'}>Read my documents</button></div>${mine.length?'':'<span class="note">Add at least one document above first.</span>'}${mine.length&&!agreed?'<span class="note">Tick the box to continue.</span>':''}</div>
   <p class="note">${LIMIT} imports a month are included in Plus. Each one usually takes about a minute.</p>`;
 }
 function busyHTML(){return`<div class="card" style="text-align:center;padding:28px 14px"><b>Reading your documents…</b><span class="note">Usually about a minute. Keep Guidewise open. <span id="ik-sec">0s</span></span></div>`}
@@ -184,7 +184,7 @@ document.addEventListener('click',async e=>{
     if(mine.length>=MAX_FILES){err=ERR.too_many_files;return paintImp()}
     try{const p=await prepare(new File([r.blob],r.name,{type:r.type}));p.doc=r.id;mine.push(p)}catch(x){err=x.message==='offline'?'Reading spreadsheets needs a signal the first time.':`Could not read ${r.name}.`}
     return paintImp()}
-  if(a==='go'){if(!agreed){err=ERR.consent;return paintImp()}return send()}
+  if(a==='go'){if(!mine.length)return;if(!agreed){err=ERR.consent;return paintImp()}return send()}
   if(a==='mode'){mode=b.dataset.m;return paintImp()}
   if(a==='discard'){reset();tab='home';render();return}
   if(a==='apply')return apply();
