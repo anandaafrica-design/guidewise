@@ -93,8 +93,8 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
 .note{font-size:.92rem;color:var(--muted)}
 /* tabbar */
 nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);z-index:6}
-nav .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
-nav button{background:none;border:0;padding:10px 2px 12px;font:700 .78rem var(--body);color:var(--muted);cursor:pointer;display:grid;gap:3px;justify-items:center}
+nav .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(7,1fr)}
+nav button{background:none;border:0;padding:10px 0 12px;font:700 .72rem var(--body);min-width:0;color:var(--muted);cursor:pointer;display:grid;gap:3px;justify-items:center}
 nav button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 nav button.on{color:var(--accent);box-shadow:inset 0 3px 0 var(--accent)}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:.88rem;z-index:9}
@@ -192,6 +192,7 @@ function bdays(day){const md=(day.date||'').slice(5);return S.guests.filter(g=>g
 function diets(){return S.guests.filter(g=>g.diet)}
 
 const icons={
+ home:'<svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></svg>',
  plan:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
  guests:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c.8-3.2 3.2-5 6-5s5.2 1.8 6 5"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14c2.4 0 4.2 1.4 5 4"/></svg>',
  pack:'<svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M9 7V5h6v2M9 13l2 2 4-4"/></svg>',
@@ -199,7 +200,7 @@ const icons={
  docs:'<svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>',
  intel:'<svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>'
 };
-const names={plan:'Day plan',guests:'Guests',pack:'Checklist',brief:'Briefing',docs:'Documents',intel:'Local intel'};
+const names={home:'Home',plan:'Day plan',guests:'Guests',pack:'Checklist',brief:'Briefing',docs:'Documents',intel:'Local intel'};
 
 function renderChrome(){
   const home=tab==='home';$('#tourName').hidden=home;$('#homeTitle').hidden=!home;$('#days').hidden=home;$('#homeBtn').classList.toggle('on',home);

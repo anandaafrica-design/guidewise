@@ -23,7 +23,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 - Briefing: WhatsApp evening message generated from the day plan, copy button. Never include birthdays or dietaries
 - Documents: IndexedDB store "guidewise-docs", filed per day or whole tour, shown on day plan
 - Local intel: private notes
-- Tours home screen (tab 'home', Tours button top left): new, duplicate (no guests, checklists unticked), archive, delete (also deletes that tour's documents)
+- Tours home screen (tab 'home': Home in the bottom menu and Tours button top left): new, duplicate (no guests, checklists unticked), archive, delete (also deletes that tour's documents)
 - Install banner (hidden once installed or dismissed, key guidewise.inst), one-tap install via beforeinstallprompt
 - Light-only, high-contrast theme for outdoor reading. Keep it light
 
