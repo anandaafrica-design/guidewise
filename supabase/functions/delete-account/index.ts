@@ -16,6 +16,16 @@ Deno.serve(async (req) => {
   const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
   const { data, error } = await admin.auth.getUser(jwt);
   if (error || !data?.user) return json({ error: "unauthorised" }, 401);
+  // Stop any Paystack subscription first, so the card is not charged after the account is gone.
+  const { data: sub } = await admin.from("subscriptions").select("paystack_subscription_code,paystack_email_token,status").eq("user_id", data.user.id).maybeSingle();
+  if (sub?.paystack_subscription_code && sub.paystack_email_token && ["active", "attention", "non_renewing"].includes(sub.status)) {
+    const r = await fetch("https://api.paystack.co/subscription/disable", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + Deno.env.get("PAYSTACK_SECRET_KEY"), "Content-Type": "application/json" },
+      body: JSON.stringify({ code: sub.paystack_subscription_code, token: sub.paystack_email_token }),
+    });
+    if (!r.ok && sub.status !== "non_renewing") return json({ error: "cancel_failed" }, 502);
+  }
   const del = await admin.auth.admin.deleteUser(data.user.id);
   if (del.error) return json({ error: "delete failed" }, 500);
   return json({ deleted: true });

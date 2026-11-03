@@ -10,9 +10,9 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 ## Files
 - site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
 - site/index.html: whole app (vanilla JS, no build step)
-- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v7). New precached files go in its F list
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v8). New precached files go in its F list
 - site/backup.js: cloud backup (sign-in, POPIA consent, passphrase, encrypt, sync). Shares globals with index.html
-- site/vendor/supabase-2.45.4.js: vendored so it works offline; site/privacy.html: POPIA notice; site/setup.html: setup guide to send to guides (install, first tour, backup, help). Keep it in step with the UI
+- site/vendor/supabase-2.45.4.js: vendored so it works offline; site/privacy.html: POPIA notice; site/terms.html: terms, pricing, refunds (Paystack needs it); site/setup.html: setup guide to send to guides (install, first tour, backup, help). Keep it in step with the UI
 - supabase/: record of the deployed migration and edge function
 - site/manifest.webmanifest, site/icon-192.png, site/icon-512.png
 
@@ -35,9 +35,17 @@ Optional backup (v4): Supabase project "guidewise" (ref bqevxxhdtzlywjoqbogt, Lo
 - Never add a server feature that needs to read guest data without revisiting consent and encryption
 - Changing consent wording: bump to popia-v3 in backup.js, privacy.html and the consents check constraint and has_consent()
 
+## Payments (v8): Guidewise Plus via Paystack
+- Free: everything on device. Plus: cloud backup (and later AI import). R49/month or R490/year, ZAR. 30-day trial for every new account (trigger on auth.users), no card needed
+- Table subscriptions (read-only to users; written by triggers and edge functions). has_plus() is mirrored by plus() in backup.js
+- Uploading new backup data needs Plus (insert policy + trigger on ciphertext change). Restore, delete, passphrase/recovery re-wraps always allowed (POPIA access and erasure)
+- Owner account anandaafrica@gmail.com is status 'comp'; billing never downgrades comp
+- Edge functions: billing-checkout (JWT; Paystack customer + transaction with plan; returns to /?paid=1), billing-webhook (no JWT; HMAC-SHA512 signature check; re-fetches the subscription from Paystack), billing-manage (JWT; hosted manage link, sync). delete-account also disables the Paystack subscription
+- Secrets in Supabase (owner enters them, never in code): PAYSTACK_SECRET_KEY, PAYSTACK_PLAN_MONTHLY, PAYSTACK_PLAN_YEARLY. Webhook URL: https://bqevxxhdtzlywjoqbogt.supabase.co/functions/v1/billing-webhook
+
 ## Roadmap
 1. Accounts + cloud backup: done in v4 (documents not yet backed up: phase 2 via Supabase Storage, encrypted the same way)
-2. Payments: Paystack (smoother subscriptions, card only) or PayFast (more SA methods). Free trial then ~R49/month
+2. Payments: done in v8 (Paystack, see Payments section). Next: AI document import for Plus, with per-document consent
 3. Custom domain (guidewise.app or .co, to be bought)
 4. Live local intel for the tour's area
 

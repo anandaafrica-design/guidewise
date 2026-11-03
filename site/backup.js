@@ -12,7 +12,7 @@ let sync=(()=>{try{return JSON.parse(localStorage.getItem(SYNC_KEY))||{}}catch(e
 const saveSync=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify(sync))}catch(e){}};
 if(sync.auto===undefined)sync.auto=true;
 
-let sb=null,sbLoad=null,user=null,consented=false,bk=null,meta=null,loaded=false;
+let sb=null,sbLoad=null,user=null,consented=false,bk=null,meta=null,loaded=false,plan=null;
 let step='email',email='',busy='',msg='',restoreOffer=false,lastJSON=null,autoT=null,quiet=false,changing=false,suggest='',recMode=false,recShow='',newRec=false;
 
 /* ---------- Supabase client, loaded only when needed ---------- */
@@ -78,6 +78,7 @@ async function refresh(){
   try{
     const c=await sb.from('consents').select('id').eq('version',CONSENT).limit(1);if(c.error)throw c.error;
     consented=c.data.length>0;
+    const sp=await sb.from('subscriptions').select('status,plan,trial_ends_at,current_period_end').maybeSingle();plan=sp.data||null;
     meta=await getMeta();
     bk=(await kGet(user.id))||null;
     if(bk&&!bk.kid)bk=null; // key from the first version: set up again
@@ -89,10 +90,16 @@ async function refresh(){
   if(ready()&&sync.pending)backupNow();
 }
 const ready=()=>!!(user&&consented&&bk);
+/* Mirrors has_plus() in the database, which is what actually enforces it. */
+function plus(){const p=plan,now=Date.now(),t=x=>x?new Date(x).getTime():0;if(!p)return false;
+  return p.status==='comp'||(p.status==='trialing'&&t(p.trial_ends_at)>now)||(['active','non_renewing'].includes(p.status)&&(!p.current_period_end||t(p.current_period_end)>now))||(p.status==='attention'&&t(p.current_period_end)+7*864e5>now)}
+const daysLeft=x=>Math.max(0,Math.ceil((new Date(x).getTime()-Date.now())/864e5));
+const dayStr=x=>new Date(x).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
 
 /* ---------- backup and restore ---------- */
 async function backupNow(force){
   if(!ready()||busy)return;
+  if(!plus()){sync.pending=0;saveSync();paint();return}
   if(!navigator.onLine){sync.pending=1;saveSync();paint();return}
   busy='Backing up…';msg='';paint();
   try{
@@ -109,7 +116,8 @@ async function backupNow(force){
     if(!data||!data.length){sync.conflict=1;throw new Error('conflict')}
     Object.assign(sync,{rev:data[0].rev,at:data[0].updated_at,pending:0,conflict:0});lastJSON=snap;meta={...m,...data[0]};
   }catch(e){
-    if(e.message==='rekeyed'){bk=null;msg='Your backup was reset on another device. Unlock it again below.'}
+    if(/plus_required/.test(e.message||'')){sync.pending=0;msg='Your plan has ended, so backups are paused. Subscribe below to carry on.';sb.from('subscriptions').select('status,plan,trial_ends_at,current_period_end').maybeSingle().then(r=>{plan=r.data||plan;paint()})}
+    else if(e.message==='rekeyed'){bk=null;msg='Your backup was reset on another device. Unlock it again below.'}
     else if(e.message==='nobackup'){meta=null;bk=null}
     else if(e.message!=='conflict'){sync.pending=1;msg=navigator.onLine?'Backup failed. It will retry automatically.':'No signal. Backup will run when you are back online.'}
   }
@@ -130,7 +138,7 @@ async function restoreNow(){
 
 /* Called by save() in index.html after every local change. */
 window.onSaved=function(){
-  if(quiet||!ready()||!sync.auto)return;
+  if(quiet||!ready()||!sync.auto||!plus())return;
   const j=JSON.stringify(T);if(j===lastJSON)return;
   sync.pending=1;saveSync();paintBtn();
   clearTimeout(autoT);autoT=setTimeout(()=>{autoT=null;backupNow()},AUTO_MS);
@@ -142,6 +150,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 const when=iso=>{if(!iso)return'';const d=new Date(iso);return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+', '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})};
 function status(){
   if(!user)return['Back up','off'];
+  if(consented&&!plus())return['Subscribe','warn'];
   if(!ready())return['Finish setup','warn'];
   if(sync.conflict)return['Check backup','warn'];
   if(busy)return['Backing up','busy'];
@@ -160,6 +169,18 @@ function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1
   for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++){d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1)}return d[a.length][b.length]}
 function emailSuggestion(e){const at=e.lastIndexOf('@');if(at<1)return'';const dom=e.slice(at+1).toLowerCase();if(DOMAINS.includes(dom))return'';
   const max=dom.length>=10?2:1;let best='',bd=max+1;for(const k of DOMAINS){const d=lev(dom,k);if(d<bd){bd=d;best=k}}return best?e.slice(0,at+1)+best:''}
+
+const BUY=`<div class="acts"><button class="btn pri" data-a="buy" data-plan="yearly">R490 a year · 2 months free</button><button class="btn" data-a="buy" data-plan="monthly">R49 a month</button></div>
+  <p class="note">Secure card payment by Paystack. Cancel any time. Everything on this device stays free.</p>`;
+function planCard(){const p=plan;if(!p)return'';
+  if(p.status==='comp')return `<p class="note"><b>Guidewise Plus</b> · complimentary</p>`;
+  const box=(h)=>`<div class="g"><div>${h}</div></div>`;
+  if(p.status==='active')return box(`<b>Guidewise Plus</b> · ${p.plan==='yearly'?'R490 a year':'R49 a month'}<br><span class="note">${p.current_period_end?'Renews '+esc(dayStr(p.current_period_end)):'Active'}</span><div class="acts"><button class="btn sm" data-a="manage">Change card or cancel</button></div>`);
+  if(p.status==='non_renewing'&&plus())return box(`<b>Guidewise Plus</b> · cancelled<br><span class="note">Backups continue until ${esc(dayStr(p.current_period_end))}.</span><div class="acts"><button class="btn sm" data-a="manage">Manage</button></div>`);
+  if(p.status==='attention'&&plus())return box(`<b>Payment did not go through.</b><br><span class="note">Update your card to keep backing up.</span><div class="acts"><button class="btn sm pri" data-a="manage">Update card</button></div>`);
+  if(p.status==='trialing'&&plus()){const d=daysLeft(p.trial_ends_at);return box(`<b>Free trial</b> · ${d} day${d===1?'':'s'} left<br><span class="note">Backup is part of Guidewise Plus. Subscribe any time to keep it after ${esc(dayStr(p.trial_ends_at))}.</span>${BUY}`)}
+  return box(`<b>${p.status==='trialing'?'Your free trial has ended.':'Your Guidewise Plus has ended.'}</b><br><span class="note">Backups are paused. Your backup is safe and you can still restore or delete it. Subscribe to carry on backing up.</span>${BUY}`);
+}
 
 function acctHTML(){
   if(!sb||!loaded)return `<p class="note">${esc(msg)||'Loading…'}</p>`;
@@ -196,7 +217,8 @@ function acctHTML(){
       <div class="field"><span class="lbl">Backup passphrase</span><input id="a-p1" type="password" autocomplete="current-password"></div>
       <div class="acts"><button class="btn pri" data-a="unlock">Unlock</button><button class="btn" data-a="recmode">Use recovery code</button></div>
       <p class="note">Lost both? <button class="btn sm" data-a="replace" data-arm="Tap again: deletes the cloud copy">Start a new backup</button></p>${bz}`;
-    return m+`<p>${meta?'Backups now come with a recovery code. Set your passphrase to update yours.':'Choose a backup passphrase. Your tour is locked with it before upload, so only you can open it.'}</p>
+    if(!plus())return m+planCard();
+    return m+planCard()+`<p>${meta?'Backups now come with a recovery code. Set your passphrase to update yours.':'Choose a backup passphrase. Your tour is locked with it before upload, so only you can open it.'}</p>
       <div class="field"><span class="lbl">Passphrase (${MIN_PASS}+ characters)</span><input id="a-p1" type="password" autocomplete="new-password"></div>
       <div class="field" style="margin-top:8px"><span class="lbl">Type it again</span><input id="a-p2" type="password" autocomplete="new-password"></div>
       <p class="note">Tip: two or three words, like <i>table mountain fog</i>. You also get a recovery code next.</p>
@@ -211,7 +233,7 @@ function acctHTML(){
     <div class="field" style="margin-top:8px"><span class="lbl">Type the new one again</span><input id="a-p2" type="password" autocomplete="new-password"></div>
     <p class="note">The old passphrase stops working. Your recovery code and your other devices keep working.</p>
     <div class="acts"><button class="btn pri" data-a="chsave">Change passphrase</button><button class="btn" data-a="chcancel">Cancel</button></div>${bz}`;
-  let h=m;
+  let h=m+planCard();
   if(restoreOffer)h+=`<div class="alert"><b>Cloud backup unlocked.</b> Restore it to this device? This replaces the tour on this device.<div class="acts"><button class="btn pri" data-a="restore1">Restore backup</button><button class="btn" data-a="keep">Keep this device's tour</button></div></div>`;
   if(sync.conflict)h+=`<div class="alert"><b>The cloud has a newer backup, probably from another device.</b> Restore it here, or replace it with this device's tour.<div class="acts"><button class="btn pri" data-a="restore1">Restore cloud backup</button><button class="btn" data-a="force">Replace with this device</button></div></div>`;
   const last=sync.at?'Last backup: '+when(sync.at):'Not backed up yet';
@@ -221,7 +243,7 @@ function acctHTML(){
     <p class="note">Encrypted on this device before upload. Documents stay on this device only for now.</p>
     <h2>Account</h2><p class="note">Signed in as ${esc(user.email)}</p>
     <div class="acts"><button class="btn" data-a="chpass">Change passphrase</button><button class="btn" data-a="newrec">New recovery code</button><button class="btn" data-a="signout">Sign out</button><button class="btn" data-a="delbk" data-arm="Tap again to delete">Delete cloud backup</button><button class="btn" data-a="delacct" data-arm="Tap again: deletes everything" style="color:var(--alert)">Delete account</button></div>
-    <p class="note">Signing out or deleting keeps the tour on this device. <a href="setup.html">Setup guide</a></p>`;
+    <p class="note">Signing out or deleting keeps the tour on this device. <a href="setup.html">Setup guide</a> · <a href="terms.html">Terms</a></p>`;
   return h;
 }
 
@@ -289,6 +311,14 @@ document.addEventListener('click',async e=>{
     if(a==='restore'||a==='restore1')return restoreNow();
     if(a==='force'){sync.conflict=0;return backupNow(true)}
     if(a==='now')return backupNow();
+    if(a==='buy'){busy='Opening secure payment…';paint();
+      const{data,error}=await sb.functions.invoke('billing-checkout',{body:{plan:b.dataset.plan}});
+      if(error||!data?.url){busy='';let code='';try{code=(await error.context.json()).error}catch(x){}
+        msg=code==='already_active'?'You already have Guidewise Plus.':code==='not_configured'?'Payments are not switched on yet. Please try again soon.':'Could not open the payment page. Check your signal and try again.';return paint()}
+      setTimeout(()=>{if(busy==='Opening secure payment…'){busy='';paint()}},8000);location.href=data.url;return}
+    if(a==='manage'){busy='Opening…';paint();const{data,error}=await sb.functions.invoke('billing-manage',{body:{action:'link'}});busy='';
+      if(error||!data?.url){msg='Could not open subscription settings. Try again shortly.';return paint()}
+      window.open(data.url,'_blank','noopener');return paint()}
     if(a==='chpass'){changing=true;return paint()}
     if(a==='chcancel'){changing=false;return paint()}
     if(a==='chsave'){const p0=val('#a-p0'),p1=val('#a-p1'),p2=val('#a-p2');
@@ -311,6 +341,14 @@ document.addEventListener('click',async e=>{
 
 /* Start quietly: only load the backup service for guides who use it, or when returning from an email link. */
 const fromLink=/access_token|error_description|[?&]code=/.test(location.hash+location.search);
-if(sync.acct||fromLink)addEventListener('load',()=>{loadSB().then(()=>sb.auth.getSession()).then(({data})=>{user=data.session?.user||null;refresh();
-  if(fromLink){history.replaceState(null,'',location.pathname);tab='acct';render()}}).catch(()=>{})});
+const fromPay=/[?&]paid=1/.test(location.search);
+/* Coming back with the browser Back button restores the old page: clear any stuck 'Opening…' state. */
+addEventListener('pageshow',e=>{if(e.persisted&&busy){busy='';paint()}});
+/* Back from Paystack: the webhook may take a few seconds, so check the plan a few times. */
+async function awaitPayment(){for(let i=0;i<10;i++){const sp=await sb.from('subscriptions').select('status,plan,trial_ends_at,current_period_end').maybeSingle();
+  plan=sp.data||plan;if(plan&&plan.status==='active'){toast('Thank you. Guidewise Plus is on');paint();if(ready()){lastJSON=null;backupNow()}return}
+  await new Promise(r=>setTimeout(r,3000))}msg='Payment received. It can take a minute to show here.';paint()}
+if(sync.acct||fromLink||fromPay)addEventListener('load',()=>{loadSB().then(()=>sb.auth.getSession()).then(async({data})=>{user=data.session?.user||null;await refresh();
+  if(fromLink||fromPay){history.replaceState(null,'',location.pathname);tab='acct';render()}
+  if(fromPay&&user)awaitPayment()}).catch(()=>{})});
 paintBtn();
