@@ -33,6 +33,17 @@ input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);
 .btn.pri{background:var(--accent);color:var(--accent-ink)}
 .btn.sm{padding:6px 10px;font-size:.82rem}
 .x{background:none;border:0;color:var(--muted);font-size:1.4rem;cursor:pointer;padding:6px 10px;min-width:44px;min-height:44px}
+/* backup */
+.top{display:flex;gap:10px;align-items:center}
+.acct{flex:none;display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 12px 6px 8px;min-height:40px;font:700 .82rem var(--body);cursor:pointer}
+.acct svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8}
+.acct.ok{border-color:var(--accent);color:var(--accent)}
+.acct.warn{border-color:var(--ochre);color:var(--ochre)}
+.acct.busy{border-style:dashed}
+.opt{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer}
+.opt input{width:22px;height:22px;min-height:0;flex:none;margin-top:2px;accent-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.arm{background:var(--alert);color:#fff}
 /* timeline */
 .tl{display:grid;gap:0}
 .stop{display:grid;grid-template-columns:66px 1fr;gap:12px;position:relative}
@@ -95,7 +106,7 @@ nav button.on{color:var(--accent);box-shadow:inset 0 3px 0 var(--accent)}
 </head><body>
 
 <header><div class="in">
-  <input class="tour" id="tourName" aria-label="Tour name">
+  <div class="top"><input class="tour" id="tourName" aria-label="Tour name"><button class="acct off" id="acctBtn" data-tab="acct" aria-label="Backup"><svg viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.1 9.2 4.5 4.5 0 0 0 7 18z"/></svg><span>Back up</span></button></div>
   <div class="days" id="days"></div>
 </div></header>
 <main class="wrap" id="main"></main>
@@ -141,7 +152,7 @@ let S;
 try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!S||!S.days)S=structuredClone(sample);
 let tab='plan';
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}if(window.onSaved)onSaved()};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const D=()=>S.days[S.day]||S.days[0];
@@ -263,9 +274,9 @@ function renderIntel(){
 
 function render(){
   renderChrome();
-  setTimeout(()=>{if(tab==='docs')fillDocs();if(tab==='plan')fillDayDocs()},0);
-  const v={plan:renderPlan,guests:renderGuests,pack:renderPack,brief:renderBrief,docs:renderDocs,intel:renderIntel}[tab]();
-  $('#main').innerHTML=v+(tab==='docs'?'':S.tour.includes('(sample)')?`<p class="sample">Sample tour loaded. Rename it and edit freely; your changes are saved in this browser.</p>`:'');
+  setTimeout(()=>{if(tab==='docs')fillDocs();if(tab==='plan')fillDayDocs();if(tab==='acct')fillAcct()},0);
+  const v={plan:renderPlan,guests:renderGuests,pack:renderPack,brief:renderBrief,docs:renderDocs,intel:renderIntel,acct:window.renderAcct||(()=>'<p class="note">Backup is not available right now.</p>')}[tab]();
+  $('#main').innerHTML=v+(tab==='docs'||tab==='acct'?'':S.tour.includes('(sample)')?`<p class="sample">Sample tour loaded. Rename it and edit freely; your changes are saved in this browser.</p>`:'');
 }
 
 document.addEventListener('click',e=>{
@@ -377,4 +388,5 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.dataset&&e.
 render();
 if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 </script>
+<script src="backup.js"></script>
 </body></html>

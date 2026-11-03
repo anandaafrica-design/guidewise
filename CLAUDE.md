@@ -10,7 +10,10 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 ## Files
 - site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
 - site/index.html: whole app (vanilla JS, no build step)
-- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v3)
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v4). New precached files go in its F list
+- site/backup.js: cloud backup (sign-in, POPIA consent, passphrase, encrypt, sync). Shares globals with index.html
+- site/vendor/supabase-2.45.4.js: vendored so it works offline; site/privacy.html: POPIA notice
+- supabase/: record of the deployed migration and edge function
 - site/manifest.webmanifest, site/icon-192.png, site/icon-512.png
 
 ## Features (v3)
@@ -23,10 +26,15 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 - Light-only, high-contrast theme for outdoor reading. Keep it light
 
 ## Data
-State in localStorage key tourPrepKit.v1; documents in IndexedDB. Device-only for now.
+State in localStorage key tourPrepKit.v1; documents in IndexedDB (device only).
+Optional backup (v4): Supabase project "guidewise" (ref bqevxxhdtzlywjoqbogt, London, org Spot-it Kruger).
+- Email code sign-in. POPIA consent (version popia-v1) required before anything is uploaded; RLS also refuses backups without a consent row
+- Tour JSON encrypted on device: PBKDF2-SHA256 600k -> AES-256-GCM, user id as AAD. Key kept non-extractable in IndexedDB "guidewise-keys". Server never sees plaintext
+- Never add a server feature that needs to read guest data without revisiting consent and encryption
+- Changing consent wording: bump to popia-v2 in backup.js, privacy.html and the consents check constraint and has_consent()
 
 ## Roadmap
-1. Accounts + cloud backup (Supabase). POPIA consent gate before guest data leaves the device: dietaries are health data
+1. Accounts + cloud backup: done in v4 (documents not yet backed up: phase 2 via Supabase Storage, encrypted the same way)
 2. Payments: Paystack (smoother subscriptions, card only) or PayFast (more SA methods). Free trial then ~R49/month
 3. Custom domain (guidewise.app or .co, to be bought)
 4. Live local intel for the tour's area
