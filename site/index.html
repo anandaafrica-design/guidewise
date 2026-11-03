@@ -198,6 +198,31 @@ nav button svg{padding:3px 14px;box-sizing:content-box}
 .days button.on .td{background:#fff;color:var(--accent)}
 .tour{border-radius:8px}
 .tour:focus{background:var(--soft)}
+/* ---------- v11: safari contours and colour ---------- */
+:root{--sky:#2f6ea5;--game:#3f7a34;--plum:#7a4b8c;--rose:#b2465a}
+body{background:var(--bg) url(topo.svg) right -160px top 40px/720px auto no-repeat fixed}
+header{border-bottom:0;box-shadow:0 2px 12px rgb(15 26 21 / .06);background:linear-gradient(var(--surface),var(--surface)) padding-box}
+header::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent-2) 40%,var(--ochre) 75%,#c98a2c)}
+.hero{background:url(topo-w.svg) right -120px center/560px auto no-repeat,linear-gradient(150deg,var(--accent) 0%,var(--accent-2) 100%)}
+.hero::after{display:none}
+.hello{background:linear-gradient(90deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.ic.c-brief{background:#e3f1ea}.ic.c-pack{background:var(--sand)}.ic.c-bday{background:#f8e3e7}.ic.c-food{background:#f6ead6}.ic.c-plan{background:#e3edf7}.ic.c-guest{background:#efe6f3}.ic.c-cloud{background:#e8eef0}
+.step.hot .ic{background:var(--accent)!important}
+.tile{position:relative;overflow:hidden}
+.tile .tic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;margin-bottom:6px}
+.tile .tic svg{margin:0;width:22px;height:22px}
+.tile.t-plan .tic{background:#e3edf7}.tile.t-plan svg{stroke:var(--sky)}
+.tile.t-guests .tic{background:#efe6f3}.tile.t-guests svg{stroke:var(--plum)}
+.tile.t-pack .tic{background:var(--sand)}.tile.t-pack svg{stroke:var(--ochre)}
+.tile.t-docs .tic{background:#e3f1ea}.tile.t-docs svg{stroke:var(--accent)}
+.tile .bar2{position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--soft)}.tile .bar2 i{display:block;height:100%;background:var(--ochre)}
+/* stop types */
+.rs .bx{border-left:4px solid var(--k,var(--accent))}
+.rs .dot{border-color:var(--k,var(--accent))}
+.rs.k-meal{--k:var(--ochre)}.rs.k-flight{--k:var(--sky)}.rs.k-game{--k:var(--game)}.rs.k-hotel{--k:var(--plum)}.rs.k-free{--k:var(--line)}
+.rs.lunch .bx{border-left-color:var(--k,var(--ochre))}
+.kt{display:inline-block;font:700 .7rem var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--k,var(--accent));margin-bottom:2px}
+.wa{background:#1f8f57!important;color:#fff!important}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head><body>
@@ -320,14 +345,14 @@ function nowNext(day){const sc=schedule(day),d=new Date(),m=d.getHours()*60+d.ge
 function nextSteps(f){
   const d=S.days[f.i],out=[],hr=new Date().getHours(),di=diets();
   const n=d.checklist.length,left=d.checklist.filter(c=>!c.d).length;
-  if(S.tour.includes('(sample)'))out.push({ic:'✦',t:'Start your own tour',s:'Import your itinerary, or start from scratch',go:'home',cls:'hot'});
-  if(!S.guests.length)out.push({ic:'👥',t:'Add your guests',s:'Rooms, birthdays and dietary needs, or import a rooming list',go:'guests',cls:S.tour.includes('(sample)')?'':'hot'});
-  const blank=S.days.findIndex(isBlankDay);if(blank>=0)out.push({ic:'🗺',t:`Plan Day ${blank+1}`,s:S.days[blank].date?dLabel(S.days[blank].date):'Add stops and times',go:'plan:'+blank});
-  const bd=bdays(d);if(bd.length)out.push({ic:'🎂',t:`${bd.map(g=>g.name.split(' ')[0]).join(' and ')}: birthday ${f.rel.toLowerCase()}`,s:'Arrange a cake or card with the venue',go:'guests',cls:'warm'});
-  if(f.n===1||(f.n===0&&hr<10))out.push({ic:'💬',t:f.n===1?"Send tomorrow's briefing":"Send today's briefing",s:'Ready to copy for your WhatsApp group',go:'brief:'+f.i,cls:f.n===1&&hr>=15?'hot':''});
-  if(n&&left&&f.n>=0&&f.n<=1)out.push({ic:'🎒',t:`${left} thing${left>1?'s':''} to pack for ${f.rel.toLowerCase()}`,s:d.checklist.filter(c=>!c.d).slice(0,2).map(c=>c.t).join(', '),go:'pack:'+f.i});
-  const lunch=d.stops.find(s=>s.lunch);if(lunch&&di.length&&f.n>=0&&f.n<=2)out.push({ic:'🍽',t:`Tell ${lunch.place.replace(/^Lunch (at )?/i,'')} about ${di.length} dietary need${di.length>1?'s':''}`,s:di.slice(0,3).map(g=>g.name.split(' ')[0]+': '+g.diet).join(' · '),go:'plan:'+f.i,cls:'warm'});
-  if(typeof sync!=='undefined'&&!sync.acct&&!S.tour.includes('(sample)'))out.push({ic:'☁',t:'Back up your tours',s:'So a lost phone does not cost you your planning',go:'acct'});
+  if(S.tour.includes('(sample)'))out.push({ic:'✦',c:'plan',t:'Start your own tour',s:'Import your itinerary, or start from scratch',go:'home',cls:'hot'});
+  if(!S.guests.length)out.push({ic:'👥',c:'guest',t:'Add your guests',s:'Rooms, birthdays and dietary needs, or import a rooming list',go:'guests',cls:S.tour.includes('(sample)')?'':'hot'});
+  const blank=S.days.findIndex(isBlankDay);if(blank>=0)out.push({ic:'🗺',c:'plan',t:`Plan Day ${blank+1}`,s:S.days[blank].date?dLabel(S.days[blank].date):'Add stops and times',go:'plan:'+blank});
+  const bd=bdays(d);if(bd.length)out.push({ic:'🎂',c:'bday',t:`${bd.map(g=>g.name.split(' ')[0]).join(' and ')}: birthday ${f.rel.toLowerCase()}`,s:'Arrange a cake or card with the venue',go:'guests',cls:'warm'});
+  if(f.n===1||(f.n===0&&hr<10))out.push({ic:'💬',c:'brief',t:f.n===1?"Send tomorrow's briefing":"Send today's briefing",s:'Ready to send to your WhatsApp group',go:'brief:'+f.i,cls:f.n===1&&hr>=15?'hot':''});
+  if(n&&left&&f.n>=0&&f.n<=1)out.push({ic:'🎒',c:'pack',t:`${left} thing${left>1?'s':''} to pack for ${f.rel.toLowerCase()}`,s:d.checklist.filter(c=>!c.d).slice(0,2).map(c=>c.t).join(', '),go:'pack:'+f.i});
+  const lunch=d.stops.find(s=>s.lunch);if(lunch&&di.length&&f.n>=0&&f.n<=2)out.push({ic:'🍽',c:'food',t:`Tell ${lunch.place.replace(/^Lunch (at )?/i,'')} about ${di.length} dietary need${di.length>1?'s':''}`,s:di.slice(0,3).map(g=>g.name.split(' ')[0]+': '+g.diet).join(' · '),go:'plan:'+f.i,cls:'warm'});
+  if(typeof sync!=='undefined'&&!sync.acct&&!S.tour.includes('(sample)'))out.push({ic:'☁',c:'cloud',t:'Back up your tours',s:'So a lost phone does not cost you your planning',go:'acct'});
   return out.slice(0,4);
 }
 function renderToday(){
@@ -339,16 +364,16 @@ function renderToday(){
     const row=(lbl,k)=>`<div><span class="t">${fmt(x.sc[k].arrive)}</span> ${lbl} <b>${esc(d.stops[k].place)}</b></div>`;
     hero+=`<div class="now">${x.now>=0?row('Now',x.now)+`<div class="note" style="color:#fff;opacity:.85">Leave by ${fmt(x.sc[x.now].leave)}</div>`:''}${x.next>=0?row('Next',x.next)+(x.now<0?`<div style="opacity:.85">In ${x.sc[x.next].arrive-x.m} min</div>`:''):(x.now<0?'<div>Day done. Well guided.</div>':'')}</div>`}
   else if(d.stops.length){hero+=`<div class="now">${d.stops.slice(0,3).map((s,k)=>`<div><span class="t">${fmt(sc[k].arrive)}</span> ${esc(s.place)}</div>`).join('')}${d.stops.length>3?`<div style="opacity:.8">+ ${d.stops.length-3} more</div>`:''}</div>`}
-  hero+=`<div class="go"><button data-go="plan:${f.i}">Open day plan</button><button class="ghost" data-go="brief:${f.i}">Briefing</button></div></div>`;
+  hero+=`<div class="go"><button data-go="plan:${f.i}">Open day plan</button><button class="ghost" data-wa="${f.i}">💬 Send briefing</button></div></div>`;
   const steps=nextSteps(f);
   const n=d.checklist.length,done=d.checklist.filter(c=>c.d).length,di=diets().length;
-  const tile=(ic,t,sub,go)=>`<button class="tile" data-go="${go}">${icons[ic]}<b>${t}</b><span>${sub}</span></button>`;
+  const tile=(ic,t,sub,go,pr)=>`<button class="tile t-${ic}" data-go="${go}"><span class="tic">${icons[ic]}</span><b>${t}</b><span>${sub}</span>${pr!==undefined?`<span class="bar2"><i style="width:${pr}%"></i></span>`:''}</button>`;
   let h=`<p class="hello">${greet}</p><p class="sub">${esc(S.tour)}</p>${hero}`;
-  if(steps.length)h+=`<p class="eyebrow">Next steps</p><div class="steps">${steps.map(x=>`<button class="step ${x.cls||''}" data-go="${x.go}"><span class="ic">${x.ic}</span><span class="tx"><b>${esc(x.t)}</b>${x.s?`<span>${esc(x.s)}</span>`:''}</span><span class="chev">›</span></button>`).join('')}</div>`;
+  if(steps.length)h+=`<p class="eyebrow">Next steps</p><div class="steps">${steps.map(x=>`<button class="step ${x.cls||''}" data-go="${x.go}"><span class="ic c-${x.c||''}">${x.ic}</span><span class="tx"><b>${esc(x.t)}</b>${x.s?`<span>${esc(x.s)}</span>`:''}</span><span class="chev">›</span></button>`).join('')}</div>`;
   h+=`<p class="eyebrow">This tour</p><div class="tiles">
     ${tile('plan','Day plan',`${S.days.length} day${S.days.length===1?'':'s'}`,'plan:'+f.i)}
     ${tile('guests','Guests',`${S.guests.length} guest${S.guests.length===1?'':'s'}${di?' · '+di+' dietary':''}`,'guests')}
-    ${tile('pack','Checklist',n?`${done} of ${n} ready`:'Nothing yet','pack:'+f.i)}
+    ${tile('pack','Checklist',n?`${done} of ${n} ready`:'Nothing yet','pack:'+f.i,n?Math.round(done/n*100):undefined)}
     ${tile('docs','Documents','Vouchers, tickets','docs:'+f.i)}
   </div>`;
   if(typeof isStandalone==='function'&&!isStandalone()&&!instHidden())h+=`<div class="mini-inst"><span>📲 Install Guidewise so it works with no signal.</span>${window.gwInstallReady?'<button class="btn sm pri" data-inst="go">Install</button>':'<a class="btn sm" href="setup.html#install">How</a>'}<button class="x" data-inst="x" aria-label="Hide">×</button></div>`;
@@ -376,6 +401,8 @@ function renderMore(){
   </div>`;
 }
 
+const KIND=[['flight',/^✈|\bflight\b/i,'Flight'],['meal',/breakfast|lunch|dinner|brunch|drinks|tea\b|restaurant|picnic|braai/i,'Meal'],['game',/game (drive|activity|viewing|walk)|safari|cruise|mokoro|boat/i,'Wildlife'],['hotel',/hotel|lodge|camp\b|overnight|check-in|guesthouse|rovos rail$/i,'Stay'],['free',/^free time$/i,'']];
+function kindOf(s){if(s.lunch)return['meal','Lunch'];for(const[k,re,l]of KIND)if(re.test(s.place))return[k,l];return['visit','']}
 function renderPlanRead(){
   const d=D(),sc=schedule(d),b=bdays(d),di=diets(),isToday=d.date===todayIso(),x=isToday?nowNext(d):{now:-1};
   const n=d.checklist.length,done=d.checklist.filter(c=>c.d).length;
@@ -389,8 +416,9 @@ function renderPlanRead(){
     d.stops.forEach((s,i)=>{const free=/^Free time$/i.test(s.place);
       if(s.drive)h+=`<div class="rs" style="padding:0"><span></span><span class="leg">🚐 ${s.drive} min</span></div>`;
       const warnT=(s.note||'').match(/^(⚠[^:]*):\s*/);const note=warnT?s.note.slice(warnT[0].length):s.note;
-      h+=`<div class="rs ${s.lunch?'lunch':''} ${free?'free':''} ${x.now===i?'nowp':''}"><span class="tm">${fmt(sc[i].arrive)}${s.stay&&!free?`<small>${fmt(sc[i].leave)}</small>`:''}</span><span class="dot"></span>
-        <div class="bx"><b>${esc(s.place)}${s.lunch?' 🍽':''}</b>${free?`<span class="note">${s.stay} min</span>`:''}${warnT?`<span class="note warn">${esc(warnT[1])}</span>`:''}${note?`<span class="note">${esc(note)}</span>`:''}
+      const[kk,kl]=kindOf(s);
+      h+=`<div class="rs k-${kk} ${s.lunch?'lunch':''} ${free?'free':''} ${x.now===i?'nowp':''}"><span class="tm">${fmt(sc[i].arrive)}${s.stay&&!free?`<small>${fmt(sc[i].leave)}</small>`:''}</span><span class="dot"></span>
+        <div class="bx">${kl?`<span class="kt">${kl}</span>`:''}<b>${esc(s.place)}${s.lunch?' 🍽':''}</b>${free?`<span class="note">${s.stay} min</span>`:''}${warnT?`<span class="note warn">${esc(warnT[1])}</span>`:''}${note?`<span class="note">${esc(note)}</span>`:''}
         ${s.lunch&&di.length?`<div class="chips" style="margin-top:6px">${di.map(g=>`<span class="flag">${esc(g.name.split(' ')[0])}: ${esc(g.diet)}</span>`).join('')}</div>`:''}</div></div>`});
     h+='</div>';
     const end=sc[sc.length-1].leave;h+=`<p class="note">Day runs ${esc(d.start)} to ${fmt(end)} (${Math.round((end-toMin(d.start))/6)/10} hours).</p>`}
@@ -484,8 +512,8 @@ function renderBrief(){
   <div class="field" style="margin-top:8px"><span class="lbl">What to wear</span><input id="f-dress" data-f="dress" value="${esc(d.dress)}"></div>
   <div class="field" style="margin-top:8px"><span class="lbl">What to bring</span><input id="f-bring" data-f="bring" value="${esc(d.bring)}"></div>
   <h2>Preview</h2><div class="bubble" id="bubble">${esc(briefingText())}</div>
-  <div class="acts"><button class="btn pri" data-copy="1">Copy for WhatsApp</button></div>
-  <p class="note">Times come straight from the day plan, so edit stops there. Paste into your group chat. Birthdays and dietaries stay private and never appear here.</p>`;
+  <div class="acts"><button class="btn pri wa" data-wa="${S.day}">💬 Send on WhatsApp</button><button class="btn" data-copy="1">Copy</button></div>
+  <p class="note">Times come straight from the day plan, so edit stops there. Send opens WhatsApp with the message ready: pick your group and tap send. Birthdays and dietaries stay private and never appear here.</p>`;
 }
 
 function renderIntel(){
@@ -518,6 +546,8 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;const ds=b.dataset,d=D();
   if(ds.tab){tab=ds.tab;editDay=false;editG=-1;render();scrollTo(0,0);return}
   if(ds.go){const[t,dy]=ds.go.split(':');if(dy!==undefined&&dy!=='')S.day=+dy;tab=t;editDay=false;editG=-1;save();render();scrollTo(0,0);return}
+  if(ds.wa!==undefined){S.day=+ds.wa;save();const txt=briefingText();
+    window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank','noopener');toast('Opening WhatsApp…');return}
   if(ds.editday!==undefined){editDay=ds.editday==='1';render();return}
   if(ds.gedit!==undefined){editG=+ds.gedit;render();if(editG>=0)setTimeout(()=>{const el=$('#gn-'+editG);el&&el.scrollIntoView({block:'center'})},0);return}
   if(ds.dopen){openDoc(+ds.dopen);return}
