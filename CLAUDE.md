@@ -10,7 +10,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 ## Files
 - site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
 - site/index.html: whole app (vanilla JS, no build step)
-- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v23; own files are fetched network-first, cache when offline). New precached files go in its F list
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v24; own files are fetched network-first, cache when offline). New precached files go in its F list
 - site/backup.js: cloud backup (sign-in, POPIA consent, passphrase, encrypt, sync). Shares globals with index.html
 - site/import.js: AI import (tab 'import', from Tours > Import from documents or the Docs tab; can use documents already saved in the tour). Loaded after backup.js and uses its globals (sb, user, plan, plus, refresh, SB_URL, SB_KEY)
 - site/vendor/xlsx-mini-0.18.5.js: SheetJS (Apache-2.0), lazy-loaded by import.js for .xlsx/.csv
@@ -19,7 +19,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 - site/manifest.webmanifest, site/icon-192.png, site/icon-512.png
 
 ## Design (v10)
-- Bottom bar: Today, Day, Guests, Briefing, More (More holds Checklist, Docs, Local intel, Import, All tours, Backup). Tours button top left. Day chips only on Day/Checklist/Briefing/Docs
+- Bottom bar: Today, Day, Guests, Briefing, More (More holds Checklist, Docs, Local intel, Import, All tours, Backup). Tour switcher at the top (tab name + dates ▾ opens #tpanel: tours ordered on tour, upcoming, undated, finished; + New tour, Import, rename, Manage tours). Day chips only on Day/Checklist/Briefing/Docs
 - Today (tab 'today', opening screen): focusDay() = today's tour day, else the next one; hero with now/next; nextSteps() gives up to 4 predictive actions (data-go="tab:dayIndex"); tiles; compact install hint
 - Look (v11): topo.svg / topo-w.svg contour graphics (body and Today hero), green-to-ochre accent line under the header, coloured next-step icons and tiles. Stop types inferred by kindOf() (meal, flight, wildlife, stay, free) colour the timeline
 - Briefing: 'Send on WhatsApp' opens wa.me/?text=… (data-wa=dayIndex), also from the Today hero; Copy stays as fallback

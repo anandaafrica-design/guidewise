@@ -223,6 +223,25 @@ header::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:3px
 .rs.lunch .bx{border-left-color:var(--k,var(--ochre))}
 .kt{display:inline-block;font:700 .7rem var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--k,var(--accent));margin-bottom:2px}
 .wa{background:#1f8f57!important;color:#fff!important}
+/* tour switcher */
+header .in{position:relative}
+.tsw{flex:1;min-width:0;display:grid;gap:1px;text-align:left;background:none;border:0;padding:4px 8px 4px 0;font:inherit;color:inherit;cursor:pointer;border-radius:10px}
+.tsw .tn{display:flex;align-items:center;gap:6px;min-width:0}
+.tsw b{font:800 1.35rem/1.15 var(--display);letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tsw .car{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--soft);color:var(--accent);font-size:.8rem;transition:transform .2s}
+.tsw[aria-expanded=true] .car{transform:rotate(180deg);background:var(--accent);color:#fff}
+.tsw .tm{font-size:.85rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tpanel{position:absolute;left:0;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 40px rgb(15 26 21 / .18);padding:12px;z-index:8;max-height:72vh;overflow:auto}
+.tback{position:fixed;inset:0;background:rgb(15 26 21 / .25);border:0;z-index:4;cursor:default}
+.tpanel .tp-row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:0;border-radius:12px;padding:10px;font:inherit;color:inherit;cursor:pointer}
+.tpanel .tp-row:hover,.tpanel .tp-row.cur{background:var(--soft)}
+.tpanel .tp-dot{flex:none;width:12px;height:12px;border-radius:50%;border:2px solid var(--line)}
+.tpanel .cur .tp-dot{background:var(--accent);border-color:var(--accent)}
+.tpanel .tp-row .tx{flex:1;min-width:0}.tpanel .tp-row b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tpanel .tp-row span.note{display:block}
+.tpanel .live{flex:none;font:700 .72rem var(--body);background:var(--ochre);color:#fff;border-radius:999px;padding:2px 8px}
+.tpanel .tp-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.tpanel .tp-foot{display:block;width:100%;margin-top:8px;background:none;border:0;color:var(--accent);font:700 .92rem var(--body);padding:10px;cursor:pointer;text-align:center}
 .sacts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .sacts a,.sacts button{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:5px 11px;font:700 .82rem var(--body);text-decoration:none;cursor:pointer}
 .wx{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#e3edf7,#f4f8fc);border:1px solid #d3e0ee;border-radius:var(--r);padding:10px 12px;margin:10px 0}
@@ -241,9 +260,11 @@ header::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:3px
 </head><body>
 
 <header><div class="in">
-  <div class="top"><button class="homebtn" id="homeBtn" data-tab="home" aria-label="All tours"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg><span>Tours</span></button><input class="tour" id="tourName" aria-label="Tour name"><b class="tour hometitle" id="homeTitle" hidden>Guidewise</b><button class="acct off" id="acctBtn" data-tab="acct" aria-label="Backup"><svg viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.1 9.2 4.5 4.5 0 0 0 7 18z"/></svg><span>Back up</span></button></div>
+  <div class="top"><button class="tsw" id="tsw" data-tsw="1" aria-haspopup="true" aria-expanded="false"><span class="tn"><b id="tswName"></b><span class="car" aria-hidden="true">▾</span></span><span class="tm" id="tswMeta"></span></button><button class="acct off" id="acctBtn" data-tab="acct" aria-label="Backup"><svg viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.1 9.2 4.5 4.5 0 0 0 7 18z"/></svg><span>Back up</span></button></div>
+  <div class="tpanel" id="tpanel" hidden></div>
   <div class="days" id="days"></div>
 </div></header>
+<button class="tback" id="tback" data-tsw="0" hidden aria-label="Close tours"></button>
 <div class="inst" id="inst" hidden data-old="1" style="display:none!important"><span>Install Guidewise on this device to use it with no signal.</span><span class="acts" style="margin:0"><button class="btn sm pri" data-inst="go" hidden>Install</button><a class="btn sm" href="setup.html">How to install</a><button class="x" data-inst="x" aria-label="Hide">×</button></span></div>
 <main class="wrap" id="main"></main>
 <nav><div class="in" id="tabs"></div></nav>
@@ -293,7 +314,21 @@ if(!T||!Array.isArray(T.tours)||!T.tours.length){let old;try{old=JSON.parse(loca
   if(!old||!old.days)old=structuredClone(sample);
   old.id=old.id||uid();T={v:2,cur:old.id,legacyDocs:old.id,tours:[old]}}
 let S=T.tours.find(t=>t.id===T.cur)||T.tours[0];
-let tab='today',editDay=false,editG=-1;
+let tab='today',editDay=false,editG=-1,panelOpen=false;
+/* The tour switcher at the top: every current tour, newest first by start date, with new, import and rename. */
+const dShort=iso=>iso?new Date(iso+'T12:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'';
+const shortRange=m=>!m.a?'No dates yet':m.a===m.b?dShort(m.a):dShort(m.a)+' to '+dShort(m.b);
+function tourPanel(){
+  const today=todayIso(),rank=t=>{const m=tourMeta(t);return !m.a?2:m.a<=today&&m.b>=today?0:m.b<today?3:1};
+  const list=T.tours.filter(t=>!t.archived).sort((x,y)=>{const r=rank(x)-rank(y);if(r)return r;const a=tourMeta(x).a||'',b=tourMeta(y).a||'';return rank(x)===3?(a<b?1:-1):(a<b?-1:1)});
+  const row=t=>{const m=tourMeta(t),live=m.a&&m.a<=today&&m.b>=today,past=m.b&&m.b<today;
+    return `<button class="tp-row ${t.id===S.id?'cur':''}" data-topen="${t.id}"><span class="tp-dot"></span><span class="tx"><b>${esc(t.tour)||'Untitled tour'}</b><span class="note">${esc(shortRange(m))} · ${t.guests.length} guest${t.guests.length===1?'':'s'}${past?' · finished':''}</span></span>${live?'<span class="live">On tour</span>':''}</button>`};
+  const arc=T.tours.filter(t=>t.archived).length;
+  return `<p class="eyebrow" style="margin:2px 0 4px">Your tours</p>${list.map(row).join('')||'<p class="note">No current tours.</p>'}
+  <div class="tp-acts"><button class="btn pri" data-tnew="1">+ New tour</button><button class="btn" data-tab="import">✦ Import</button></div>
+  <div class="field" style="margin-top:14px"><span class="lbl">Rename the open tour</span><input id="tourName" value="${esc(S.tour)}" aria-label="Tour name"></div>
+  <button class="tp-foot" data-tab="home">Manage tours: duplicate, archive, delete${arc?` · ${arc} archived`:''} ›</button>`;
+}
 const save=()=>{try{localStorage.setItem(KEY2,JSON.stringify(T))}catch(e){}if(window.onSaved)onSaved()};
 /* Used by backup.js on restore: accepts v2 {T} or a v1 single tour {S}. */
 window.applyBackup=o=>{let nt=o.T;if(!nt){const t=o.S;t.id=t.id||uid();nt={v:2,cur:t.id,tours:[t]}}
@@ -335,10 +370,11 @@ const DAY_TABS=['plan','pack','brief','docs'];
 const names={home:'Home',plan:'Day plan',guests:'Guests',pack:'Checklist',brief:'Briefing',docs:'Documents',intel:'Local intel'};
 
 function renderChrome(){
-  const home=tab==='home'||tab==='import'||tab==='more';$('#tourName').hidden=home;$('#homeTitle').hidden=!home;
-  $('#homeTitle').textContent=tab==='home'?'Your tours':tab==='more'?'More':'Guidewise';
-  $('#days').hidden=!DAY_TABS.includes(tab);$('#homeBtn').classList.toggle('on',tab==='home');
-  $('#tourName').value=S.tour;
+  const m=tourMeta(S);$('#tswName').textContent=S.tour||'Untitled tour';
+  $('#tswMeta').textContent=`${shortRange(m)} · ${S.days.length} day${S.days.length===1?'':'s'} · ${S.guests.length} guest${S.guests.length===1?'':'s'}`;
+  $('#tsw').setAttribute('aria-expanded',String(panelOpen));$('#tback').hidden=!panelOpen;
+  const tp=$('#tpanel');tp.hidden=!panelOpen;if(panelOpen&&!tp.contains(document.activeElement))tp.innerHTML=tourPanel();
+  $('#days').hidden=!DAY_TABS.includes(tab);
   const td=todayIso();
   $('#days').innerHTML=S.days.map((d,i)=>`<button class="${i===S.day?'on':''}" data-day="${i}">Day ${i+1} · ${esc(dLabel(d.date))}${d.date===td?'<span class="td">today</span>':''}</button>`).join('')+`<button data-addday="1" aria-label="Add a day">+ Day</button>`;
   const on=k=>k===tab||(k==='more'&&UNDER_MORE.includes(tab));
@@ -429,7 +465,7 @@ function renderToday(){
   const steps=nextSteps(f);
   const n=d.checklist.length,done=d.checklist.filter(c=>c.d).length,di=diets().length;
   const tile=(ic,t,sub,go,pr)=>`<button class="tile t-${ic}" data-go="${go}"><span class="tic">${icons[ic]}</span><b>${t}</b><span>${sub}</span>${pr!==undefined?`<span class="bar2"><i style="width:${pr}%"></i></span>`:''}</button>`;
-  let h=`<p class="hello">${greet}</p><p class="sub">${esc(S.tour)}</p>${hero}`;
+  let h=`<p class="hello">${greet}</p>${hero}`;
   if(f.n===0&&S.guests.length)h+=`<button class="step hot" data-tab="count" style="margin-top:10px"><span class="ic">👥</span><span class="tx"><b>Headcount: ${hc.size} of ${S.guests.length} on board</b><span>Tap guests back on the vehicle</span></span><span class="chev">›</span></button>`;
   if(steps.length)h+=`<p class="eyebrow">Next steps</p><div class="steps">${steps.map(x=>`<button class="step ${x.cls||''}" data-go="${x.go}"${x.edit?' data-edit-after="1"':''}><span class="ic c-${x.c||''}">${x.ic}</span><span class="tx"><b>${esc(x.t)}</b>${x.s?`<span>${esc(x.s)}</span>`:''}</span><span class="chev">›</span></button>`).join('')}</div>`;
   h+=`<p class="eyebrow">This tour</p><div class="tiles">
@@ -447,7 +483,7 @@ function renderMore(){
   const li=(ic,t,sub,attr)=>`<button class="li" ${attr}>${icons[ic]}<span class="tx"><b>${t}</b><span>${sub}</span></span><span class="chev">›</span></button>`;
   const a=(ic,t,sub,href)=>`<a class="li" href="${href}">${icons[ic]}<span class="tx"><b>${t}</b><span>${sub}</span></span><span class="chev">›</span></a>`;
   const n=D().checklist.length,done=D().checklist.filter(c=>c.d).length;
-  return `<p class="eyebrow">${esc(S.tour)}</p><div class="list">
+  return `<p class="eyebrow">This tour</p><div class="list">
     ${li('pack','Checklist',n?`${done} of ${n} ready for Day ${S.day+1}`:'What to take each day','data-tab="pack"')}
     ${li('docs','Documents','Vouchers and tickets, readable offline','data-tab="docs"')}
     ${li('count','Headcount',`${S.guests.length} guest${S.guests.length===1?'':'s'}: tap them back on board`,'data-tab="count"')}
@@ -610,6 +646,8 @@ function render(){
 
 document.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;const ds=b.dataset,d=D();
+  if(ds.tsw!==undefined){panelOpen=ds.tsw==='1'?!panelOpen:false;renderChrome();if(panelOpen)setTimeout(()=>$('#tpanel').scrollTop=0,0);return}
+  if(ds.tab||ds.go||ds.topen||ds.tnew)panelOpen=false;
   if(ds.tab){tab=ds.tab;editDay=false;editG=-1;render();scrollTo(0,0);return}
   if(ds.hc!==undefined){if(ds.hc==='reset')hc.clear();else if(ds.hc==='all')S.guests.forEach((g,i)=>hc.add(i));else{const i=+ds.hc;hc.has(i)?hc.delete(i):hc.add(i)}render();return}
   if(ds.go){const[t,dy]=ds.go.split(':');if(dy!==undefined&&dy!=='')S.day=+dy;tab=t;editDay=!!ds.editAfter;editG=-1;save();render();scrollTo(0,0);return}
@@ -623,7 +661,7 @@ document.addEventListener('click',e=>{
   if(ds.dpick){$('#docFile').click();return}
   if(ds.topen){openTour(ds.topen);return}
   if(ds.tnew){const nd=new Date();nd.setDate(nd.getDate()+1);const t={id:uid(),tour:'New tour',day:0,days:[newDay(nd.toISOString().slice(0,10))],guests:[],intel:[]};
-    T.tours.push(t);openTour(t.id);setTimeout(()=>{const n=$('#tourName');n.focus();n.select()},50);return}
+    T.tours.push(t);openTour(t.id);panelOpen=true;renderChrome();setTimeout(()=>{const n=$('#tourName');if(n){n.focus();n.select()}},50);return}
   if(ds.tdup){const src=T.tours.find(t=>t.id===ds.tdup);const t=structuredClone(src);Object.assign(t,{id:uid(),tour:src.tour.replace(/\s*\(sample\)/,'')+' (copy)',guests:[],archived:false,day:0});
     t.days.forEach(x=>x.checklist.forEach(c=>c.d=false));T.tours.push(t);save();render();toast('Tour duplicated, without guests');return}
   if(ds.tarc){const t=T.tours.find(x=>x.id===ds.tarc);t.archived=!t.archived;save();render();toast(t.archived?'Tour archived':'Tour restored');return}
@@ -660,7 +698,7 @@ document.addEventListener('change',e=>{
 });
 document.addEventListener('input',e=>{
   const el=e.target,ds=el.dataset,d=D();
-  if(el.id==='tourName'){S.tour=el.value}
+  if(el.id==='tourName'){S.tour=el.value;$('#tswName').textContent=S.tour||'Untitled tour'}
   else if(ds.f){d[ds.f]=el.value;if(ds.f==='weather')d.wxAuto=false;if(ds.f==='area'){d.wxAuto=d.wxAuto||!d.weather}if(tab==='brief')$('#bubble').textContent=briefingText()}
   else if(ds.s!==undefined&&ds.k!=='lunch'){d.stops[+ds.s][ds.k]=(ds.k==='drive'||ds.k==='stay')?+el.value:el.value}
   else if(ds.g!==undefined){S.guests[+ds.g][ds.k]=el.value}
@@ -731,7 +769,7 @@ async function fillDayDocs(){
   const mine=all.filter(f=>f.day===String(S.day)||f.day==='all');
   box.innerHTML=`<h2>Documents for today</h2>`+(mine.length?`<div class="daydocs">${mine.map(f=>`<button data-dopen="${f.id}">${esc(f.name)}</button>`).join('')}</div>`:`<p class="note">None filed yet. <button class="btn sm" data-tab="docs">Add documents</button></p>`);
 }
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.dopen)openDoc(+e.target.dataset.dopen)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&panelOpen){panelOpen=false;renderChrome();return}if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.dopen)openDoc(+e.target.dataset.dopen)});
 
 render();
 if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
