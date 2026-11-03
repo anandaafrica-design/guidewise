@@ -44,6 +44,13 @@ input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);
 .opt input{width:22px;height:22px;min-height:0;flex:none;margin-top:2px;accent-color:var(--accent)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn.arm{background:var(--alert);color:#fff}
+.welcome{text-align:center;background:linear-gradient(180deg,var(--soft),var(--surface));border:1px solid var(--line);border-radius:16px;padding:26px 18px 18px;margin-top:16px}
+.burst{width:64px;height:64px;border-radius:50%;margin:0 auto 6px;display:grid;place-items:center;background:var(--accent);color:#fff;font:800 2rem var(--display);box-shadow:0 0 0 8px color-mix(in srgb,var(--accent) 15%,transparent);animation:pop .5s ease-out}
+@keyframes pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.burst{animation:none}}
+.wtitle{font-size:1.6rem;margin:10px 0 6px}
+.perk{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+.pi{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--soft);color:var(--accent);font-weight:800}
 .homebtn{flex:none;display:flex;flex-direction:column;align-items:center;gap:1px;border:0;background:none;color:var(--ink);font:700 .7rem var(--body);cursor:pointer;padding:2px 4px;min-width:44px;min-height:44px}
 .homebtn svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8}
 .homebtn.on{color:var(--accent)}
@@ -317,8 +324,8 @@ function renderHome(){
 function render(){
   renderChrome();
   setTimeout(()=>{if(tab==='docs')fillDocs();if(tab==='plan')fillDayDocs();if(tab==='acct')fillAcct()},0);
-  const v={home:renderHome,plan:renderPlan,guests:renderGuests,pack:renderPack,brief:renderBrief,docs:renderDocs,intel:renderIntel,acct:window.renderAcct||(()=>'<p class="note">Backup is not available right now.</p>')}[tab]();
-  $('#main').innerHTML=v+(tab==='docs'||tab==='acct'||tab==='home'?'':S.tour.includes('(sample)')?`<p class="sample">Sample tour loaded. Rename it and edit freely; your changes are saved in this browser. New here? <a href="setup.html">Setup guide</a></p>`:'');
+  const v={home:renderHome,plan:renderPlan,guests:renderGuests,pack:renderPack,brief:renderBrief,docs:renderDocs,intel:renderIntel,plus:()=>(window.renderPlus?renderPlus():''),acct:window.renderAcct||(()=>'<p class="note">Backup is not available right now.</p>')}[tab]();
+  $('#main').innerHTML=v+(tab==='docs'||tab==='acct'||tab==='home'||tab==='plus'?'':S.tour.includes('(sample)')?`<p class="sample">Sample tour loaded. Rename it and edit freely; your changes are saved in this browser. New here? <a href="setup.html">Setup guide</a></p>`:'');
 }
 
 document.addEventListener('click',e=>{
