@@ -10,7 +10,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 ## Files
 - site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
 - site/index.html: whole app (vanilla JS, no build step)
-- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v40; own files are fetched network-first, cache when offline). New precached files go in its F list
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v41; own files are fetched network-first, cache when offline). New precached files go in its F list
 - site/backup.js: cloud backup (sign-in, POPIA consent, passphrase, encrypt, sync). Shares globals with index.html
 - site/import.js: AI import (tab 'import', from Tours > Import from documents or the Docs tab; can use documents already saved in the tour). Loaded after backup.js and uses its globals (sb, user, plan, plus, refresh, SB_URL, SB_KEY)
 - site/vendor/xlsx-mini-0.18.5.js: SheetJS (Apache-2.0), lazy-loaded by import.js for .xlsx/.csv
@@ -83,7 +83,8 @@ Optional backup (v4): Supabase project "guidewise" (ref bqevxxhdtzlywjoqbogt, Lo
 ## Status (end of 3 Nov 2026)
 - Live (main): everything up to PR #9 (Today, switcher, WhatsApp, weather, headcount, running late, cash, report, welcome, landing page)
 - PR #10 merged 4 Nov (document backup, venues, translation, messages, reminders, sun times, holidays, tests). Fix: self-describing document files and 'Get documents from cloud'
-- Owner to do: run the clean-up SQL in Supabase SQL Editor (delete admin_test_tokens rows, drop ai_test_payload, delete net._http_response); finish guidewiseapp.co.za (Netlify domain, DNS, Supabase Site URL + redirect URLs), then switch links; Paystack live mode
+- 4 Nov: clean-up SQL done; Supabase Site URL https://guidewiseapp.co.za with redirects for both domains and previews; setup guide and landing meta use guidewiseapp.co.za. billing-checkout already allows the domain (fallback still netlify.app, harmless)
+- Owner to do: Paystack live mode
 - Paystack test plans are R79/R790 (updated via a retired one-off function admin-plans, now a 410 stub)
 
 ## Roadmap
