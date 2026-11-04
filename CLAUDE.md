@@ -10,7 +10,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 ## Files
 - site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
 - site/index.html: whole app (vanilla JS, no build step)
-- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v36; own files are fetched network-first, cache when offline). New precached files go in its F list
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v37; own files are fetched network-first, cache when offline). New precached files go in its F list
 - site/backup.js: cloud backup (sign-in, POPIA consent, passphrase, encrypt, sync). Shares globals with index.html
 - site/import.js: AI import (tab 'import', from Tours > Import from documents or the Docs tab; can use documents already saved in the tour). Loaded after backup.js and uses its globals (sb, user, plan, plus, refresh, SB_URL, SB_KEY)
 - site/vendor/xlsx-mini-0.18.5.js: SheetJS (Apache-2.0), lazy-loaded by import.js for .xlsx/.csv
@@ -38,6 +38,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 - Print or PDF (tab 'print'): #printOut filled by printHTML(), @media print shows only it; whole tour or one day, rooming list, dietaries, optional guest notes, checklists. Never prints birthdays
 - Guest list import without AI (tab 'gimport', in import.js): reads .xlsx/.csv on the phone, matches Name or First/Last, Room/Room type, Dietary, DOB/Birthday (MM-DD), Notes/Requests; ignores private columns (DROP); review then add new and fill empty fields of existing. Adding a spreadsheet in Documents that holds 2+ guests offers the same
 - Venues (tab 'venues'): T.venues {key:{name,phone,addr,note}}, gathered from every tour's stops with a phone or address; add, edit, search, delete
+- Fonts (v17): Source Serif 4 for headings and clock times (--display, --mono; tabular figures), Atkinson Hyperlegible for body (outdoor legibility). Google Fonts on every page; recovery code uses system monospace
 - Day and Guests are read-first (timeline / guest cards) with Edit day / tap-to-edit (editDay, editG). Keep new screens read-first with a clear primary action
 
 ## Features (v3)
