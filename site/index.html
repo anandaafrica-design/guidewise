@@ -669,6 +669,7 @@ function renderWelcome(){
   <button class="opt3 pri" data-onb="import"><span class="n" style="background:var(--accent);color:#fff">✦</span><span><b>Import my itinerary</b><span class="s">Itinerary, rooming list or recap: a ready tour in about a minute (Plus, 30 days free)</span></span></button>
   <button class="opt3" data-onb="new"><span class="n" style="background:#e3edf7">＋</span><span><b>Start a tour from scratch</b><span class="s">Add days, stops and guests yourself</span></span></button>
   <button class="opt3" data-onb="sample"><span class="n" style="background:var(--sand)">👀</span><span><b>Look around the sample tour</b><span class="s">A two-day Cape trip, to see how it works</span></span></button>
+  <button class="opt3" data-onb="signin"><span class="n" style="background:#e5ebe4">👤</span><span><b>Sign in or create an account</b><span class="s">New phone? Restore your tours. New here? 30 days of Plus free</span></span><span class="chev">›</span></button>
   <p class="eyebrow" style="margin-bottom:0">Good to know</p>
   <ul><li>Everything stays on your phone unless you switch on backup.</li><li>Install it on your home screen so it works offline. <a href="setup.html#install">How</a></li><li>Your briefing goes to WhatsApp in one tap.</li></ul></div>`;
 }
@@ -949,7 +950,7 @@ function renderHome(){
 
 function render(){
   renderChrome();
-  setTimeout(()=>{if(tab==='docs')fillDocs();if(tab==='plan')fillDayDocs();if(tab==='acct')fillAcct();if(tab==='import'&&window.fillImport)fillImport();if(['today','plan','brief'].includes(tab)){const fd=tab==='today'?S.days[focusDay().i]:D();ensureWx(fd);setTimeout(()=>ensureRoads(fd),1500)}if(tab==='intel')S.days.forEach(d=>{ensureWx(d);setTimeout(()=>ensureRoads(d),1500)});},0);
+  setTimeout(()=>{if(tab==='docs')fillDocs();if(tab==='plan')fillDayDocs();if(tab==='acct'&&typeof fillAcct==='function')fillAcct();if(tab==='import'&&window.fillImport)fillImport();if(['today','plan','brief'].includes(tab)){const fd=tab==='today'?S.days[focusDay().i]:D();ensureWx(fd);setTimeout(()=>ensureRoads(fd),1500)}if(tab==='intel')S.days.forEach(d=>{ensureWx(d);setTimeout(()=>ensureRoads(d),1500)});},0);
   const v={gimport:()=>(window.renderGImport?renderGImport():''),tpl:renderTpl,print:renderPrint,venues:renderVenues,welcome:renderWelcome,report:renderReport,today:renderToday,more:renderMore,count:renderCount,late:renderLate,cash:renderCash,home:renderHome,plan:renderPlan,guests:renderGuests,pack:renderPack,brief:renderBrief,docs:renderDocs,intel:renderIntel,plus:()=>(window.renderPlus?renderPlus():''),import:()=>(window.renderImport?renderImport():'<p class="note">Loading…</p>'),acct:window.renderAcct||(()=>'<p class="note">Backup is not available right now.</p>')}[tab]();
   $('#main').innerHTML=v+(tab==='docs'||tab==='acct'||tab==='home'||tab==='plus'||tab==='import'||tab==='today'||tab==='more'||tab==='count'||tab==='late'||tab==='cash'||tab==='welcome'||tab==='report'||tab==='venues'||tab==='tpl'||tab==='print'||tab==='gimport'?'':S.tour.includes('(sample)')?`<p class="sample">Sample tour loaded. Rename it and edit freely; your changes are saved in this browser. New here? <a href="setup.html">Setup guide</a></p>`:'');
 }
@@ -962,6 +963,7 @@ document.addEventListener('click',async e=>{
   if(ds.hc!==undefined){if(ds.hc==='reset')hc.clear();else if(ds.hc==='all')S.guests.forEach((g,i)=>hc.add(i));else{const i=+ds.hc;hc.has(i)?hc.delete(i):hc.add(i)}render();return}
   if(ds.onb){try{localStorage.setItem(ONB,'1')}catch(x){}
     if(ds.onb==='import'){tab='import';render();return}
+    if(ds.onb==='signin'){tab='acct';render();return}
     if(ds.onb==='new'){const nd=new Date();nd.setDate(nd.getDate()+1);const t={id:uid(),tour:'New tour',day:0,days:[newDay(nd.toISOString().slice(0,10))],guests:[],intel:[]};T.tours.push(t);openTour(t.id);panelOpen=true;renderChrome();setTimeout(()=>{const n=$('#tourName');if(n){n.focus();n.select()}},50);return}
     tab='today';render();return}
   if(ds.repwa){window.open('https://wa.me/?text='+encodeURIComponent(reportText()),'_blank','noopener');return}
@@ -974,7 +976,7 @@ document.addEventListener('click',async e=>{
   if(ds.vdel){if(!b.classList.contains('arm')){b.classList.add('arm');b.textContent='Tap again to delete';return}delete T.venues[ds.vdel];vEdit=null;save();render();return}
   if(ds.tr){trBusy=true;trErr='';render();const k=trKey();
     gwTranslate?.(briefingText(),S.lang).then(r=>{trMem[k]=r.text;toast(r.left>=0?`Translated · ${r.left} left this month`:'Translated')}).catch(e=>{const m=e.message;
-      trErr=m==='signin'?'Sign in under Back up to use translation (Plus, 30 days free for new accounts).':m==='plus'||m==='plus_required'?'Translation is part of Guidewise Plus.':m==='limit'?'You have used your 30 translations this month.':!navigator.onLine?'Translation needs a signal.':'Could not translate just now. Try again.'})
+      trErr=m==='signin'?'Sign in (top right) to use translation (Plus, 30 days free for new accounts).':m==='plus'||m==='plus_required'?'Translation is part of Guidewise Plus.':m==='limit'?'You have used your 30 translations this month.':!navigator.onLine?'Translation needs a signal.':'Could not translate just now. Try again.'})
       .finally(()=>{trBusy=false;if(tab==='brief')render()});return}
   if(ds.wa2){const t=trMem[trKey()];if(!t)return;window.open('https://wa.me/?text='+encodeURIComponent(ds.wa2==='both'?briefingText()+'\n\n· · ·\n\n'+t:t),'_blank','noopener');return}
   if(ds.diet){const[a,c]=ds.diet.split(':').map(Number),st=S.days[a].stops[c];window.open(waTo(st.phone,dietText(a,c)),'_blank','noopener');return}
@@ -1138,6 +1140,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&panelOpen){panelOpe
 
 tab='home';
 try{if(!localStorage.getItem(ONB)&&T.tours.length===1&&S.tour.includes('(sample)'))tab='welcome'}catch(e){}
+if(/[?&]signin=1/.test(location.search)){tab='acct';try{localStorage.setItem(ONB,'1')}catch(e){}history.replaceState(null,'',location.pathname)}
 render();
 if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 </script>
