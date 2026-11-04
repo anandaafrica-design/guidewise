@@ -232,4 +232,53 @@ document.addEventListener('change',async e=>{
   if(size>MAX_BYTES){mine.pop();err=ERR.too_large}
   paintImp();
 });
+/* ---------- Guest list import without AI: spreadsheet or CSV read on the phone ---------- */
+const GCOL={full:/^(guest|passenger|pax|client|traveller|traveler)?\s*(full\s*)?name$|^guest$|^passenger$|^names?$/i,first:/first|given|prefer/i,last:/last|surname|family/i,title:/^(title|salutation)$/i,
+  roomNo:/room\s*(no|number|#)?$|^room$|cabin|suite/i,roomType:/room\s*type|sharing|bed|occupancy|twin|double/i,diet:/diet|allerg|food|meal\s*pref/i,bday:/birth|\bdob\b|d\.o\.b|birthday/i,
+  notes:/note|remark|medical|mobility|special|request|celebrat|comment|occasion|vip|class/i};
+const cellTxt=c=>c?String(c.w??c.v??'').trim():'';
+function parseGuests(wb){
+  const X=window.XLSX;let best=null;
+  for(const nm of wb.SheetNames){const ws=wb.Sheets[nm];if(!ws['!ref'])continue;const r=X.utils.decode_range(ws['!ref']);
+    for(let y=r.s.r;y<=Math.min(r.e.r,r.s.r+40);y++){const hd=[];for(let x=r.s.c;x<=Math.min(r.e.c,r.s.c+60);x++)hd.push(cellTxt(ws[X.utils.encode_cell({r:y,c:x})]));
+      const col=k=>hd.findIndex(h=>h&&h.length<40&&!DROP.test(h)&&GCOL[k].test(h));
+      const m={full:col('full'),first:col('first'),last:col('last'),title:col('title'),roomNo:col('roomNo'),roomType:col('roomType'),diet:col('diet'),bday:col('bday'),notes:hd.map((h,i)=>h&&h.length<40&&!DROP.test(h)&&GCOL.notes.test(h)&&!GCOL.diet.test(h)?i:-1).filter(i=>i>=0)};
+      if(m.full<0&&m.first<0&&m.last<0)continue;
+      const guests=[];
+      for(let yy=y+1;yy<=Math.min(r.e.r,y+500);yy++){const v=k=>k>=0?cellTxt(ws[X.utils.encode_cell({r:yy,c:r.s.c+k})]):'';const raw=k=>k>=0?ws[X.utils.encode_cell({r:yy,c:r.s.c+k})]:null;
+        let name=m.full>=0?v(m.full):[v(m.first),v(m.last)].filter(Boolean).join(' ');
+        if(m.title>=0&&v(m.title)&&name)name=name; // titles left out on purpose
+        if(!name||/^(total|name|guest)s?$/i.test(name))continue;
+        const bc=raw(m.bday);const bd=bc?mmdd(bc.t==='n'?bc.v:cellTxt(bc)):'';
+        guests.push({name:scrubText(name),room:[v(m.roomNo),v(m.roomType)].filter(Boolean).join(' · '),diet:scrubText(v(m.diet)),bday:bd,notes:scrubText(m.notes.map(v).filter(Boolean).join(' · '))})}
+      const used=Object.entries(m).filter(([k,i])=>k!=='notes'&&k!=='title'&&i>=0).map(([k,i])=>[k,hd[i]]).concat(m.notes.map(i=>['notes',hd[i]]));
+      if(guests.length&&(!best||guests.length>best.guests.length))best={guests,used,sheet:nm};break}}
+  return best;
+}
+window.gwReadGuests=async f=>{const n=f.name.toLowerCase();if(!/\.(xlsx|xlsm|csv)$/.test(n))return null;const X=await loadXL();
+  const wb=n.endsWith('.csv')?X.read(await f.text(),{type:'string',raw:true}):X.read(await f.arrayBuffer(),{type:'array'});return parseGuests(wb)};
+let gl=null,glErr='';
+const GL_LBL={full:'Name',first:'First name',last:'Last name',roomNo:'Room',roomType:'Room type',diet:'Dietary',bday:'Birthday (day and month only)',notes:'Notes'};
+window.gwShowGuests=r=>{gl=r;glErr='';tab='gimport';render();scrollTo(0,0)};
+window.renderGImport=()=>{
+  let h=`<h2>Import guest list</h2><p class="note">Read on your phone from an Excel or CSV file: no AI, nothing leaves your phone. Passport, phone, email and address columns are ignored; dates of birth become day and month only.</p>`;
+  if(glErr)h+=`<div class="alert">${esc(glErr)}</div>`;
+  if(!gl)return h+`<div class="acts"><button class="btn pri" data-gl="pick">Choose a spreadsheet</button></div><input type="file" id="glFile" hidden accept=".xlsx,.xlsm,.csv"><p class="note">PDF or photo of a rooming list? Use <button class="rcpt" data-tab="import">✦ AI import</button> instead.</p>`;
+  const have=new Map(S.guests.map((g,i)=>[g.name.trim().toLowerCase(),i])),nNew=gl.guests.filter(g=>!have.has(g.name.trim().toLowerCase())).length,nUpd=gl.guests.length-nNew;
+  h+=`<div class="card"><b>Found ${gl.guests.length} guest${gl.guests.length===1?'':'s'}</b><span class="note">Matched columns: ${gl.used.map(([k,hd])=>`${esc(GL_LBL[k])} ← “${esc(hd)}”`).join(' · ')}</span></div>
+  <div class="list">${gl.guests.map(g=>`<div class="li" style="cursor:default"><span class="tx"><b>${esc(g.name)}${have.has(g.name.trim().toLowerCase())?' <span class="flag">already here</span>':''}</b><span>${[g.room&&'Room '+g.room,g.diet&&'🍽 '+g.diet,g.bday&&'🎂 '+g.bday,g.notes].filter(Boolean).map(esc).join(' · ')||'No details'}</span></span></div>`).join('')}</div>
+  <div class="acts"><button class="btn pri" data-gl="add">Add ${nNew} guest${nNew===1?'':'s'}${nUpd?` and fill in ${nUpd} existing`:''}</button><button class="btn" data-gl="cancel">Cancel</button></div>
+  <p class="note">Existing guests keep what you typed; only their empty fields are filled.</p>`;
+  return h;
+};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-gl]');if(!b)return;const a=b.dataset.gl;
+  if(a==='pick'){$('#glFile').click();return}
+  if(a==='cancel'){gl=null;tab='guests';render();return}
+  if(a==='add'){const have=new Map(S.guests.map((g,i)=>[g.name.trim().toLowerCase(),i]));let n=0,u=0;
+    gl.guests.forEach(g=>{const i=have.get(g.name.trim().toLowerCase());if(i===undefined){S.guests.push(g);n++}else{const x=S.guests[i];['room','diet','bday','notes'].forEach(k=>{if(!x[k]&&g[k])x[k]=g[k]});u++}});
+    gl=null;save();tab='guests';render();toast(`${n} guest${n===1?'':'s'} added`+(u?`, ${u} filled in`:''));return}});
+document.addEventListener('change',async e=>{if(e.target.id!=='glFile')return;const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{const r=await gwReadGuests(f);if(!r){glErr='No guest names found. Check the file has a heading row with "Name" (or first and last name).';gl=null}else{gl=r;glErr=''}}catch(x){glErr=x.message==='offline'?'Reading spreadsheets needs a signal the first time.':'Could not read that file. Use Excel (.xlsx) or CSV.'}
+  render()});
+
 })();
