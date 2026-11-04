@@ -10,7 +10,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 ## Files
 - site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
 - site/index.html: whole app (vanilla JS, no build step)
-- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v42; own files are fetched network-first, cache when offline). New precached files go in its F list
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v45; own files are fetched network-first, cache when offline). New precached files go in its F list
 - site/backup.js: cloud backup (sign-in, POPIA consent, passphrase, encrypt, sync). Shares globals with index.html
 - site/import.js: AI import (tab 'import', from Tours > Import from documents or the Docs tab; can use documents already saved in the tour). Loaded after backup.js and uses its globals (sb, user, plan, plus, refresh, SB_URL, SB_KEY)
 - site/vendor/xlsx-mini-0.18.5.js: SheetJS (Apache-2.0), lazy-loaded by import.js for .xlsx/.csv
@@ -37,6 +37,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 - Receipts: cash entries of type 'out' can carry a photo (resized JPEG in the docs store, entry.rec = doc id, so it is backed up like any document); share all receipts via the Web Share API; deleting the entry deletes the photo
 - Print or PDF (tab 'print'): #printOut filled by printHTML(), @media print shows only it; whole tour or one day, rooming list, dietaries, optional guest notes, checklists. Never prints birthdays
 - Guest list import without AI (tab 'gimport', in import.js): reads .xlsx/.csv on the phone, matches Name or First/Last, Room/Room type, Dietary, DOB/Birthday (MM-DD), Notes/Requests; ignores private columns (DROP); review then add new and fill empty fields of existing. Adding a spreadsheet in Documents that holds 2+ guests offers the same
+- Sign in (v20): header button reads 'Sign in' when signed out (status() in backup.js); welcome has 'Sign in or create an account' (data-onb=signin); /?signin=1 opens the account screen (landing 'Try Plus free'). Same email-code flow: first sign-in creates the account and starts the trial. Sign-in is optional; the app works fully without an account
 - Venues (tab 'venues'): T.venues {key:{name,phone,addr,note}}, gathered from every tour's stops with a phone or address; add, edit, search, delete
 - Fonts (v17): Source Serif 4 for headings and clock times (--display, --mono; tabular figures), Atkinson Hyperlegible for body (outdoor legibility). Google Fonts on every page; recovery code uses system monospace
 - Day and Guests are read-first (timeline / guest cards) with Edit day / tap-to-edit (editDay, editG). Keep new screens read-first with a clear primary action
