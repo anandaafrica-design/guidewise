@@ -5,6 +5,9 @@ const {chromium}=require('playwright');const {spawn}=require('child_process');co
 const PORT=8799,BASE=`http://localhost:${PORT}/`;let fails=0;
 const ok=(c,m)=>{console.log((c?'  ✓ ':'  ✗ ')+m);if(!c)fails++};
 (async()=>{
+  {const rd=f=>fs.readFileSync(path.join(__dirname,'..',f),'utf8'),pages=['site/backup.js','site/guides.html','site/setup.html','site/terms.html'].map(rd).join('\n');
+   ok(/R99 a month/.test(pages)&&/R950 a year/.test(pages)&&/save 20%/.test(pages)&&!/R79\b|R790/.test(pages),'prices are R99 a month and R950 a year (save 20%) everywhere');
+   ok(/9900/.test(rd('supabase/functions/billing-checkout/index.ts'))&&/95000/.test(rd('supabase/functions/billing-checkout/index.ts')),'checkout charges R99 and R950');}
   const srv=spawn('python3',['-m','http.server',String(PORT)],{cwd:path.join(__dirname,'..','site'),stdio:'ignore'});await new Promise(r=>setTimeout(r,800));
   const b=await chromium.launch();const ctx=await b.newContext({viewport:{width:390,height:844}});const errs=[];
   await ctx.route(/supabase\.co|wa\.me|maps\.google|google\.com\/maps/,r=>r.fulfill({status:200,contentType:'application/json',body:'{}'}));
