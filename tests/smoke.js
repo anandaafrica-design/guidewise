@@ -11,15 +11,16 @@ const ok=(c,m)=>{console.log((c?'  ✓ ':'  ✗ ')+m);if(!c)fails++};
   await ctx.route(/geocoding-api\.open-meteo/,r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({results:[{latitude:-34.19,longitude:18.43,name:'Simon\'s Town',country_code:'ZA'}]})}));
   await ctx.route(/\/\/api\.open-meteo/,r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({daily:{time:['x'],weather_code:[61],temperature_2m_max:[21],temperature_2m_min:[14],precipitation_probability_max:[70],wind_speed_10m_max:[45],sunrise:['2026-11-03T05:32'],sunset:['2026-11-03T19:41']}})}));
   await ctx.route(/date\.nager\.at/,r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify([{date:new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10),name:'Test Day',global:true}])}));
-  const pg=await ctx.newPage();pg.on('pageerror',e=>errs.push(e.message));
+  const pg=await ctx.newPage();pg.on('pageerror',e=>errs.push(e.message+' @ '+(e.stack||'').split('\n').slice(1,3).join(' ')));
   await pg.goto(BASE);await pg.evaluate(()=>localStorage.clear());await pg.reload();await pg.waitForTimeout(600);
 
   console.log('First run');
   ok(await pg.evaluate(()=>tab)==='welcome','welcome shows on a fresh install');
   await pg.click('[data-onb="sample"]');ok(await pg.evaluate(()=>tab==='today'&&localStorage.getItem('guidewise.onb')==='1'),'explore opens Today and is remembered');
+  await pg.reload();await pg.waitForTimeout(500);ok(await pg.evaluate(()=>tab==='home'),'app opens on Tours every time');
 
   console.log('Navigation');
-  for(const t of ['today','plan','guests','brief','more'])await pg.click(`nav [data-tab=${t}]`),ok(await pg.evaluate(t=>tab===t,t),`bottom bar opens ${t}`);
+  for(const t of ['home','today','plan','guests','brief','more'])await pg.click(`nav [data-tab=${t}]`),ok(await pg.evaluate(t=>tab===t,t),`bottom bar opens ${t}`);
   for(const t of ['pack','docs','intel','count','cash','late','report','venues','import','home','acct'])await pg.evaluate(t=>{tab=t;render()},t),ok(await pg.evaluate(()=>!!document.querySelector('#main').textContent.trim()),`${t} renders`);
 
   console.log('Day plan');
@@ -90,6 +91,16 @@ const ok=(c,m)=>{console.log((c?'  ✓ ':'  ✗ ')+m);if(!c)fails++};
   await pg.emulateMedia({media:'print'});ok(await pg.evaluate(()=>getComputedStyle(document.querySelector('header')).display==='none'&&getComputedStyle(document.querySelector('#printOut')).display==='block'),'print hides the app and shows only the printout');
   await pg.emulateMedia({media:'screen'});
 
+  console.log('Guest list import');
+  await pg.evaluate(()=>{S.guests=[];tab='gimport';render()});await pg.setInputFiles('#glFile',path.join(__dirname,'fixture-guests.csv'));await pg.waitForTimeout(900);
+  await pg.click('[data-gl="add"]');const gg=await pg.evaluate(()=>S.guests.map(g=>[g.name,g.room,g.diet,g.bday,g.notes].join('|')));
+  ok(gg.length===3&&gg.includes('Carol Example|12|Melon allergy|06-16|Queen bed'),'guest list import fills names, rooms, dietaries, birthdays, notes');
+  ok(!gg.join().includes('X123'),'passport numbers are never imported');
+  await pg.evaluate(()=>{S.guests=[];tab='docs';render()});await pg.setInputFiles('#docFile',path.join(__dirname,'fixture-guests.csv'));await pg.waitForTimeout(1200);
+  ok(await pg.$$eval('[data-docguests="1"]',x=>x.length)===1,'a guest list added to Documents offers to fill in Guests');
+  await pg.click('[data-docguests="1"]');await pg.click('[data-gl="add"]');ok(await pg.evaluate(()=>S.guests.length===3),'guests added from the Documents prompt');
+  await pg.evaluate(()=>{S.guests=[{name:'Robert Smith',room:'412',diet:'',bday:'',notes:''},{name:'Linda Smith',room:'412',diet:'Gluten free',bday:'11-05',notes:''},{name:'Megan Lee',room:'415',diet:'Vegetarian',bday:'',notes:''},{name:'Tom Lee',room:'415',diet:'Shellfish allergy',bday:'',notes:''}];save()});
+
   console.log('Headcount');
   await pg.evaluate(()=>{hc.clear();tab='count';render()});await pg.click('[data-hc="0"]');ok(/1 of 4/.test(await pg.textContent('.hc-top')),'counts guests on board');
 
@@ -142,7 +153,7 @@ const ok=(c,m)=>{console.log((c?'  ✓ ':'  ✗ ')+m);if(!c)fails++};
 
   console.log('Offline');
   await pg.goto(BASE);await pg.waitForTimeout(1200);await pg.reload();await pg.waitForTimeout(800);await ctx.setOffline(true);await pg.reload();await pg.waitForTimeout(800);
-  ok(await pg.evaluate(()=>document.querySelectorAll('nav button').length===5),'app opens with no signal');await ctx.setOffline(false);
+  ok(await pg.evaluate(()=>document.querySelectorAll('nav button').length===6),'app opens with no signal');await ctx.setOffline(false);
 
   ok(!errs.length,'no JavaScript errors'+(errs.length?': '+errs.join(' | '):''));
   await b.close();srv.kill();console.log(fails?`\n${fails} check(s) failed`:'\nAll checks passed');process.exit(fails?1:0);

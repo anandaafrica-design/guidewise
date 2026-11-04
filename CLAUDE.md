@@ -10,7 +10,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 ## Files
 - site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
 - site/index.html: whole app (vanilla JS, no build step)
-- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v32; own files are fetched network-first, cache when offline). New precached files go in its F list
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v38; own files are fetched network-first, cache when offline). New precached files go in its F list
 - site/backup.js: cloud backup (sign-in, POPIA consent, passphrase, encrypt, sync). Shares globals with index.html
 - site/import.js: AI import (tab 'import', from Tours > Import from documents or the Docs tab; can use documents already saved in the tour). Loaded after backup.js and uses its globals (sb, user, plan, plus, refresh, SB_URL, SB_KEY)
 - site/vendor/xlsx-mini-0.18.5.js: SheetJS (Apache-2.0), lazy-loaded by import.js for .xlsx/.csv
@@ -20,7 +20,9 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 - site/manifest.webmanifest, site/icon-192.png, site/icon-512.png
 
 ## Design (v10)
-- Bottom bar: Today, Day, Guests, Briefing, More (More holds Checklist, Docs, Local intel, Import, All tours, Backup). Tour switcher at the top (tab name + dates ▾ opens #tpanel: tours ordered on tour, upcoming, undated, finished; + New tour, Import, rename, Manage tours). Day chips only on Day/Checklist/Briefing/Docs
+- Opens on Tours every time (tab 'home'; first run still shows the welcome). Bottom bar: Tours, Today, Day, Guests, Briefing, More. Tours page groups: On tour now, Coming up, No dates yet, Finished; actions under More per card
+- Palette (v16) 'bush to sky': hero fades corner to corner (135deg) bush green #5F8048 through teal #2F6470 to blue #24507E (v18 'brighter'); blue (--accent/--brand) for buttons and links; green #4D6B3A (--ochre var, --game) for done/live; ochre #B8862B (--info) for badges and notices (.alert); red (--alert, .alert.err) only for real problems. Icons recoloured; topo-earth.svg background
+- Was: Today, Day, Guests, Briefing, More (More holds Checklist, Docs, Local intel, Import, All tours, Backup). Tour switcher at the top (tab name + dates ▾ opens #tpanel: tours ordered on tour, upcoming, undated, finished; + New tour, Import, rename, Manage tours). Day chips only on Day/Checklist/Briefing/Docs
 - Today (tab 'today', opening screen): focusDay() = today's tour day, else the next one; hero with now/next; nextSteps() gives up to 4 predictive actions (data-go="tab:dayIndex"); tiles; compact install hint
 - Look (v11): topo.svg / topo-w.svg contour graphics (body and Today hero), green-to-ochre accent line under the header, coloured next-step icons and tiles. Stop types inferred by kindOf() (meal, flight, wildlife, stay, free) colour the timeline
 - Briefing: 'Send on WhatsApp' opens wa.me/?text=… (data-wa=dayIndex), also from the Today hero; Copy stays as fallback
@@ -34,7 +36,9 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 - Day templates (tab 'tpl', T.templates [{id,name,day}]): tplOf() keeps stops, times, venues, area, checklist (unticked); never dates, guests, logs. Use on the open day (replaces, confirm) or add as a new day
 - Receipts: cash entries of type 'out' can carry a photo (resized JPEG in the docs store, entry.rec = doc id, so it is backed up like any document); share all receipts via the Web Share API; deleting the entry deletes the photo
 - Print or PDF (tab 'print'): #printOut filled by printHTML(), @media print shows only it; whole tour or one day, rooming list, dietaries, optional guest notes, checklists. Never prints birthdays
+- Guest list import without AI (tab 'gimport', in import.js): reads .xlsx/.csv on the phone, matches Name or First/Last, Room/Room type, Dietary, DOB/Birthday (MM-DD), Notes/Requests; ignores private columns (DROP); review then add new and fill empty fields of existing. Adding a spreadsheet in Documents that holds 2+ guests offers the same
 - Venues (tab 'venues'): T.venues {key:{name,phone,addr,note}}, gathered from every tour's stops with a phone or address; add, edit, search, delete
+- Fonts (v17): Source Serif 4 for headings and clock times (--display, --mono; tabular figures), Atkinson Hyperlegible for body (outdoor legibility). Google Fonts on every page; recovery code uses system monospace
 - Day and Guests are read-first (timeline / guest cards) with Edit day / tap-to-edit (editDay, editG). Keep new screens read-first with a clear primary action
 
 ## Features (v3)
