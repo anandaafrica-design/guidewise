@@ -10,7 +10,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 ## Files
 - site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
 - site/index.html: whole app (vanilla JS, no build step)
-- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v42; own files are fetched network-first, cache when offline). New precached files go in its F list
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v43; own files are fetched network-first, cache when offline). New precached files go in its F list
 - site/backup.js: cloud backup (sign-in, POPIA consent, passphrase, encrypt, sync). Shares globals with index.html
 - site/import.js: AI import (tab 'import', from Tours > Import from documents or the Docs tab; can use documents already saved in the tour). Loaded after backup.js and uses its globals (sb, user, plan, plus, refresh, SB_URL, SB_KEY)
 - site/vendor/xlsx-mini-0.18.5.js: SheetJS (Apache-2.0), lazy-loaded by import.js for .xlsx/.csv
@@ -37,6 +37,8 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 - Receipts: cash entries of type 'out' can carry a photo (resized JPEG in the docs store, entry.rec = doc id, so it is backed up like any document); share all receipts via the Web Share API; deleting the entry deletes the photo
 - Print or PDF (tab 'print'): #printOut filled by printHTML(), @media print shows only it; whole tour or one day, rooming list, dietaries, optional guest notes, checklists. Never prints birthdays
 - Guest list import without AI (tab 'gimport', in import.js): reads .xlsx/.csv on the phone, matches Name or First/Last, Room/Room type, Dietary, DOB/Birthday (MM-DD), Notes/Requests; ignores private columns (DROP); review then add new and fill empty fields of existing. Adding a spreadsheet in Documents that holds 2+ guests offers the same
+- Road alerts (v19): edge function road-alerts (verify_jwt true, anon key is enough; secret TOMTOM_API_KEY; 503 not_configured until set). App sends the day's stop addresses or names (+ area) and the area coordinates, never guest data; function geocodes with TomTom Search, fetches Traffic Incidents v5 per 0.8 deg tile, keeps closures/roadworks/accidents/lane closures/flooding within 3 km of a stop, labelled with the stop. Today and tomorrow only; phone cache 30 min (wxMem 'road|date|hash', stop coords 'pt|query'); function caches 20 min; 60 calls/h per IP. Shows on Day plan (roadCard), Today step and Local intel. TomTom free tier 2,500 requests/day for the whole app
+- Table Mountain: stops matching table mountain/cableway/cable car get a 'Cableway status' link (tablemountain.net) and a Today step on that day and the day before
 - Venues (tab 'venues'): T.venues {key:{name,phone,addr,note}}, gathered from every tour's stops with a phone or address; add, edit, search, delete
 - Fonts (v17): Source Serif 4 for headings and clock times (--display, --mono; tabular figures), Atkinson Hyperlegible for body (outdoor legibility). Google Fonts on every page; recovery code uses system monospace
 - Day and Guests are read-first (timeline / guest cards) with Edit day / tap-to-edit (editDay, editG). Keep new screens read-first with a clear primary action
@@ -91,7 +93,7 @@ Optional backup (v4): Supabase project "guidewise" (ref bqevxxhdtzlywjoqbogt, Lo
 1. Accounts + cloud backup: done in v4; documents backed up in v13
 2. Payments: done in v8 (Paystack). AI import: done in v9
 3. Custom domain guidewiseapp.co.za bought; owner to finish Netlify + DNS + Supabase Site URL
-4. Live local intel: weather, sun times and public holidays done (v14); road closures and events still open
+4. Live local intel: weather, sun times and public holidays done (v14); road alerts along the day's stops (v19, needs TOMTOM_API_KEY); events still open (no good free source for SA)
 
 ## Tests
 - `node tests/smoke.js` (see tests/README.md). Run before every PR; add a check for each new feature
