@@ -70,6 +70,26 @@ const ok=(c,m)=>{console.log((c?'  ✓ ':'  ✗ ')+m);if(!c)fails++};
   ok(/Leave in 5 min/.test(rm),'reminder fires 10 min before leaving a stop: '+rm);
   await pg.evaluate(()=>{remOn=false});
 
+  console.log('Receipts');
+  await pg.evaluate(()=>{cashCat='entry';tab='cash';render()});await pg.setInputFiles('#rcptFile',path.join(__dirname,'fixture-receipt.jpg'));await pg.waitForTimeout(500);
+  await pg.fill('#cashAmt','120');await pg.fill('#cashWhat','Penguins');await pg.click('[data-cashadd]');await pg.waitForTimeout(300);
+  const rc=await pg.evaluate(async()=>{const e=S.cash.find(x=>x.what==='Penguins');const f=e&&e.rec?await dbGet(e.rec):null;return{has:!!f,type:f&&f.type,named:f&&/Receipt · Penguins/.test(f.name)}});
+  ok(rc.has&&rc.type==='image/jpeg'&&rc.named,'receipt photo is saved with the cash entry');
+  ok(await pg.$$eval('[data-rcptshare]',x=>x.length)===1,'share receipts button appears');
+
+  console.log('Day templates');
+  await pg.evaluate(()=>{window.prompt=()=>'Peninsula day';S.day=0;tab='tpl';render()});await pg.click('[data-tplsave]');
+  const nT=await pg.evaluate(()=>(T.templates||[]).length);ok(nT===1,'day saved as a template');
+  await pg.click('[data-tpluse][data-mode="add"]');const ad=await pg.evaluate(()=>({n:S.days.length,title:D().title,stops:D().stops.length,src:S.days[0].stops.length,checked:D().checklist.some(c=>c.d)}));
+  ok(ad.title===(await pg.evaluate(()=>S.days[0].title))&&ad.stops===ad.src&&!ad.checked,'template adds a new day with the same stops, checklist unticked');
+
+  console.log('Print');
+  await pg.evaluate(()=>{tab='print';prOpt={scope:'tour',room:true,diet:true,notes:false,check:true};render()});await pg.click('[data-prgo]').catch(()=>{});
+  const ph=await pg.evaluate(()=>printHTML());ok(/Rooming list/.test(ph)&&/Gluten free/i.test(ph),'printout has the rooming list and dietaries');
+  ok(!(await pg.evaluate(()=>S.guests.filter(g=>g.bday).some(g=>printHTML().includes(g.bday)))),'printout never shows birthdays');
+  await pg.emulateMedia({media:'print'});ok(await pg.evaluate(()=>getComputedStyle(document.querySelector('header')).display==='none'&&getComputedStyle(document.querySelector('#printOut')).display==='block'),'print hides the app and shows only the printout');
+  await pg.emulateMedia({media:'screen'});
+
   console.log('Headcount');
   await pg.evaluate(()=>{hc.clear();tab='count';render()});await pg.click('[data-hc="0"]');ok(/1 of 4/.test(await pg.textContent('.hc-top')),'counts guests on board');
 
