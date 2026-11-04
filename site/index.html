@@ -73,6 +73,7 @@ nav button span{font-size:.68rem}
 :root{--bg:#f4f1ea;--surface:#fffdf9;--ink:#1d2622;--muted:#5b625c;--line:#dfdccf;--accent:#24507e;--accent-2:#2f6470;--brand:#24507e;--ochre:#4d6b3a;--soft:#e5ebe4;--sand:#f6ecd5;--game:#4d6b3a;--sky:#24507e;--info:#b8862b;--infoBg:#f6ecd5;--alert:#a3262a}
 body{background-image:url(topo-earth.svg)}
 header::after{background:linear-gradient(90deg,#4d6b3a,#2f6470 50%,#24507e)}
+a{color:var(--accent);text-underline-offset:2px}
 .hero{background:url(topo-w.svg) right -120px center/560px auto no-repeat,linear-gradient(135deg,#5f8048 0%,#2f6470 50%,#24507e 100%);box-shadow:0 10px 30px rgb(20 40 50 / .28)}
 .hero .when{color:#f0c48a;opacity:1}
 .hello{background-image:linear-gradient(90deg,#4d6b3a,#24507e)}
@@ -169,7 +170,7 @@ h2{letter-spacing:-.01em}
 .steps{display:grid;gap:8px}
 .step{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;font:inherit;color:inherit;cursor:pointer;box-shadow:var(--shadow)}
 .step .ic{flex:none;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--soft);font-size:1.15rem}
-.step.hot{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),var(--shadow)}
+.step.hot{border-color:#4d6b3a;box-shadow:0 0 0 1px #4d6b3a,var(--shadow)}
 .step.hot .ic{background:var(--accent);color:#fff}
 .step.warm .ic{background:var(--sand)}
 .step .tx{flex:1;min-width:0}
@@ -228,12 +229,12 @@ nav button svg{padding:3px 14px;box-sizing:content-box}
 :root{--sky:#2f6ea5;--game:#3f7a34;--plum:#7a4b8c;--rose:#b2465a}
 body{background:var(--bg) url(topo.svg) right -160px top 40px/720px auto no-repeat fixed}
 header{border-bottom:0;box-shadow:0 2px 12px rgb(15 26 21 / .06);background:linear-gradient(var(--surface),var(--surface)) padding-box}
-header::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent-2) 40%,var(--ochre) 75%,#c98a2c)}
-.hero{background:url(topo-w.svg) right -120px center/560px auto no-repeat,linear-gradient(150deg,var(--accent) 0%,var(--accent-2) 100%)}
+header::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:3px;background:linear-gradient(90deg,#4d6b3a,#2f6470 50%,#24507e)}
+.hero{background:url(topo-w.svg) right -120px center/560px auto no-repeat,linear-gradient(135deg,#5f8048 0%,#2f6470 50%,#24507e 100%)}
 .hero::after{display:none}
-.hello{background:linear-gradient(90deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hello{background:linear-gradient(90deg,#4d6b3a,#24507e);width:fit-content;max-width:100%;-webkit-background-clip:text;background-clip:text;color:transparent}
 .ic.c-brief{background:#e3f1ea}.ic.c-pack{background:var(--sand)}.ic.c-bday{background:#f8e3e7}.ic.c-food{background:#f6ead6}.ic.c-plan{background:#e3edf7}.ic.c-guest{background:#efe6f3}.ic.c-cloud{background:#e8eef0}
-.step.hot .ic{background:var(--accent)!important}
+.step.hot .ic{background:linear-gradient(135deg,#4d6b3a,#24507e)!important}
 .tile{position:relative;overflow:hidden}
 .tile .tic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;margin-bottom:6px}
 .tile .tic svg{margin:0;width:22px;height:22px}
@@ -284,8 +285,11 @@ header::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:3px
   #printOut .pbreak{page-break-before:always}
 }
 .onb{min-height:calc(100vh - 220px);display:grid;align-content:start;gap:12px;padding-top:10px}
-.onb .big{font:800 2rem/1.1 var(--display);letter-spacing:-.02em;margin:14px 0 0;background:linear-gradient(90deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.onb .big{font:800 2rem/1.1 var(--display);letter-spacing:-.02em;margin:14px 0 0;background:linear-gradient(90deg,#4d6b3a,#24507e);width:fit-content;max-width:100%;-webkit-background-clip:text;background-clip:text;color:transparent}
 .onb .lead{font-size:1.05rem;color:var(--muted);margin:0}
+.onb .intro{background:url(topo-w.svg) right -120px center/560px auto no-repeat,linear-gradient(135deg,#5f8048 0%,#2f6470 50%,#24507e 100%);color:#fff;border-radius:20px;padding:20px 18px;box-shadow:0 10px 30px rgb(20 40 50 / .28)}
+.onb .intro .big{background:none;color:#fff;-webkit-text-fill-color:#fff;margin:0 0 8px}
+.onb .intro .lead{color:#e8eef0}
 .onb .opt3{display:flex;gap:14px;align-items:center;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow);font:inherit;color:inherit;cursor:pointer}
 .onb .opt3 .n{flex:none;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:1.4rem}
 .onb .opt3.pri{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),var(--shadow)}
@@ -630,8 +634,8 @@ setInterval(remindTick,30000);document.addEventListener('visibilitychange',()=>{
 /* ---------- First run: three ways in ---------- */
 const ONB='guidewise.onb';
 function renderWelcome(){
-  return `<div class="onb"><p class="big">Tomorrow, sorted.</p>
-  <p class="lead">Guidewise keeps your tour in your pocket: the day plan, guests, briefing, documents and cash, even with no signal.</p>
+  return `<div class="onb"><div class="intro"><p class="big">Tomorrow, sorted.</p>
+  <p class="lead">Guidewise keeps your tour in your pocket: the day plan, guests, briefing, documents and cash, even with no signal.</p></div>
   <button class="opt3 pri" data-onb="import"><span class="n" style="background:var(--accent);color:#fff">✦</span><span><b>Import my itinerary</b><span class="s">Itinerary, rooming list or recap: a ready tour in about a minute (Plus, 30 days free)</span></span></button>
   <button class="opt3" data-onb="new"><span class="n" style="background:#e3edf7">＋</span><span><b>Start a tour from scratch</b><span class="s">Add days, stops and guests yourself</span></span></button>
   <button class="opt3" data-onb="sample"><span class="n" style="background:var(--sand)">👀</span><span><b>Look around the sample tour</b><span class="s">A two-day Cape trip, to see how it works</span></span></button>
