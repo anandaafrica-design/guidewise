@@ -157,7 +157,7 @@ const ready=()=>!!(typeof user!=='undefined'&&user);
 function gate(){
   if(!navigator.onLine)return`<div class="alert">AI import needs a signal. Your tours and documents still work offline.</div>`;
   if(!sb||!loaded)return(err?`<div class="alert err">${esc(err)}</div>`:'')+`<p class="note">Loading…</p>`;
-  if(!ready())return`<div class="alert">AI import is part of <b>Guidewise Plus</b>, with 30 days free for new accounts. Sign in first.</div><div class="acts"><button class="btn pri" data-tab="acct">Sign in under Back up</button></div>`;
+  if(!ready())return`<div class="alert">AI import is part of <b>Guidewise Plus</b>, with 30 days free for new accounts. Sign in first.</div><div class="acts"><button class="btn pri" data-tab="acct">Sign in</button></div>`;
   if(!plus())return`<div class="alert">AI import is part of <b>Guidewise Plus</b>. Your trial or subscription has ended.</div><div class="acts"><button class="btn pri" data-tab="acct">See plans</button></div>`;
   return'';
 }

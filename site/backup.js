@@ -237,7 +237,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 /* ---------- UI ---------- */
 const when=iso=>{if(!iso)return'';const d=new Date(iso);return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+', '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})};
 function status(){
-  if(!user)return['Back up','off'];
+  if(!user)return['Sign in','off'];
   if(consented&&!plus())return['Subscribe','warn'];
   if(!ready())return['Finish setup','warn'];
   if(sync.conflict)return['Check backup','warn'];
@@ -248,7 +248,7 @@ function status(){
 function paintBtn(){const b=$('#acctBtn');if(!b)return;const[t,c]=status();b.className='acct '+c;b.querySelector('span').textContent=t}
 function paint(){paintBtn();const el=$('#acct');if(el)el.innerHTML=acctHTML()}
 
-window.renderAcct=()=>`<h2>Backup</h2><div id="acct">${acctHTML()}</div>`;
+window.renderAcct=()=>`${user?'<h2>Backup</h2>':''}<div id="acct">${acctHTML()}</div>`;
 window.fillAcct=()=>{if(!sb)loadSB().then(()=>{if(!user)sb.auth.getSession().then(({data})=>{user=data.session?.user||null;refresh()})}).catch(()=>{msg='Backup needs a signal the first time. Try again when you are online.';loaded=true;paint()});else paint()};
 
 /* Catch typos like gmail.coma or gmial.com before a code goes to a dead address. */
@@ -294,7 +294,7 @@ window.renderPlus=()=>{const p=plan||{},yearly=p.plan==='yearly';
   ${li('🌍','Briefing in other languages','German, French, Spanish and 17 more, in one tap. 30 translations a month.')}
   ${li('📎','Document backup','Vouchers, PDFs and photos encrypted and backed up with your tours.')}
   <div class="acts" style="margin-top:18px">${next}<button class="btn" data-tab="acct">Backup settings</button></div>
-  <p class="note">Manage or cancel any time under <b>Back up</b>. <a href="terms.html">Terms and pricing</a></p>`};
+  <p class="note">Manage or cancel any time with the account button at the top right. <a href="terms.html">Terms and pricing</a></p>`};
 
 function acctHTML(){
   if(!sb||!loaded)return `<p class="note">${esc(msg)||'Loading…'}</p>`;
@@ -304,9 +304,9 @@ function acctHTML(){
       <div class="field"><span class="lbl">6-digit code</span><input id="a-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></div>
       <div class="acts"><button class="btn pri" data-a="verify">Sign in</button><button class="btn" data-a="restart">Use another email</button></div>${bz}`;
     if(suggest)return m+`<div class="alert">Did you mean <b>${esc(suggest)}</b>?<div class="acts"><button class="btn pri" data-a="usesug">Yes, use ${esc(suggest)}</button><button class="btn" data-a="keepmail">No, send to ${esc(email)}</button></div></div>${bz}`;
-    return m+`<p>Back up your tour so a lost or broken phone does not cost you your planning. It is off until you switch it on.</p>
+    return m+`<h2 style="margin-top:4px">Sign in or create your account</h2><p>One email, one code. No password. New here? This creates your account with <b>30 days of Plus free</b>: encrypted backup, restore on a new phone, AI import and translation. No card needed.</p>
       <div class="field"><span class="lbl">Your email</span><input id="a-email" type="email" autocomplete="email" value="${esc(email)}"></div>
-      <div class="acts"><button class="btn pri" data-a="send">Email me a sign-in code</button></div>
+      <div class="acts"><button class="btn pri" data-a="send">Email me a code</button></div>
       <p class="note">Signing in sends only your email address. Your tour and guest details stay on this device until you agree to the terms on the next screen. <a href="setup.html#backup">How backup works</a></p>${bz}`;
   }
   if(!consented)return m+`<h2>Before anything leaves this device</h2>
@@ -478,3 +478,4 @@ if(sync.acct||fromLink||fromPay)addEventListener('load',()=>{loadSB().then(()=>s
   if(fromLink||fromPay){history.replaceState(null,'',location.pathname);tab='acct';render()}
   if(fromPay&&user)awaitPayment()}).catch(()=>{})});
 paintBtn();
+if(typeof tab!=='undefined'&&tab==='acct')render();
