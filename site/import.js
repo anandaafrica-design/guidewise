@@ -156,7 +156,7 @@ async function send(){
 const ready=()=>!!(typeof user!=='undefined'&&user);
 function gate(){
   if(!navigator.onLine)return`<div class="alert">AI import needs a signal. Your tours and documents still work offline.</div>`;
-  if(!sb||!loaded)return(err?`<div class="alert">${esc(err)}</div>`:'')+`<p class="note">Loading…</p>`;
+  if(!sb||!loaded)return(err?`<div class="alert err">${esc(err)}</div>`:'')+`<p class="note">Loading…</p>`;
   if(!ready())return`<div class="alert">AI import is part of <b>Guidewise Plus</b>, with 30 days free for new accounts. Sign in first.</div><div class="acts"><button class="btn pri" data-tab="acct">Sign in under Back up</button></div>`;
   if(!plus())return`<div class="alert">AI import is part of <b>Guidewise Plus</b>. Your trial or subscription has ended.</div><div class="acts"><button class="btn pri" data-tab="acct">See plans</button></div>`;
   return'';
@@ -164,7 +164,7 @@ function gate(){
 function pickHTML(){
   const g=gate();if(g)return g;
   const list=mine.length?`<div class="card">${mine.map((f,i)=>`<div style="display:flex;gap:8px;align-items:center"><div style="flex:1;min-width:0"><b>${esc(f.name)}</b><br><span class="note">${esc(f.how)}</span></div><button class="x" data-ik="rm" data-i="${i}" aria-label="Remove file">×</button></div>`).join('')}</div>`:'';
-  return`${err?`<div class="alert">${esc(err)}</div>`:''}
+  return`${err?`<div class="alert err">${esc(err)}</div>`:''}
   <p>Add the tour's itinerary, rooming list, recap or confirmations. Guidewise reads them and builds a draft tour for you to check.</p>
   <div class="acts"><button class="btn${mine.length?'':' pri'}" data-ik="pick">${mine.length?'+ Add another file':'Choose documents'}</button></div>
   <input type="file" id="ik-file" multiple hidden accept="application/pdf,image/*,.xlsx,.xlsm,.csv,.txt,.eml">
@@ -262,7 +262,7 @@ const GL_LBL={full:'Name',first:'First name',last:'Last name',roomNo:'Room',room
 window.gwShowGuests=r=>{gl=r;glErr='';tab='gimport';render();scrollTo(0,0)};
 window.renderGImport=()=>{
   let h=`<h2>Import guest list</h2><p class="note">Read on your phone from an Excel or CSV file: no AI, nothing leaves your phone. Passport, phone, email and address columns are ignored; dates of birth become day and month only.</p>`;
-  if(glErr)h+=`<div class="alert">${esc(glErr)}</div>`;
+  if(glErr)h+=`<div class="alert err">${esc(glErr)}</div>`;
   if(!gl)return h+`<div class="acts"><button class="btn pri" data-gl="pick">Choose a spreadsheet</button></div><input type="file" id="glFile" hidden accept=".xlsx,.xlsm,.csv"><p class="note">PDF or photo of a rooming list? Use <button class="rcpt" data-tab="import">✦ AI import</button> instead.</p>`;
   const have=new Map(S.guests.map((g,i)=>[g.name.trim().toLowerCase(),i])),nNew=gl.guests.filter(g=>!have.has(g.name.trim().toLowerCase())).length,nUpd=gl.guests.length-nNew;
   h+=`<div class="card"><b>Found ${gl.guests.length} guest${gl.guests.length===1?'':'s'}</b><span class="note">Matched columns: ${gl.used.map(([k,hd])=>`${esc(GL_LBL[k])} ← “${esc(hd)}”`).join(' · ')}</span></div>

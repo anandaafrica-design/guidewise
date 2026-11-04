@@ -105,7 +105,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
 .mini .field{gap:2px}
 .mini input{padding:8px 10px;font-size:1rem}
 .flag{display:inline-flex;gap:6px;align-items:center;font-size:.9rem;font-weight:700;background:color-mix(in srgb,var(--ochre) 16%,transparent);color:var(--ink);border-radius:6px;padding:4px 8px}
-.alert{background:color-mix(in srgb,var(--alert) 10%,var(--surface));border-left:4px solid var(--alert);border-radius:8px;padding:10px 12px;margin:12px 0;font-size:.92rem}
+.alert{background:var(--infoBg);border-left:4px solid var(--info);border-radius:8px;padding:10px 12px;margin:12px 0;font-size:.92rem}
 /* guests */
 .g{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:8px;margin-bottom:8px}
 .ghead{display:flex;gap:8px;align-items:center}
@@ -191,7 +191,7 @@ h2{letter-spacing:-.01em}
 .bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:22px 0 10px}
 .bar h2{margin:0}
 .pill{display:inline-flex;align-items:center;gap:6px;min-height:40px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 13px;font:700 .85rem var(--body);cursor:pointer}
-.pill.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.pill.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 /* read-mode timeline */
 .rt{position:relative;margin-left:4px}
 .rt::before{content:"";position:absolute;left:64px;top:8px;bottom:8px;width:2px;background:var(--line)}
@@ -254,7 +254,7 @@ header::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:3px
 .wa{background:#1f8f57!important;color:#fff!important}
 .chipsel{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
 .chipsel button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:10px 16px;font:700 1rem var(--body);cursor:pointer;color:var(--ink)}
-.chipsel button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chipsel button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .chipsel.sm button{padding:6px 11px;font-size:.85rem}
 .money{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,96px),1fr));gap:8px;margin:10px 0}
 .money div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px;box-shadow:var(--shadow)}
@@ -871,7 +871,7 @@ function trBlock(){
   const opts=`<option value="">English only</option>`+LANGS.map(l=>`<option ${S.lang===l?'selected':''}>${l}</option>`).join('');
   const t=S.lang&&trMem[trKey()];
   let h=`<h2>Also in another language</h2><div class="row"><select id="trLang" aria-label="Translation language">${opts}</select>${S.lang?`<button class="btn" data-tr="1" ${trBusy?'disabled':''}>${trBusy?'Translating…':t?'Translate again':'✦ Translate'}</button>`:''}</div>`;
-  if(trErr)h+=`<div class="alert">${esc(trErr)}</div>`;
+  if(trErr)h+=`<div class="alert err">${esc(trErr)}</div>`;
   if(t)h+=`<div class="bubble" id="trBubble" style="margin-top:10px">${esc(t)}</div>
     <div class="acts"><button class="btn pri wa" data-wa2="lang">💬 Send in ${esc(S.lang)}</button><button class="btn wa" data-wa2="both" style="opacity:.9">💬 Send both</button></div>`;
   else if(S.lang)h+=`<p class="note">Plus: 30 translations a month. Only the briefing text is sent to our AI provider; it never holds guest birthdays or dietaries.</p>`;

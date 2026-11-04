@@ -298,7 +298,7 @@ window.renderPlus=()=>{const p=plan||{},yearly=p.plan==='yearly';
 
 function acctHTML(){
   if(!sb||!loaded)return `<p class="note">${esc(msg)||'Loading…'}</p>`;
-  const m=msg?`<div class="alert">${esc(msg)}</div>`:'',bz=busy?`<p class="note"><b>${esc(busy)}</b></p>`:'';
+  const m=msg?`<div class="alert err">${esc(msg)}</div>`:'',bz=busy?`<p class="note"><b>${esc(busy)}</b></p>`:'';
   if(!user){
     if(step==='code')return m+`<p>We sent a code to <b>${esc(email)}</b>. Enter it below, or tap the link in the email on this device.</p>
       <div class="field"><span class="lbl">6-digit code</span><input id="a-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></div>

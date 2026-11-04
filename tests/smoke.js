@@ -23,6 +23,7 @@ const ok=(c,m)=>{console.log((c?'  ✓ ':'  ✗ ')+m);if(!c)fails++};
   console.log('Navigation');
   for(const t of ['home','today','plan','guests','brief','more'])await pg.click(`nav [data-tab=${t}]`),ok(await pg.evaluate(t=>tab===t,t),`bottom bar opens ${t}`);
   await pg.evaluate(()=>{tab='today';render()});ok(await pg.evaluate(()=>/rgb\(95, 128, 72\)/.test(getComputedStyle(document.querySelector('.hero')).backgroundImage)),'Today hero uses the bush-to-sky colours');
+  await pg.evaluate(()=>{const d=document.createElement('div');d.className='alert';document.body.appendChild(d);const e=document.createElement('div');e.className='alert err';document.body.appendChild(e);window._al=[getComputedStyle(d).borderLeftColor,getComputedStyle(e).borderLeftColor];d.remove();e.remove()});ok(await pg.evaluate(()=>_al[0]==='rgb(184, 134, 43)'&&_al[1]==='rgb(163, 38, 42)'),'notices are ochre, problems are red');
   for(const t of ['pack','docs','intel','count','cash','late','report','venues','import','home','acct'])await pg.evaluate(t=>{tab=t;render()},t),ok(await pg.evaluate(()=>!!document.querySelector('#main').textContent.trim()),`${t} renders`);
 
   console.log('Day plan');
