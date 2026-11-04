@@ -10,7 +10,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 ## Files
 - site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
 - site/index.html: whole app (vanilla JS, no build step)
-- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v30; own files are fetched network-first, cache when offline). New precached files go in its F list
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v31; own files are fetched network-first, cache when offline). New precached files go in its F list
 - site/backup.js: cloud backup (sign-in, POPIA consent, passphrase, encrypt, sync). Shares globals with index.html
 - site/import.js: AI import (tab 'import', from Tours > Import from documents or the Docs tab; can use documents already saved in the tour). Loaded after backup.js and uses its globals (sb, user, plan, plus, refresh, SB_URL, SB_KEY)
 - site/vendor/xlsx-mini-0.18.5.js: SheetJS (Apache-2.0), lazy-loaded by import.js for .xlsx/.csv
@@ -50,7 +50,7 @@ All tours in localStorage key guidewise.tours.v2: {v:2, cur, legacyDocs, tours:[
 Optional backup (v4): Supabase project "guidewise" (ref bqevxxhdtzlywjoqbogt, London, org Spot-it Kruger).
 - Email code sign-in. POPIA consent (version popia-v2) required before anything is uploaded; RLS also refuses backups without a consent row
 - Format 2: random data key (AES-256-GCM, user id as AAD) encrypts the tour. It is stored wrapped twice: by the passphrase (PBKDF2 600k, min 8 chars) and by a one-time recovery code (20 chars, PBKDF2 100k). Device keeps it non-extractable in IndexedDB "guidewise-keys". Changing passphrase or recovery code only re-wraps; other devices keep working. Server never sees a key or plaintext
-- Document backup (v13): storage bucket 'docs' (private, 15 MB limit). Each file encrypted on the phone with the tour data key, AAD user id + ':doc:' + sid, stored at docs/<uid>/<sid> as iv+ciphertext. Names, types and filing only in the encrypted backup's 'docs' manifest. sync.up (uploaded sids), sync.man (last manifest, keeps other devices' files listed), sync.docDel (tombstones: only these are deleted remotely). Restore downloads missing files. Toggle 'Back up documents too' (sync.docs). Storage policies: own folder; insert needs has_consent() and has_plus(). Delete backup, replace backup and delete-account remove the files
+- Document backup (v13): storage bucket 'docs' (private, 15 MB limit). Each file encrypted on the phone with the tour data key, AAD user id + ':doc:' + sid, stored at docs/<uid>/<sid> as iv+ciphertext. Names, types and filing only in the encrypted backup's 'docs' manifest. sync.up (uploaded sids), sync.man (last manifest, keeps other devices' files listed), sync.docDel (tombstones: only these are deleted remotely). File format v2: plaintext = 'GWD1' + 4-byte header length + header JSON {name,type,size,tour,day,added} + bytes, so files are self-describing (v1 files without header still read; type sniffed, named 'Recovered document'). restoreDocs() uses the manifest plus a storage listing, so nothing is lost if the list is missing; unknown tours file into the open tour. loadRemoteMan() merges the cloud manifest once per session before backing up, so a phone never drops another phone's files. 'Get documents from cloud' (fetchDocs) in Backup downloads missing files without touching tours. Toggle 'Back up documents too' (sync.docs). Storage policies: own folder; insert needs has_consent() and has_plus(). Delete backup, replace backup and delete-account remove the files
 - Never add a server feature that needs to read guest data without revisiting consent and encryption
 - Changing consent wording: bump to popia-v3 in backup.js, privacy.html and the consents check constraint and has_consent()
 
@@ -75,7 +75,7 @@ Optional backup (v4): Supabase project "guidewise" (ref bqevxxhdtzlywjoqbogt, Lo
 
 ## Status (end of 3 Nov 2026)
 - Live (main): everything up to PR #9 (Today, switcher, WhatsApp, weather, headcount, running late, cash, report, welcome, landing page)
-- Open: PR #10 (branch claude/docs-venues-qa): document backup, venues, translation, venue/driver messages, reminders, sun times, holidays, tests. Owner to test document upload and a German translation on the preview, then merge
+- PR #10 merged 4 Nov (document backup, venues, translation, messages, reminders, sun times, holidays, tests). Fix: self-describing document files and 'Get documents from cloud'
 - Owner to do: run the clean-up SQL in Supabase SQL Editor (delete admin_test_tokens rows, drop ai_test_payload, delete net._http_response); finish guidewiseapp.co.za (Netlify domain, DNS, Supabase Site URL + redirect URLs), then switch links; Paystack live mode
 - Paystack test plans are R79/R790 (updated via a retired one-off function admin-plans, now a 410 stub)
 

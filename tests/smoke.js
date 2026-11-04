@@ -94,7 +94,19 @@ const ok=(c,m)=>{console.log((c?'  ✓ ':'  ✗ ')+m);if(!c)fails++};
     const man=await docManifest();await uploadDocs(man.files);const leak=new TextDecoder().decode([...store.values()][0]).includes('Secret');
     for(const f of await dbAll())await tx('readwrite',st=>st.delete(f.id));sync.up=[];const res=await restoreDocs(man.list);
     const txt=await (await dbAll())[0].blob.text();user=null;bk=null;return{leak,res,txt}});
-  ok(!d.leak,'stored document is unreadable');ok(d.res.got===1&&d.txt==='Secret entry','document restores exactly');
+  ok(!d.leak,'stored document is unreadable');
+  const d2=await pg.evaluate(async()=>{const store=new Map();sb={storage:{from:()=>({upload:async(p,bl)=>{store.set(p,new Uint8Array(await bl.arrayBuffer()));return{error:null}},download:async p=>({data:new Blob([store.get(p)])}),remove:async()=>({error:null}),list:async()=>({data:[...store.keys()].map(k=>({name:k.split('/')[1]}))})})}};
+    user={id:'u1'};bk={key:await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt'])};sync.up=[];sync.man=[];sync.docDel=[];
+    for(const f of await dbAll())await tx('readwrite',st=>st.delete(f.id));
+    await tx('readwrite',st=>st.add({tour:S.id,name:'voucher.pdf',type:'application/pdf',size:9,day:'0',added:'2026-01-01',blob:new Blob(['%PDF-1.4 x'])}));
+    const man=await docManifest();await uploadDocs(man.files);
+    // an old v1 file with no header and no manifest entry
+    const iv=crypto.getRandomValues(new Uint8Array(12)),ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:docAAD('old1')},bk.key,new TextEncoder().encode('%PDF-1.3 old')));
+    const o=new Uint8Array(12+ct.length);o.set(iv);o.set(ct,12);store.set('u1/old1',o);
+    for(const f of await dbAll())await tx('readwrite',st=>st.delete(f.id));sync.up=[];
+    const r=await restoreDocs([]);const back=(await dbAll()).map(f=>f.name+'|'+f.type).sort();user=null;bk=null;return{r,back}});
+  ok(d2.r.got===2,'documents come back even with no list in the backup');
+  ok(d2.back.includes('voucher.pdf|application/pdf')&&d2.back.some(x=>/^Recovered document\.pdf\|application\/pdf/.test(x)),'names come from the file itself; old files are recovered as PDFs: '+d2.back.join(', '));ok(d.res.got===1&&d.txt==='Secret entry','document restores exactly');
 
   console.log('Phone layout and accessibility');
   for(const w of [320,390]){await pg.setViewportSize({width:w,height:800});

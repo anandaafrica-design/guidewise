@@ -111,40 +111,61 @@ const dayStr=x=>new Date(x).toLocaleDateString('en-GB',{day:'numeric',month:'sho
 const DOC_MAX=15*1048576;
 const newSid=()=>(crypto.randomUUID?crypto.randomUUID():Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join(''));
 const docAAD=sid=>enc(user.id+':doc:'+sid);
-async function sealBlob(blob,sid){const iv=crypto.getRandomValues(new Uint8Array(12));
-  const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:docAAD(sid)},bk.key,await blob.arrayBuffer()));
+/* File format v2: iv + AES-GCM( "GWD1" + 4-byte header length + header JSON {name,type,size,tour,day,added} + file ).
+   The header makes every stored file self-describing, so any phone can recover it even without the backup's list.
+   v1 files (no header) are still read. */
+const MAGIC=[71,87,68,49];
+async function sealBlob(blob,sid,meta){const iv=crypto.getRandomValues(new Uint8Array(12));
+  const hd=enc(JSON.stringify(meta||{})),body=new Uint8Array(await blob.arrayBuffer()),pt=new Uint8Array(8+hd.length+body.length);
+  pt.set(MAGIC);new DataView(pt.buffer).setUint32(4,hd.length);pt.set(hd,8);pt.set(body,8+hd.length);
+  const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:docAAD(sid)},bk.key,pt));
   const out=new Uint8Array(12+ct.length);out.set(iv);out.set(ct,12);return new Blob([out],{type:'application/octet-stream'})}
+function sniff(u){const h=a=>a.every((b,i)=>u[i]===b);
+  return h([37,80,68,70])?['application/pdf','.pdf']:h([255,216,255])?['image/jpeg','.jpg']:h([137,80,78,71])?['image/png','.png']:h([80,75,3,4])?['application/zip','.docx or .xlsx']:['application/octet-stream','']}
 async function openBlob(buf,sid,type){const u=new Uint8Array(buf);
-  return new Blob([await crypto.subtle.decrypt({name:'AES-GCM',iv:u.slice(0,12),additionalData:docAAD(sid)},bk.key,u.slice(12))],{type:type||'application/octet-stream'})}
+  const pt=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:u.slice(0,12),additionalData:docAAD(sid)},bk.key,u.slice(12)));
+  if(MAGIC.every((b,i)=>pt[i]===b)){const n=new DataView(pt.buffer).getUint32(4),meta=JSON.parse(new TextDecoder().decode(pt.slice(8,8+n)));
+    return{blob:new Blob([pt.slice(8+n)],{type:meta.type||type||'application/octet-stream'}),meta}}
+  const sn=sniff(pt);return{blob:new Blob([pt],{type:type||sn[0]}),meta:null,guess:sn}}
 async function docManifest(){
   if(sync.docs===false||typeof dbAll!=='function')return null;
   let all=[];try{all=await dbAll()}catch(e){return null}
   for(const f of all)if(!f.sid){f.sid=newSid();await tx('readwrite',st=>st.put(f))}
   const local=all.map(f=>({sid:f.sid,name:f.name,type:f.type,size:f.size,tour:f.tour||T.legacyDocs,day:f.day,added:f.added}));
   const have=new Set(local.map(x=>x.sid)),gone=new Set(sync.docDel||[]);
-  const elsewhere=(sync.man||[]).filter(x=>!have.has(x.sid)&&!gone.has(x.sid)&&T.tours.some(t=>t.id===x.tour)); // on another device, not restored here
+  const elsewhere=(sync.man||[]).filter(x=>!have.has(x.sid)&&!gone.has(x.sid)); // on another device, not restored here
   return{list:[...local.filter(x=>x.size<=DOC_MAX),...elsewhere],files:all};
 }
 async function uploadDocs(files){
   const up=new Set(sync.up||[]);let fail=0;
   for(const f of files){if(up.has(f.sid)||f.size>DOC_MAX)continue;
     busy='Backing up documents…';paint();
-    const{error}=await sb.storage.from('docs').upload(user.id+'/'+f.sid,await sealBlob(f.blob,f.sid),{contentType:'application/octet-stream',upsert:false});
+    const{error}=await sb.storage.from('docs').upload(user.id+'/'+f.sid,await sealBlob(f.blob,f.sid,{name:f.name,type:f.type,size:f.size,tour:f.tour||T.legacyDocs,day:f.day,added:f.added}),{contentType:'application/octet-stream',upsert:false});
     if(!error||/exist|duplicate/i.test(error.message||''))up.add(f.sid);else fail++}
   const del=sync.docDel||[];
   if(del.length){const{error}=await sb.storage.from('docs').remove(del.map(s=>user.id+'/'+s));if(!error){del.forEach(s=>up.delete(s));sync.docDel=[]}}
   sync.up=[...up];saveSync();if(fail)throw new Error('docs');
 }
 async function restoreDocs(man){
-  let all=[];try{all=await dbAll()}catch(e){return 0}
-  const have=new Set(all.map(f=>f.sid).filter(Boolean)),todo=(man||[]).filter(x=>!have.has(x.sid)&&T.tours.some(t=>t.id===x.tour));let got=0,bad=0;
-  const up=new Set(sync.up||[]);
-  for(const x of todo){busy=`Restoring documents ${got+bad+1} of ${todo.length}…`;paint();
-    try{const{data,error}=await sb.storage.from('docs').download(user.id+'/'+x.sid);if(error)throw error;
-      const blob=await openBlob(await data.arrayBuffer(),x.sid,x.type);
-      await tx('readwrite',st=>st.add({sid:x.sid,tour:x.tour,name:x.name,type:x.type,size:x.size,day:x.day,added:x.added,blob}));up.add(x.sid);got++}catch(e){bad++}}
+  let all=[];try{all=await dbAll()}catch(e){return{got:0,bad:0}}
+  const have=new Set(all.map(f=>f.sid).filter(Boolean)),gone=new Set(sync.docDel||[]),bySid=new Map((man||[]).map(x=>[x.sid,x]));
+  let remote=[];try{for(let off=0;off<20000;off+=1000){const{data}=await sb.storage.from('docs').list(user.id,{limit:1000,offset:off});if(!data||!data.length)break;remote.push(...data.map(f=>f.name));if(data.length<1000)break}}catch(e){}
+  const sids=[...new Set([...(man||[]).map(x=>x.sid),...remote])].filter(sid=>!have.has(sid)&&!gone.has(sid)&&(!remote.length||remote.includes(sid)));
+  const up=new Set(sync.up||[]);let got=0,bad=0;
+  for(const sid of sids){busy=`Getting documents ${got+bad+1} of ${sids.length}…`;paint();
+    try{const{data,error}=await sb.storage.from('docs').download(user.id+'/'+sid);if(error)throw error;
+      const x=bySid.get(sid),o=await openBlob(await data.arrayBuffer(),sid,x&&x.type),m=o.meta||x||{name:'Recovered document'+(o.guess?o.guess[1].replace(/^(\.\w+).*/,'$1'):''),type:o.blob.type,day:'all'};
+      const tour=T.tours.some(t=>t.id===m.tour)?m.tour:S.id;
+      await tx('readwrite',st=>st.add({sid,tour,name:m.name||'Document',type:o.blob.type,size:o.blob.size,day:tour===m.tour?(m.day||'all'):'all',added:m.added||new Date().toISOString().slice(0,10),blob:o.blob}));
+      up.add(sid);got++;if(!bySid.has(sid))sync.man=[...(sync.man||[]),{sid,name:m.name,type:o.blob.type,size:o.blob.size,tour,day:'all',added:m.added}]}catch(e){bad++}}
   sync.up=[...up];saveSync();return{got,bad};
 }
+/* Read the cloud's document list once per session before backing up, so this phone never drops another phone's files. */
+async function loadRemoteMan(){if(loadRemoteMan.done)return;try{const row=await getFull();if(row){const o=await unseal(bk.key,row);if(o.docs){const m=new Map((sync.man||[]).map(x=>[x.sid,x]));o.docs.forEach(x=>{if(!m.has(x.sid))m.set(x.sid,x)});sync.man=[...m.values()];saveSync()}}loadRemoteMan.done=true}catch(e){}}
+async function fetchDocs(){busy='Checking the cloud…';paint();try{const row=await getFull();let man=[];if(row){const o=await unseal(bk.key,row);man=o.docs||[]}
+  const r=await restoreDocs(man);busy='';if(typeof render==='function'&&tab!=='acct')render();else paint();
+  toast(r.got?`${r.got} document${r.got===1?'':'s'} downloaded`+(r.bad?`, ${r.bad} failed`:''):r.bad?`${r.bad} could not be downloaded`:'All documents are already on this phone');if(r.got){sync.pending=1;saveSync();backupNow()}}
+  catch(e){busy='';msg='Could not reach the cloud. Check your signal and try again.';paint()}}
 async function wipeDocs(){ // remove every backed-up document (cloud backup deleted or replaced with a new key)
   for(let i=0;i<50;i++){const{data}=await sb.storage.from('docs').list(user.id,{limit:1000});if(!data||!data.length)break;
     const{error}=await sb.storage.from('docs').remove(data.map(f=>user.id+'/'+f.name));if(error)throw error}
@@ -168,6 +189,7 @@ async function backupNow(force){
   try{
     const m=await getMeta();
     if(m&&m.rev>(sync.rev||0)&&!force){sync.conflict=m.rev;saveSync();throw new Error('conflict')}
+    if(sync.docs!==false)await loadRemoteMan();
     const snap=JSON.stringify(T),man=await docManifest();
     const{iv,ciphertext}=await seal(bk.key,{app:'guidewise',v:2,at:new Date().toISOString(),T:JSON.parse(snap),...(man?{docs:man.list}:{})});
     if(m&&m.key_id!==bk.kid){bk=null;throw new Error('rekeyed')}
@@ -332,7 +354,8 @@ function acctHTML(){
   h+=`<p><b>${esc(last)}</b>${sync.pending&&!busy?`<br><span class="note">${navigator.onLine?'Changes waiting to back up.':'No signal. Will back up when you are online.'}</span>`:''}</p>
     <label class="opt"><input type="checkbox" id="a-auto" ${sync.auto?'checked':''}><span>Back up automatically after changes</span></label>
     <div class="acts"><button class="btn pri" data-a="now">Back up now</button><button class="btn" data-a="restore" data-arm="Tap again to replace this device's tour">Restore from cloud</button></div>${bz}
-    <label class="opt"><input type="checkbox" id="a-docs" ${sync.docs!==false?'checked':''}><span>Back up documents too (vouchers, PDFs, photos)<br><span class="note">${sync.docs!==false?`${(sync.up||[]).length} backed up. Files over 15 MB stay on this phone.`:'Off: documents stay on this phone only.'}</span></span></label>
+    <label class="opt"><input type="checkbox" id="a-docs" ${sync.docs!==false?'checked':''}><span>Back up documents too (vouchers, PDFs, photos)<br><span class="note">${sync.docs!==false?`${(sync.up||[]).length} backed up from this phone. Files over 15 MB stay on the phone.`:'Off: documents stay on this phone only.'}</span></span></label>
+    ${sync.docs!==false?`<div class="acts" style="margin-top:0"><button class="btn sm" data-a="getdocs">⇩ Get documents from cloud</button></div>`:''}
     <p class="note">Tours and documents are encrypted on this device before upload. Nobody else can read them, including us.</p>
     <h2>Account</h2><p class="note">Signed in as ${esc(user.email)}</p>
     <div class="acts"><button class="btn" data-a="chpass">Change passphrase</button><button class="btn" data-a="newrec">New recovery code</button><button class="btn" data-a="signout">Sign out</button><button class="btn" data-a="delbk" data-arm="Tap again to delete">Delete cloud backup</button><button class="btn" data-a="delacct" data-arm="Tap again: deletes everything" style="color:var(--alert)">Delete account</button></div>
@@ -405,6 +428,7 @@ document.addEventListener('click',async e=>{
     if(a==='restore'||a==='restore1')return restoreNow();
     if(a==='force'){sync.conflict=0;return backupNow(true)}
     if(a==='now')return backupNow();
+    if(a==='getdocs')return fetchDocs();
     if(a==='buy'){busy='Opening secure payment…';paint();
       const{data,error}=await sb.functions.invoke('billing-checkout',{body:{plan:b.dataset.plan}});
       if(error||!data?.url){busy='';let code='';try{code=(await error.context.json()).error}catch(x){}
