@@ -242,6 +242,21 @@ header::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:3px
 .addcash{display:grid;grid-template-columns:minmax(0,110px) minmax(0,1fr);gap:8px}
 .bar{flex-wrap:wrap}.row>*{min-width:0}
 .late-msg{white-space:pre-wrap}
+.rcpt{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:3px 9px;font:700 .78rem var(--body);cursor:pointer;color:var(--accent)}
+#printOut{display:none}
+@media print{
+  body{background:#fff!important}
+  body>*:not(#printOut){display:none!important}
+  #printOut{display:block!important;font:11pt/1.45 var(--body);color:#000}
+  #printOut h1{font:800 18pt var(--display);margin:0 0 2pt}
+  #printOut h2{font:700 13pt var(--display);margin:14pt 0 4pt;page-break-after:avoid}
+  #printOut table{width:100%;border-collapse:collapse;margin:4pt 0 8pt;page-break-inside:auto}
+  #printOut th,#printOut td{border-bottom:1px solid #ccc;padding:3pt 4pt;text-align:left;vertical-align:top}
+  #printOut th{font-size:9pt;text-transform:uppercase;letter-spacing:.04em;color:#444}
+  #printOut .pday{page-break-inside:avoid}
+  #printOut .pnote{color:#444;font-size:9.5pt}
+  #printOut .pbreak{page-break-before:always}
+}
 .onb{min-height:calc(100vh - 220px);display:grid;align-content:start;gap:12px;padding-top:10px}
 .onb .big{font:800 2rem/1.1 var(--display);letter-spacing:-.02em;margin:14px 0 0;background:linear-gradient(90deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
 .onb .lead{font-size:1.05rem;color:var(--muted);margin:0}
@@ -294,6 +309,7 @@ header .in{position:relative}
 <button class="tback" id="tback" data-tsw="0" hidden aria-label="Close tours"></button>
 <div class="inst" id="inst" hidden data-old="1" style="display:none!important"><span>Install Guidewise on this device to use it with no signal.</span><span class="acts" style="margin:0"><button class="btn sm pri" data-inst="go" hidden>Install</button><a class="btn sm" href="setup.html">How to install</a><button class="x" data-inst="x" aria-label="Hide">×</button></span></div>
 <main class="wrap" id="main"></main>
+<div id="printOut" aria-hidden="true"></div>
 <nav><div class="in" id="tabs"></div></nav>
 <div class="toast" id="toast" hidden></div>
 
@@ -392,10 +408,12 @@ const icons={
  cash:'<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6.5 9v.01M17.5 15v.01"/></svg>',
  late:'<svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5M9 2h6"/></svg>',
  report:'<svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6M10 9h2"/></svg>',
+ tpl:'<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9h16M9 9v11"/></svg>',
+ print:'<svg viewBox="0 0 24 24"><path d="M7 9V3h10v6"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg>',
  help:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/></svg>'
 };
 const NAV=[['today','Today'],['plan','Day'],['guests','Guests'],['brief','Briefing'],['more','More']];
-const UNDER_MORE=['more','count','cash','late','report','venues','pack','docs','intel','acct','plus','import','home'];
+const UNDER_MORE=['more','count','cash','late','report','venues','tpl','print','pack','docs','intel','acct','plus','import','home'];
 const DAY_TABS=['plan','pack','brief','docs','late','report'];
 const names={home:'Home',plan:'Day plan',guests:'Guests',pack:'Checklist',brief:'Briefing',docs:'Documents',intel:'Local intel'};
 
@@ -473,6 +491,44 @@ function renderVenues(){
   return h;
 }
 
+/* ---------- Day templates: a day you run often, reused on any tour (stops, times, venues, checklist; never dates or guests) ---------- */
+let tplPick=null;
+const tplOf=d=>JSON.parse(JSON.stringify({title:d.title,area:d.area||'',meet:d.meet,start:d.start,dress:d.dress||'',bring:d.bring||'',stops:d.stops.map(s=>({...s,note:String(s.note||'').replace(/^⚠[^:]*:\s*/,'')})),checklist:d.checklist.map(c=>({t:c.t,d:false}))}));
+function renderTpl(){
+  const L=T.templates||[],d=D();
+  let h=`<div class="bar"><h2>Day templates</h2>${d.stops.length&&!isBlankDay(d)?`<button class="pill" data-tplsave="1">+ Save Day ${S.day+1}</button>`:''}</div>
+  <p class="note">Save a day you run often, then drop it into any tour: stops, times, venue numbers, area and checklist come with it. Dates and guests never do.</p>`;
+  if(!L.length)return h+`<div class="empty"><b>No templates yet</b><span class="note">Open a finished day and tap Save. Try it with ${esc(d.title||'this day')}.</span>${d.stops.length&&!isBlankDay(d)?`<div class="acts" style="justify-content:center"><button class="btn pri" data-tplsave="1">Save Day ${S.day+1} as a template</button></div>`:''}</div>`;
+  h+=L.map(t=>`<div class="card"><div style="display:flex;gap:8px;align-items:flex-start"><div style="flex:1;min-width:0"><b>${esc(t.name)}</b><span class="note" style="display:block">${t.day.stops.length} stops · depart ${esc(t.day.start)}${t.day.area?' · '+esc(t.day.area):''}</span></div><button class="x" data-tpldel="${t.id}" aria-label="Delete template">×</button></div>
+    <div class="acts" style="margin-top:4px"><button class="btn pri sm" data-tpluse="${t.id}" data-mode="here">Use on Day ${S.day+1}</button><button class="btn sm" data-tpluse="${t.id}" data-mode="add">Add as a new day</button></div></div>`).join('');
+  return h;
+}
+function applyTpl(t,mode){const base=tplOf(t.day);
+  if(mode==='add'){const last=S.days[S.days.length-1],nd=new Date((last?.date||todayIso())+'T12:00');nd.setDate(nd.getDate()+1);S.days.push({...newDay(nd.toISOString().slice(0,10)),...base,weather:'',wxAuto:true});S.day=S.days.length-1}
+  else{const d=D();Object.assign(d,base,{date:d.date,weather:'',wxAuto:true,log:[],report:''})}
+  save();tab='plan';editDay=false;render();scrollTo(0,0);toast(`"${t.name}" added. Check the times`)}
+
+/* ---------- Print or PDF: tour or day, with optional rooming list and dietaries ---------- */
+let prOpt={scope:'tour',room:true,diet:true,notes:false,check:true};
+function printHTML(){
+  const days=prOpt.scope==='tour'?S.days.map((d,i)=>[d,i]):[[D(),S.day]],m=tourMeta(S);
+  let h=`<h1>${esc(S.tour)}</h1><div class="pnote">${esc(m.range)} · ${S.days.length} day${S.days.length===1?'':'s'} · ${S.guests.length} guest${S.guests.length===1?'':'s'}</div>`;
+  days.forEach(([d,i])=>{const sc=schedule(d),di=diets();
+    h+=`<div class="pday"><h2>Day ${i+1}${d.date?' · '+esc(dLabel(d.date)):''} · ${esc(d.title)}</h2><div class="pnote">Meet ${esc(d.meet||'meeting point')} ${fmt(toMin(d.start)-15)} · depart ${esc(d.start)}${sc.length?' · back about '+fmt(sc[sc.length-1].leave):''}${d.weather?' · '+esc(d.weather):''}</div>
+    <table><tr><th>Time</th><th>Stop</th><th>Details</th></tr>${d.stops.map((s,k)=>`<tr><td>${fmt(sc[k].arrive)}${s.stay?'–'+fmt(sc[k].leave):''}</td><td><b>${esc(s.place)}</b>${s.lunch?' (lunch)':''}</td><td>${[s.note,s.addr,s.phone].filter(Boolean).map(esc).join('<br>')}${s.lunch&&prOpt.diet&&di.length?'<br><i>Dietaries: '+di.map(g=>esc(g.name.split(' ')[0]+': '+g.diet)).join('; ')+'</i>':''}</td></tr>`).join('')||'<tr><td colspan="3">No stops yet</td></tr>'}</table>
+    ${prOpt.check&&d.checklist.length?`<div class="pnote">Checklist: ${d.checklist.map(c=>(c.d?'☑ ':'☐ ')+esc(c.t)).join(' · ')}</div>`:''}</div>`});
+  if(prOpt.room&&S.guests.length){const g=[...S.guests].sort((a,b)=>String(a.room).localeCompare(String(b.room),undefined,{numeric:true}));
+    h+=`<div class="pbreak"><h2>Rooming list</h2><table><tr><th>Room</th><th>Guest</th>${prOpt.diet?'<th>Dietary</th>':''}${prOpt.notes?'<th>Notes</th>':''}</tr>${g.map(x=>`<tr><td>${esc(x.room)}</td><td>${esc(x.name)}</td>${prOpt.diet?`<td>${esc(x.diet)}</td>`:''}${prOpt.notes?`<td>${esc(x.notes)}</td>`:''}</tr>`).join('')}</table></div>`}
+  else if(prOpt.diet&&diets().length&&!prOpt.room)h+=`<h2>Dietary needs</h2><table><tr><th>Guest</th><th>Dietary</th></tr>${diets().map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.diet)}</td></tr>`).join('')}</table>`;
+  return h+`<div class="pnote" style="margin-top:12pt">Printed from Guidewise · ${esc(dLabel(todayIso()))}</div>`}
+function renderPrint(){
+  const ck=(k,l)=>`<label class="opt"><input type="checkbox" data-pr="${k}" ${prOpt[k]?'checked':''}><span>${l}</span></label>`;
+  return `<h2>Print or PDF</h2><p class="note">A clean printout for drivers, hotels or your clipboard. On a phone, choose <b>Save as PDF</b> in the print window to keep or send it.</p>
+  <div class="seg" style="margin:10px 0"><button class="${prOpt.scope==='tour'?'on':''}" data-prscope="tour">Whole tour</button><button class="${prOpt.scope==='day'?'on':''}" data-prscope="day">Day ${S.day+1} only</button></div>
+  ${ck('room','Rooming list')}${ck('diet','Dietary needs')}${ck('notes','Guest notes (private: mobility, medical)')}${ck('check','Checklists')}
+  <div class="acts"><button class="btn pri" data-prgo="1">🖨 Print or save as PDF</button></div>
+  <p class="note">Guest birthdays are never printed. Only share rooming lists and notes with people who need them.</p>`}
+
 /* ---------- Headcount: tap guests back on board ---------- */
 let hc=new Set();
 function renderCount(){
@@ -506,6 +562,8 @@ function renderLate(){
 /* ---------- Cash and tips: float in, spending out, tips received kept apart ---------- */
 const CATS=[['float','Float in','in'],['entry','Entrance','out'],['meal','Meals','out'],['tip','Tips paid','out'],['trans','Transport','out'],['other','Other','out'],['mytip','Tips received','tip']];
 const catOf=k=>CATS.find(c=>c[0]===k)||CATS[5];
+let rcptBlob=null;
+async function shrinkPhoto(f){try{const img=await createImageBitmap(f),k=Math.min(1,1600/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);return await new Promise(r=>c.toBlob(r,'image/jpeg',.82))}catch(e){return f}}
 let cashCat='entry';
 const money=n=>{const v=Math.round(Math.abs(n)*100)/100;return (n<0?'−':'')+(S.cur||'R')+' '+v.toLocaleString('en-ZA',{minimumFractionDigits:v%1?2:0,maximumFractionDigits:2})};
 function cashTotals(list){let fin=0,out=0,tip=0;(list||S.cash||[]).forEach(e=>{const t=catOf(e.cat)[2];if(t==='in')fin+=e.amt;else if(t==='out')out+=e.amt;else tip+=e.amt});return{fin,out,tip,bal:fin-out}}
@@ -513,6 +571,7 @@ function cashSub(){const c=S.cash||[];if(!c.length)return'Float, entrance fees, 
 function cashReport(){const c=S.cash||[],t=cashTotals(),by={};c.forEach(e=>{by[e.cat]=(by[e.cat]||0)+e.amt});
   let r=`${S.tour}: cash summary\n\nFloat received: ${money(t.fin)}\nSpent: ${money(t.out)}\nBalance: ${money(t.bal)}\n\nBy type:\n`;
   CATS.filter(x=>x[2]==='out').forEach(([k,l])=>{if(by[k])r+=`${l}: ${money(by[k])}\n`});
+  const nrc=c.filter(e=>e.rec).length;if(nrc)r+=`\nReceipts: ${nrc} photo${nrc===1?'':'s'} (sent separately)\n`;
   r+=`\nDetail:\n`+c.slice().sort((a,b)=>a.date<b.date?-1:1).filter(e=>catOf(e.cat)[2]!=='tip').map(e=>`${dShort(e.date)}  ${catOf(e.cat)[1]}  ${e.what||''}  ${catOf(e.cat)[2]==='in'?'+':'-'}${money(e.amt)}`).join('\n');
   return r}
 function renderCash(){
@@ -521,13 +580,15 @@ function renderCash(){
   <div class="money"><div class="bal ${t.bal<0?'neg':''}"><b>${money(t.bal)}</b><span>Float balance</span></div><div><b>${money(tt.out)}</b><span>Spent ${esc(dShort(day))}</span></div><div><b>${money(t.tip)}</b><span>Tips received</span></div></div>
   <div class="card"><b>Add</b>
     <div class="chipsel sm">${CATS.map(([k,l])=>`<button class="${k===cashCat?'on':''}" data-cashcat="${k}">${l}</button>`).join('')}</div>
-    <div class="addcash"><input id="cashAmt" inputmode="decimal" placeholder="Amount"><input id="cashWhat" placeholder="${cashCat==='float'?'From whom, e.g. A&K office':cashCat==='mytip'?'From whom (optional)':'What for, e.g. Cape Point entry'}"></div>
+    <div class="addcash"><input id="cashAmt" inputmode="decimal" placeholder="Amount"><input id="cashWhat" placeholder="${cashCat==='float'?'From whom, e.g. tour office':cashCat==='mytip'?'From whom (optional)':'What for, e.g. Cape Point entry'}"></div>
     <div class="row"><input type="date" id="cashDate" value="${esc(day)}"><button class="btn pri" data-cashadd="1">Add ${esc(catOf(cashCat)[1].toLowerCase())}</button></div>
+    ${catOf(cashCat)[2]==='out'?`<div class="acts" style="margin-top:0"><button class="btn sm" data-rcpt="1">${rcptBlob?'📎 Receipt attached ✓':'📷 Add receipt photo'}</button></div><input type="file" id="rcptFile" accept="image/*" capture="environment" hidden>`:''}
     <span class="note">Tips you receive are kept separate from the float.</span></div>`;
   if(!S.cash.length)h+=`<div class="empty"><b>Nothing logged yet</b><span class="note">Start with the float you received, then add spending as you go.</span></div>`;
   else{const days=[...new Set(S.cash.map(e=>e.date))].sort().reverse();
-    days.forEach(dt=>{const l=S.cash.filter(e=>e.date===dt);h+=`<p class="eyebrow">${esc(dLabel(dt))}</p>`+l.map(e=>{const k=catOf(e.cat);return `<div class="cx"><span class="tx"><b>${esc(e.what||k[1])}</b><span>${k[1]}</span></span><span class="am ${k[2]==='in'?'in':k[2]==='tip'?'tip':''}">${k[2]==='in'?'+':k[2]==='tip'?'':'−'}${money(e.amt)}</span><button class="x" data-cashdel="${e.id}" aria-label="Delete">×</button></div>`}).join('')});
-    h+=`<div class="acts"><button class="btn pri wa" data-cashwa="1">💬 Send summary</button><button class="btn" data-cashcopy="1">Copy summary</button></div><p class="note">The summary lists the float, spending by type and every entry, for your tour report. Tips received are not included.</p>`}
+    days.forEach(dt=>{const l=S.cash.filter(e=>e.date===dt);h+=`<p class="eyebrow">${esc(dLabel(dt))}</p>`+l.map(e=>{const k=catOf(e.cat);return `<div class="cx"><span class="tx"><b>${esc(e.what||k[1])}</b><span>${k[1]}${e.rec?` <button class="rcpt" data-dopen="${e.rec}">📎 receipt</button>`:''}</span></span><span class="am ${k[2]==='in'?'in':k[2]==='tip'?'tip':''}">${k[2]==='in'?'+':k[2]==='tip'?'':'−'}${money(e.amt)}</span><button class="x" data-cashdel="${e.id}" aria-label="Delete">×</button></div>`}).join('')});
+    const nr=S.cash.filter(e=>e.rec).length;
+    h+=`<div class="acts"><button class="btn pri wa" data-cashwa="1">💬 Send summary</button><button class="btn" data-cashcopy="1">Copy summary</button>${nr?`<button class="btn" data-rcptshare="1">📎 Share ${nr} receipt${nr===1?'':'s'}</button>`:''}</div><p class="note">The summary lists the float, spending by type and every entry, for your tour report. Tips received are not included.</p>`}
   return h;
 }
 
@@ -640,6 +701,8 @@ function renderMore(){
     ${li('cash','Cash and tips',cashSub(),'data-tab="cash"')}
     ${li('report','End-of-day report',`Day ${S.day+1}: times, changes, cash, notes for your operator`,'data-tab="report"')}
     ${li('late','Running late',`Shift Day ${S.day+1} and tell the group`,'data-tab="late"')}
+    ${li('tpl','Day templates',`${(T.templates||[]).length} saved: reuse a day you run often`,'data-tab="tpl"')}
+    ${li('print','Print or PDF','Tour or day plan, rooming list, dietaries','data-tab="print"')}
     ${li('docs','Venues',`${Object.keys(T.venues||{}).length} saved: phone, address, notes`,'data-tab="venues"')}
     ${li('intel','Local intel',`${S.intel.length} private note${S.intel.length===1?'':'s'}`,'data-tab="intel"')}
   </div>
@@ -670,11 +733,11 @@ function renderPlanRead(){
   const n=d.checklist.length,done=d.checklist.filter(c=>c.d).length;
   let h='';
   if(b.length)h+=`<div class="alert"><b>🎂 Birthday:</b> ${b.map(g=>esc(g.name)).join(', ')}. Arrange cake or a card with the lunch venue.</div>`;
-  h+=`<div class="bar"><h2>${esc(d.title)||'Untitled day'}</h2><span style="display:flex;gap:6px">${d.stops.length?`<button class="pill" data-tab="late">⏱ Late</button>`:''}<button class="pill" data-editday="1">Edit day</button></span></div>
+  h+=`<div class="bar"><h2>${esc(d.title)||'Untitled day'}</h2><span style="display:flex;gap:6px;flex-wrap:wrap">${d.stops.length?`<button class="pill" data-tab="late">⏱ Late</button>`:''}<button class="pill" data-tab="tpl" aria-label="Day templates">☰ Templates</button><button class="pill" data-editday="1">Edit day</button></span></div>
   <p class="sub">${esc(dLabel(d.date))} · Meet ${esc(d.meet)||'meeting point'} ${fmt(toMin(d.start)-15)} · Depart ${esc(d.start)}</p>`;
   h+=wxCard(d);
   if(n)h+=`<button class="step" data-go="pack:${S.day}" style="margin:12px 0"><span class="ic">🎒</span><span class="tx"><b>Before you leave: ${done} of ${n} ready</b><span>${esc(d.checklist.filter(c=>!c.d).slice(0,3).map(c=>c.t).join(', ')||'All packed')}</span></span><span class="chev">›</span></button>`;
-  if(!d.stops.length||isBlankDay(d))h+=`<div class="empty"><b>No plan for this day yet</b><span class="note">Add stops with drive and stay times, or import your itinerary.</span><div class="acts" style="justify-content:center"><button class="btn pri" data-editday="1">Plan this day</button><button class="btn" data-tab="import">Import</button></div></div>`;
+  if(!d.stops.length||isBlankDay(d))h+=`<div class="empty"><b>No plan for this day yet</b><span class="note">Add stops with drive and stay times, or import your itinerary.</span><div class="acts" style="justify-content:center"><button class="btn pri" data-editday="1">Plan this day</button>${(T.templates||[]).length?'<button class="btn" data-tab="tpl">Use a template</button>':''}<button class="btn" data-tab="import">Import</button></div></div>`;
   else{h+='<div class="rt">';
     d.stops.forEach((s,i)=>{const free=/^Free time$/i.test(s.place);
       if(s.drive)h+=`<div class="rs" style="padding:0"><span></span><span class="leg">🚐 ${s.drive} min</span></div>`;
@@ -820,11 +883,11 @@ function renderHome(){
 function render(){
   renderChrome();
   setTimeout(()=>{if(tab==='docs')fillDocs();if(tab==='plan')fillDayDocs();if(tab==='acct')fillAcct();if(tab==='import'&&window.fillImport)fillImport();if(['today','plan','brief'].includes(tab)){const fd=tab==='today'?S.days[focusDay().i]:D();ensureWx(fd)}if(tab==='intel')S.days.forEach(d=>ensureWx(d));},0);
-  const v={venues:renderVenues,welcome:renderWelcome,report:renderReport,today:renderToday,more:renderMore,count:renderCount,late:renderLate,cash:renderCash,home:renderHome,plan:renderPlan,guests:renderGuests,pack:renderPack,brief:renderBrief,docs:renderDocs,intel:renderIntel,plus:()=>(window.renderPlus?renderPlus():''),import:()=>(window.renderImport?renderImport():'<p class="note">Loading…</p>'),acct:window.renderAcct||(()=>'<p class="note">Backup is not available right now.</p>')}[tab]();
-  $('#main').innerHTML=v+(tab==='docs'||tab==='acct'||tab==='home'||tab==='plus'||tab==='import'||tab==='today'||tab==='more'||tab==='count'||tab==='late'||tab==='cash'||tab==='welcome'||tab==='report'||tab==='venues'?'':S.tour.includes('(sample)')?`<p class="sample">Sample tour loaded. Rename it and edit freely; your changes are saved in this browser. New here? <a href="setup.html">Setup guide</a></p>`:'');
+  const v={tpl:renderTpl,print:renderPrint,venues:renderVenues,welcome:renderWelcome,report:renderReport,today:renderToday,more:renderMore,count:renderCount,late:renderLate,cash:renderCash,home:renderHome,plan:renderPlan,guests:renderGuests,pack:renderPack,brief:renderBrief,docs:renderDocs,intel:renderIntel,plus:()=>(window.renderPlus?renderPlus():''),import:()=>(window.renderImport?renderImport():'<p class="note">Loading…</p>'),acct:window.renderAcct||(()=>'<p class="note">Backup is not available right now.</p>')}[tab]();
+  $('#main').innerHTML=v+(tab==='docs'||tab==='acct'||tab==='home'||tab==='plus'||tab==='import'||tab==='today'||tab==='more'||tab==='count'||tab==='late'||tab==='cash'||tab==='welcome'||tab==='report'||tab==='venues'||tab==='tpl'||tab==='print'?'':S.tour.includes('(sample)')?`<p class="sample">Sample tour loaded. Rename it and edit freely; your changes are saved in this browser. New here? <a href="setup.html">Setup guide</a></p>`:'');
 }
 
-document.addEventListener('click',e=>{
+document.addEventListener('click',async e=>{
   const b=e.target.closest('button');if(!b)return;const ds=b.dataset,d=D();
   if(ds.tsw!==undefined){panelOpen=ds.tsw==='1'?!panelOpen:false;renderChrome();if(panelOpen)setTimeout(()=>$('#tpanel').scrollTop=0,0);return}
   if(ds.tab||ds.go||ds.topen||ds.tnew)panelOpen=false;
@@ -852,6 +915,14 @@ document.addEventListener('click',e=>{
   if(ds.rem){remOn=!remOn;try{localStorage.setItem(REM,remOn?'1':'0')}catch(x){}
     if(remOn&&'Notification' in window&&Notification.permission==='default')Notification.requestPermission().catch(()=>{});
     toast(remOn?'Reminders on: 10 min before you leave each stop, while Guidewise is open':'Reminders off');render();remindTick();return}
+  if(ds.tplsave){const d=D(),name=(prompt('Name this template',d.title)||'').trim();if(!name)return;T.templates=T.templates||[];T.templates.push({id:uid(),name,day:tplOf(d)});save();render();toast('Template saved');return}
+  if(ds.tpluse){const t=(T.templates||[]).find(x=>x.id===ds.tpluse);if(!t)return;if(ds.mode==='here'&&!isBlankDay(D())&&!b.classList.contains('arm')){b.classList.add('arm');b.textContent='Tap again: replaces Day '+(S.day+1);return}applyTpl(t,ds.mode);return}
+  if(ds.tpldel){if(!b.classList.contains('arm')){b.classList.add('arm');b.textContent='Delete?';return}T.templates=(T.templates||[]).filter(x=>x.id!==ds.tpldel);save();render();return}
+  if(ds.prscope){prOpt.scope=ds.prscope;render();return}
+  if(ds.prgo){$('#printOut').innerHTML=printHTML();setTimeout(()=>window.print(),50);return}
+  if(ds.rcpt){$('#rcptFile').click();return}
+  if(ds.rcptshare){const files=[];for(const e of S.cash.filter(x=>x.rec)){const f=await dbGet(e.rec).catch(()=>null);if(f)files.push(new File([f.blob],f.name,{type:f.type}))}
+    if(navigator.canShare&&navigator.canShare({files})){navigator.share({files,title:S.tour+' receipts'}).catch(()=>{})}else toast('This browser cannot share files. Find them under More, Documents');return}
   if(ds.latemin){lateMin=+ds.latemin;render();return}
   if(ds.lateapply){const d=D(),i=+($('#lateFrom')||{}).value||0,st=lateStart(d),f=(d.date===todayIso()&&st.i===i)?st.f:'drive';
     d.stops[i][f]=(+d.stops[i][f]||0)+lateMin;lateDone={day:S.day,stop:i,field:f,mins:lateMin};
@@ -860,8 +931,10 @@ document.addEventListener('click',e=>{
   if(ds.latewa){window.open('https://wa.me/?text='+encodeURIComponent(lateText(D(),lateDone.stop)),'_blank','noopener');return}
   if(ds.cashcat){cashCat=ds.cashcat;const a=$('#cashAmt').value,w=$('#cashWhat').value;render();$('#cashAmt').value=a;$('#cashWhat').value=w;return}
   if(ds.cashadd){const amt=parseFloat(String($('#cashAmt').value).replace(/\s/g,'').replace(',','.'));if(!(amt>0)){toast('Enter an amount');$('#cashAmt').focus();return}
-    S.cash=S.cash||[];S.cash.push({id:uid(),date:$('#cashDate').value||todayIso(),cat:cashCat,amt:Math.round(amt*100)/100,what:$('#cashWhat').value.trim()});save();render();toast('Added');return}
-  if(ds.cashdel){if(!b.classList.contains('arm')){b.classList.add('arm');b.textContent='Delete?';setTimeout(()=>{b.classList.remove('arm');b.textContent='×'},3000);return}S.cash=S.cash.filter(e=>e.id!==ds.cashdel);save();render();return}
+    S.cash=S.cash||[];const e={id:uid(),date:$('#cashDate').value||todayIso(),cat:cashCat,amt:Math.round(amt*100)/100,what:$('#cashWhat').value.trim()};
+    if(rcptBlob&&catOf(cashCat)[2]==='out'){try{e.rec=await tx('readwrite',st=>st.add({tour:S.id,name:`Receipt · ${e.what||catOf(e.cat)[1]} · ${e.date}.jpg`,type:'image/jpeg',size:rcptBlob.size,day:'all',added:todayIso(),blob:rcptBlob}));window.onDocsChanged&&onDocsChanged()}catch(x){toast('Could not save the photo')}}
+    rcptBlob=null;S.cash.push(e);save();render();toast('Added');return}
+  if(ds.cashdel){if(!b.classList.contains('arm')){b.classList.add('arm');b.textContent='Delete?';setTimeout(()=>{b.classList.remove('arm');b.textContent='×'},3000);return}const gone=S.cash.find(e=>e.id===ds.cashdel);if(gone&&gone.rec)dbDel(gone.rec).catch(()=>{});S.cash=S.cash.filter(e=>e.id!==ds.cashdel);save();render();return}
   if(ds.cashwa){window.open('https://wa.me/?text='+encodeURIComponent(cashReport()),'_blank','noopener');return}
   if(ds.cashcopy){navigator.clipboard.writeText(cashReport()).then(()=>toast('Summary copied')).catch(()=>toast('Could not copy'));return}
   if(ds.go){const[t,dy]=ds.go.split(':');if(dy!==undefined&&dy!=='')S.day=+dy;tab=t;editDay=!!ds.editAfter;editG=-1;save();render();scrollTo(0,0);return}
@@ -904,6 +977,8 @@ document.addEventListener('click',e=>{
 document.addEventListener('change',e=>{
   const el=e.target,ds=el.dataset,d=D();
   if(el.id==='docFile'){addFiles(el.files);el.value='';return}
+  if(el.id==='rcptFile'){const f=el.files[0];el.value='';if(f){shrinkPhoto(f).then(bl=>{rcptBlob=bl;const a=$('#cashAmt').value,w=$('#cashWhat').value;render();$('#cashAmt').value=a;$('#cashWhat').value=w;toast('Receipt ready: tap Add')})}return}
+  if(ds.pr){prOpt[ds.pr]=el.checked;return}
   if(ds.dmove){dbMove(+ds.dmove,el.value).then(fillDocs);return}
   if(ds.c!==undefined){d.checklist[+ds.c].d=el.checked;save();render();return}
   if(ds.s!==undefined&&ds.k==='lunch'){d.stops[+ds.s].lunch=el.checked;save();render();return}

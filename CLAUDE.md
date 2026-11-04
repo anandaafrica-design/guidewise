@@ -10,7 +10,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 ## Files
 - site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
 - site/index.html: whole app (vanilla JS, no build step)
-- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v31; own files are fetched network-first, cache when offline). New precached files go in its F list
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v32; own files are fetched network-first, cache when offline). New precached files go in its F list
 - site/backup.js: cloud backup (sign-in, POPIA consent, passphrase, encrypt, sync). Shares globals with index.html
 - site/import.js: AI import (tab 'import', from Tours > Import from documents or the Docs tab; can use documents already saved in the tour). Loaded after backup.js and uses its globals (sb, user, plan, plus, refresh, SB_URL, SB_KEY)
 - site/vendor/xlsx-mini-0.18.5.js: SheetJS (Apache-2.0), lazy-loaded by import.js for .xlsx/.csv
@@ -31,6 +31,9 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 - End-of-day report (tab 'report'): programme, changes (day.log, written by Running late), cash that day, float balance, day.report notes; WhatsApp, email (mailto) or copy. Never includes guest birthdays, dietaries or notes
 - Briefing translation (Plus): edge function ai-translate (JWT, has_plus, 30 a month, Claude Haiku 5.5, logged in ai_usage as '<model>:translate'; ai-import's 5-a-month count excludes these). S.lang per tour; send translation or both. Only the briefing text is sent, never guest data
 - Messages: dietText() to the lunch venue (waTo(phone): SA 0xx becomes 27xx; first names + dietaries, birthday that day), planText() to the driver (no guest details). Departure reminders (key guidewise.remind): remindTick every 30 s while open, 10 min before leaving the current stop: toast, vibrate, SW notification if permitted. No server schedule (would need tour data on the server)
+- Day templates (tab 'tpl', T.templates [{id,name,day}]): tplOf() keeps stops, times, venues, area, checklist (unticked); never dates, guests, logs. Use on the open day (replaces, confirm) or add as a new day
+- Receipts: cash entries of type 'out' can carry a photo (resized JPEG in the docs store, entry.rec = doc id, so it is backed up like any document); share all receipts via the Web Share API; deleting the entry deletes the photo
+- Print or PDF (tab 'print'): #printOut filled by printHTML(), @media print shows only it; whole tour or one day, rooming list, dietaries, optional guest notes, checklists. Never prints birthdays
 - Venues (tab 'venues'): T.venues {key:{name,phone,addr,note}}, gathered from every tour's stops with a phone or address; add, edit, search, delete
 - Day and Guests are read-first (timeline / guest cards) with Edit day / tap-to-edit (editDay, editG). Keep new screens read-first with a clear primary action
 
