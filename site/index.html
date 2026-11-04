@@ -1,4 +1,4 @@
-<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#fffdf9"><meta name="color-scheme" content="light"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style>
+<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1f3a5f"><meta name="color-scheme" content="light"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style>
 <title>Guidewise</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
@@ -68,17 +68,24 @@ input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);
 .tmore summary::-webkit-details-marker{display:none}
 .tile .tic{font-size:1.2rem;font-weight:800;color:var(--accent)}
 nav button span{font-size:.68rem}
-/* Ochre palette (v15): #B75A1A burnt ochre is the main colour (white text on it passes WCAG AA), umber the second */
-:root{--bg:#f7f2ea;--surface:#fffdf9;--soft:#f6e6d6;--line:#e6dac8;--muted:#5a5144;--ink:#1f1a14;--accent:#b75a1a;--accent-2:#d07a35;--brand:#b75a1a;--ochre:#5e4429;--sand:#f6e9d6;--sky:#2f6ea5;--game:#5f7a2e}
+/* Palette (v16) "bush to sky": bush green #3F5232 fading corner to corner through teal into navy #1F3A5F.
+   Navy carries buttons and links, green means done, ochre #B8862B is for badges and information, red only for real problems. */
+:root{--bg:#f4f1ea;--surface:#fffdf9;--ink:#1d2622;--muted:#5b625c;--line:#dfdccf;--accent:#1f3a5f;--accent-2:#2c4a52;--brand:#1f3a5f;--ochre:#3f5232;--soft:#e5ebe4;--sand:#f6ecd5;--game:#3f5232;--sky:#1f3a5f;--info:#b8862b;--infoBg:#f6ecd5;--alert:#a3262a}
 body{background-image:url(topo-earth.svg)}
-header::after{background:linear-gradient(90deg,var(--brand),#d9923f 55%,var(--ochre))}
-.hero{background:url(topo-w.svg) right -120px center/560px auto no-repeat,linear-gradient(150deg,#b75a1a 0%,#8a4210 100%);box-shadow:0 10px 30px rgb(110 50 15 / .28)}
-.hello{background:linear-gradient(90deg,#b75a1a,#7e3d10)}
-.tbadge.b-live{background:var(--brand);color:#fff}.tbadge.b-next{background:var(--soft);color:var(--accent)}
-.tcard.live{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand),var(--shadow)}
-nav button.on svg{background:#f5ddc8}
+header::after{background:linear-gradient(90deg,#3f5232,#2c4a52 50%,#1f3a5f)}
+.hero{background:url(topo-w.svg) right -120px center/560px auto no-repeat,linear-gradient(135deg,#4a5e3a 0%,#2c4a52 50%,#1f3a5f 100%);box-shadow:0 10px 30px rgb(20 40 50 / .28)}
+.hero .when{color:#f0c48a;opacity:1}
+.hello{background-image:linear-gradient(90deg,#3f5232,#1f3a5f)}
+.alert{background:var(--infoBg);border-left-color:var(--info)}
+.alert.err{background:color-mix(in srgb,var(--alert) 10%,var(--surface));border-left-color:var(--alert)}
+.tbadge.b-live{background:var(--info);color:#1d2622}.tbadge.b-next{background:var(--soft);color:var(--accent)}
+.tcard.live{border-color:#3f5232;box-shadow:0 0 0 1px #3f5232,var(--shadow)}
+.step.hot{border-color:#3f5232;box-shadow:0 0 0 1px #3f5232,var(--shadow)}.step.hot .ic{background:linear-gradient(135deg,#3f5232,#1f3a5f)!important}
+nav button.on svg{background:#e1e8ea}
 .days button.on{background:var(--accent);border-color:var(--accent)}
-.days button .td{background:#fff;color:var(--accent)}
+.days button .td{background:var(--info);color:#1d2622}
+.flag{background:color-mix(in srgb,var(--info) 18%,transparent)}
+.card.lunch,.rs.lunch .bx{border-left-color:var(--info)}
 .arch summary{cursor:pointer;font-weight:700;margin:18px 0 6px;color:var(--muted)}
 .inst{max-width:640px;margin:12px auto 0;box-sizing:border-box;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:.92rem}
 @media (max-width:672px){.inst{margin:12px 16px 0}}
