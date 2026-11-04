@@ -10,7 +10,7 @@ Tagline idea: "Guidewise. Tomorrow, sorted."
 ## Files
 - site/: everything public (Netlify publish dir, set in netlify.toml). Nothing outside site/ is served
 - site/index.html: whole app (vanilla JS, no build step)
-- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v45; own files are fetched network-first, cache when offline). New precached files go in its F list
+- site/sw.js: service worker. Bump cache name tp-vN on every front-end change (currently tp-v47; own files are fetched network-first, cache when offline). New precached files go in its F list
 - site/backup.js: cloud backup (sign-in, POPIA consent, passphrase, encrypt, sync). Shares globals with index.html
 - site/import.js: AI import (tab 'import', from Tours > Import from documents or the Docs tab; can use documents already saved in the tour). Loaded after backup.js and uses its globals (sb, user, plan, plus, refresh, SB_URL, SB_KEY)
 - site/vendor/xlsx-mini-0.18.5.js: SheetJS (Apache-2.0), lazy-loaded by import.js for .xlsx/.csv
@@ -63,7 +63,7 @@ Optional backup (v4): Supabase project "guidewise" (ref bqevxxhdtzlywjoqbogt, Lo
 - Changing consent wording: bump to popia-v3 in backup.js, privacy.html and the consents check constraint and has_consent()
 
 ## Payments (v8): Guidewise Plus via Paystack
-- Free: everything on device. Plus: cloud backup and AI import. R79/month or R790/year (was R49/R490 before AI import), ZAR. 30-day trial for every new account (trigger on auth.users), no card needed
+- Free: everything on device. Plus: cloud backup and AI import. R99/month or R950/year (20% off 12 × R99, marketed as "save 20%"; was R79/R790, and R49/R490 before AI import), ZAR. 30-day trial for every new account (trigger on auth.users), no card needed
 - Table subscriptions (read-only to users; written by triggers and edge functions). has_plus() is mirrored by plus() in backup.js
 - Uploading new backup data needs Plus (insert policy + trigger on ciphertext change). Restore, delete, passphrase/recovery re-wraps always allowed (POPIA access and erasure)
 - Welcome screen (tab 'plus', renderPlus in backup.js): 'Congratulations! You're in!' plus what's included; shown once per subscription after payment (key guidewise.welcomed), and via "What's included" on the Plus card. Keep the list in step with what Plus really includes
@@ -86,7 +86,7 @@ Optional backup (v4): Supabase project "guidewise" (ref bqevxxhdtzlywjoqbogt, Lo
 - PR #10 merged 4 Nov (document backup, venues, translation, messages, reminders, sun times, holidays, tests). Fix: self-describing document files and 'Get documents from cloud'
 - 4 Nov: clean-up SQL done; Supabase Site URL https://guidewiseapp.co.za with redirects for both domains and previews; setup guide and landing meta use guidewiseapp.co.za. billing-checkout already allows the domain (fallback still netlify.app, harmless)
 - Owner to do: Paystack live mode
-- Paystack test plans are R79/R790 (updated via a retired one-off function admin-plans, now a 410 stub)
+- Paystack test plans must match: R99 monthly, R950 yearly (owner edits them in Paystack; billing-checkout amounts 9900/95000)
 
 ## Roadmap
 1. Accounts + cloud backup: done in v4; documents backed up in v13

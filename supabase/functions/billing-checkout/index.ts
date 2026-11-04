@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     }
     const t = await paystack("/transaction/initialize", {
       method: "POST",
-      body: JSON.stringify({ email: user.email, amount: plan === "yearly" ? 79000 : 7900, plan: planCode, callback_url: back, metadata: { user_id: user.id, plan } }),
+      body: JSON.stringify({ email: user.email, amount: plan === "yearly" ? 95000 : 9900, plan: planCode, callback_url: back, metadata: { user_id: user.id, plan } }),
     });
     return json({ url: t.authorization_url });
   } catch (e) {
