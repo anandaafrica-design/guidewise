@@ -68,17 +68,17 @@ input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);
 .tmore summary::-webkit-details-marker{display:none}
 .tile .tic{font-size:1.2rem;font-weight:800;color:var(--accent)}
 nav button span{font-size:.68rem}
-/* Ochre palette (v15): #CC7722 is the signature; #9A5414 carries text and buttons so they stay readable in sun */
-:root{--bg:#f7f2ea;--surface:#fffdf9;--soft:#f6e8d6;--line:#e6dac8;--muted:#5a5144;--ink:#1f1a14;--accent:#9a5414;--accent-2:#cc7722;--brand:#cc7722;--ochre:#5e4429;--sand:#f6e9d6;--sky:#2f6ea5;--game:#5f7a2e}
+/* Ochre palette (v15): #B75A1A burnt ochre is the main colour (white text on it passes WCAG AA), umber the second */
+:root{--bg:#f7f2ea;--surface:#fffdf9;--soft:#f6e6d6;--line:#e6dac8;--muted:#5a5144;--ink:#1f1a14;--accent:#b75a1a;--accent-2:#d07a35;--brand:#b75a1a;--ochre:#5e4429;--sand:#f6e9d6;--sky:#2f6ea5;--game:#5f7a2e}
 body{background-image:url(topo-earth.svg)}
-header::after{background:linear-gradient(90deg,var(--brand),#e09a45 55%,var(--ochre))}
-.hero{background:url(topo-w.svg) right -120px center/560px auto no-repeat,linear-gradient(150deg,#b86418 0%,#8a4a12 100%);box-shadow:0 10px 30px rgb(110 60 15 / .28)}
-.hello{background:linear-gradient(90deg,var(--brand),#8a4a12)}
-.tbadge.b-live{background:var(--brand);color:#1f1a14}.tbadge.b-next{background:var(--soft);color:var(--accent)}
+header::after{background:linear-gradient(90deg,var(--brand),#d9923f 55%,var(--ochre))}
+.hero{background:url(topo-w.svg) right -120px center/560px auto no-repeat,linear-gradient(150deg,#b75a1a 0%,#8a4210 100%);box-shadow:0 10px 30px rgb(110 50 15 / .28)}
+.hello{background:linear-gradient(90deg,#b75a1a,#7e3d10)}
+.tbadge.b-live{background:var(--brand);color:#fff}.tbadge.b-next{background:var(--soft);color:var(--accent)}
 .tcard.live{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand),var(--shadow)}
-nav button.on svg{background:#f6e1c4}
+nav button.on svg{background:#f5ddc8}
 .days button.on{background:var(--accent);border-color:var(--accent)}
-.days button .td{background:var(--brand);color:#1f1a14}
+.days button .td{background:#fff;color:var(--accent)}
 .arch summary{cursor:pointer;font-weight:700;margin:18px 0 6px;color:var(--muted)}
 .inst{max-width:640px;margin:12px auto 0;box-sizing:border-box;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:.92rem}
 @media (max-width:672px){.inst{margin:12px 16px 0}}
