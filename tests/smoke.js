@@ -16,6 +16,7 @@ const ok=(c,m)=>{console.log((c?'  ✓ ':'  ✗ ')+m);if(!c)fails++};
 
   console.log('First run');
   ok(await pg.evaluate(()=>tab)==='welcome','welcome shows on a fresh install');
+  ok(await pg.evaluate(()=>/rgb\(95, 128, 72\)/.test(getComputedStyle(document.querySelector('.onb .intro')).backgroundImage)),'welcome intro sits on the bush-to-sky panel');
   await pg.click('[data-onb="sample"]');ok(await pg.evaluate(()=>tab==='today'&&localStorage.getItem('guidewise.onb')==='1'),'explore opens Today and is remembered');
   await pg.reload();await pg.waitForTimeout(500);ok(await pg.evaluate(()=>tab==='home'),'app opens on Tours every time');
 
